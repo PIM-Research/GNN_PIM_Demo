@@ -1,0 +1,7 @@
+NeuroSIMOld/
+/NeuroSim_Output.csv
+NeuroSim_Results_Each_Epoch/
+__pycache__/
+record/
+.idea/
+/dataset/
