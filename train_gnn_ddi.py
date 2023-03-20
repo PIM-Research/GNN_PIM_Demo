@@ -39,7 +39,7 @@ def main():
     #adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
     #run_recorder.record('', 'adj_matrix.csv', adj_matrix, delimiter=',', fmt='%d')
     adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
-    adj_matrix = reset_adj_matrix(data.adj, adj_matrix, args.percentile)
+    adj_matrix = reset_adj_matrix(data.adj_t, adj_matrix, args.percentile)
     adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
     adj_binary_col, scale = dec2bin(adj_matrix, args.bl_activate)
     for i, b in enumerate(adj_binary_col):
