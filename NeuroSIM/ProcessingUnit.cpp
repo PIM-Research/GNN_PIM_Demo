@@ -702,6 +702,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 	}
 	*writeLatencyPeakWU = (*writeLatencyWU);
 	*writeDynamicEnergyPeakWU = (*writeDynamicEnergyWU);
+	cout << "subArrayStartRow:" << subArrayStartRow << endl;
 	return 0;
 }
 
@@ -891,7 +892,10 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 		int numSetWritePulse = 0;						// num of set pulse of each row
 		int numResetWritePulse = 0;						// num of reset pulse of each row
 		bool rowSelected = false;
-		if (subArrayStartRow > 0 && updatedVertexs[subArrayStartRow + i] == 0) continue;
+		if (subArrayStartRow > 0 && updatedVertexs[subArrayStartRow + i] == 0) {
+			cout << "isUpdated?" << updatedVertexs[subArrayStartRow + i]<<" ";
+			continue;
+		}
 		for (int j=0; j<newMemory[0].size(); j++) {   	// sweep column for a row
 			if (param->memcelltype != 1) { // eNVM
 				if (abs(newMemory[i][j]-oldMemory[i][j]) >= minDeltaConductance) {

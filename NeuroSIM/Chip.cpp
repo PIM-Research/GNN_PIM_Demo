@@ -711,6 +711,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 				int numColMatrix = min(desiredTileSizeCM, weightMatrixCol-j*desiredTileSizeCM);
 				if ((l + 1) % 2 == 0) tileStartRow = i * desiredTileSizeCM;
 				else tileStartRow = -1;
+				cout << "tileStartRow:" << tileStartRow << endl;
 				// assign weight and input to specific tile
 				vector<vector<double> > tileMemoryOld;
 				tileMemoryOld = CopyArray(oldMemory, i*desiredTileSizeCM, j*desiredTileSizeCM, numRowMatrix, numColMatrix);
