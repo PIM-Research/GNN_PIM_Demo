@@ -12,6 +12,7 @@ from torch_sparse import SparseTensor
 import os
 from subprocess import call
 
+
 def main():
     print(args)
     if not os.path.exists('./NeuroSim_Results_Each_Epoch'):
