@@ -445,7 +445,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 			*coreLatencyOther = (*coreLatencyOther)/(arrayDupRow*arrayDupCol);
 		} else {
 			extern int peStartRow;
-			if (peStartRow > 0)subArrayStartRow = peStartRow;
+			if (peStartRow >= 0)subArrayStartRow = peStartRow;
 			else subArrayStartRow = -1;
 			// assign weight and input to specific subArray
 			vector<vector<double> > subArrayMemoryOld;
@@ -533,7 +533,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 					int numRowMatrix = min(param->numRowSubArray, weightMatrixRow-i*param->numRowSubArray);
 					int numColMatrix = min(param->numColSubArray, weightMatrixCol-j*param->numColSubArray);
 					extern int peStartRow;
-					if (peStartRow > 0)subArrayStartRow = peStartRow + i * param->numRowSubArray;
+					if (peStartRow >= 0)subArrayStartRow = peStartRow + i * param->numRowSubArray;
 					else subArrayStartRow = -1;
 					// assign weight and input to specific subArray
 					vector<vector<double> > subArrayMemoryOld;
@@ -892,7 +892,7 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 		int numSetWritePulse = 0;						// num of set pulse of each row
 		int numResetWritePulse = 0;						// num of reset pulse of each row
 		bool rowSelected = false;
-		if (subArrayStartRow > 0 && updatedVertexs[subArrayStartRow + i] == 0) {
+		if (subArrayStartRow >= 0 && updatedVertexs[subArrayStartRow + i] == 0) {
 			cout << "isUpdated?" << updatedVertexs[subArrayStartRow + i]<<" ";
 			continue;
 		}
