@@ -64,7 +64,7 @@ using namespace std;
 extern Param *param;
 double globalBusWidth = 0;
 int numBufferCore = 0;
-
+int tileStartRow = 0;
 /*** Circuit Modules ***/
 Buffer *globalBuffer;
 HTree *GhTree;
@@ -709,7 +709,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 			for (int j=0; j<ceil((double) netStructure[l][5]*(double) numColPerSynapse/(double) desiredTileSizeCM); j++) {   // # of tiles in Column
 				int numRowMatrix = min(desiredTileSizeCM, weightMatrixRow-i*desiredTileSizeCM);
 				int numColMatrix = min(desiredTileSizeCM, weightMatrixCol-j*desiredTileSizeCM);
-				
+				tileStartRow = i * desiredTileSizeCM;
 				// assign weight and input to specific tile
 				vector<vector<double> > tileMemoryOld;
 				tileMemoryOld = CopyArray(oldMemory, i*desiredTileSizeCM, j*desiredTileSizeCM, numRowMatrix, numColMatrix);

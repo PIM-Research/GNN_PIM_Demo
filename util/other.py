@@ -41,15 +41,29 @@ def dec2bin(x, n):
     return out, scale_list
 
 
-def reset_adj_matrix(adj_original: SparseTensor, adj_norm: np.ndarray, percentage):
-    adj_coo = adj_original.coo()
+def get_n_percentile(adj: SparseTensor, percentage):
+    adj_coo = adj.coo()
     des_vertex = adj_coo[1]
-    vertex_deg = np.zeros(adj_original.size(dim=0))
+    vertex_deg = np.zeros(adj.size(dim=0))
     for i in des_vertex:
         vertex_deg[i] += 1
     n_percentile = np.percentile(vertex_deg, percentage)
+    return n_percentile, vertex_deg
+
+
+def reset_adj_matrix(adj_original: SparseTensor, adj_norm: np.ndarray, percentage):
+    n_percentile, vertex_deg = get_n_percentile(adj_original, percentage)
     for i, deg in enumerate(vertex_deg):
         if deg < n_percentile:
             print(i)
             adj_norm[:, i] = 0
     return adj_norm
+
+
+def get_updated_vertex(adj: SparseTensor, percentage):
+    n_percentile, vertex_deg = get_n_percentile(adj, percentage)
+    updated_vertex = np.zeros(shape=[vertex_deg.shape[0]])
+    for i, deg in enumerate(vertex_deg):
+        if deg >= n_percentile:
+            updated_vertex[i] = 1
+    return updated_vertex

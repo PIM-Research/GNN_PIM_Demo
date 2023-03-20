@@ -56,7 +56,7 @@
 using namespace std;
 
 extern Param *param;
-
+int subArrayStartRow = 0;
 AdderTree *adderTreeNM;
 Bus *busInputNM;
 Bus *busOutputNM;
@@ -329,6 +329,8 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 					int numColMatrix = min(param->numColSubArray, weightMatrixCol-j*param->numColSubArray);
 					// sweep different sub-array
 					if ((i*param->numRowSubArray < weightMatrixRow) && (j*param->numColSubArray < weightMatrixCol) && (i*param->numRowSubArray < weightMatrixRow) ) {
+						extern int peStartRow;
+						subArrayStartRow = peStartRow + i * param->numRowSubArray;
 						// assign weight and input to specific subArray
 						vector<vector<double> > subArrayMemoryOld;
 						subArrayMemoryOld = CopySubArray(oldMemory, i*param->numRowSubArray, j*param->numColSubArray, numRowMatrix, numColMatrix);
@@ -441,6 +443,8 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 			*coreLatencyAccum = (*coreLatencyAccum)/(arrayDupRow*arrayDupCol);
 			*coreLatencyOther = (*coreLatencyOther)/(arrayDupRow*arrayDupCol);
 		} else {
+			extern int peStartRow;
+			subArrayStartRow = peStartRow;
 			// assign weight and input to specific subArray
 			vector<vector<double> > subArrayMemoryOld;
 			subArrayMemoryOld = CopySubArray(oldMemory, 0, 0, weightMatrixRow, weightMatrixCol);
@@ -526,6 +530,8 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 				if ((i*param->numRowSubArray < weightMatrixRow) && (j*param->numColSubArray < weightMatrixCol) && (i*param->numRowSubArray < weightMatrixRow) ) {
 					int numRowMatrix = min(param->numRowSubArray, weightMatrixRow-i*param->numRowSubArray);
 					int numColMatrix = min(param->numColSubArray, weightMatrixCol-j*param->numColSubArray);
+					extern int peStartRow;
+					subArrayStartRow = peStartRow + i * param->numRowSubArray;
 					// assign weight and input to specific subArray
 					vector<vector<double> > subArrayMemoryOld;
 					subArrayMemoryOld = CopySubArray(oldMemory, i*param->numRowSubArray, j*param->numColSubArray, numRowMatrix, numColMatrix);
@@ -865,7 +871,7 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 	double minDeltaConductance = (double) (param->maxConductance-param->minConductance)/maxNumWritePulse;     // define the min delta weight
 	int totalNumSetWritePulse = 0;
 	int totalNumResetWritePulse = 0;
-	
+	extern vector<int> updatedVertexs;
 	*activityColWrite = 0;
 	*activityRowWrite = 0;
 	*numWritePulseAVG = 0;
@@ -882,7 +888,7 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 		int numSetWritePulse = 0;						// num of set pulse of each row
 		int numResetWritePulse = 0;						// num of reset pulse of each row
 		bool rowSelected = false;
-		
+		if (updatedVertexs[subArrayStartRow + i] == 0) continue;
 		for (int j=0; j<newMemory[0].size(); j++) {   	// sweep column for a row
 			if (param->memcelltype != 1) { // eNVM
 				if (abs(newMemory[i][j]-oldMemory[i][j]) >= minDeltaConductance) {

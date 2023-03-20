@@ -48,3 +48,4 @@ InputParameter inputParameter;
 Technology tech;
 MemCell cell;
 
+vector<int> updatedVertexs;

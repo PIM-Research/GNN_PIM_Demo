@@ -60,7 +60,7 @@ using namespace std;
 extern Param *param;
 int numInBufferCore = 0;
 int numOutBufferCore = 0;
-
+int peStartRow = 0;
 SubArray *subArrayInPE;
 Buffer *inputBufferCM;
 Buffer *outputBufferCM;
@@ -383,6 +383,8 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 			if ((speedUpRow >= numPE) && (speedUpCol >= numPE)) {
 				// duplication in PE or subArray --> tell each PE to take the whole assigned weight  --> "fully" duplication
 				// assign weight and input to specific tile
+				extern int tileStartRow;
+				peStartRow = tileStartRow;
 				vector<vector<double> > pEMemoryOld;
 				pEMemoryOld = CopyPEArray(oldMemory, 0, 0, weightMatrixRow, weightMatrixCol);
 				vector<vector<double> > pEMemory;
@@ -433,7 +435,8 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 						if ( (i*peSize < weightMatrixRow) && (j*peSize < weightMatrixCol) ) {
 							int numRowMatrix = min(peSize, (double) weightMatrixRow-i*peSize);
 							int numColMatrix = min(peSize, (double) weightMatrixCol-j*peSize);
-					
+							extern int tileStartRow;
+							peStartRow = tileStartRow + i * peSize;
 							// assign weight and input to specific tile
 							vector<vector<double> > pEMemoryOld;
 							pEMemoryOld = CopyPEArray(oldMemory, i*peSize, j*peSize, numRowMatrix, numColMatrix);
@@ -520,7 +523,8 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 						// assign weight and input to specific tile
 						int numRowMatrix = min(peSize, (double) weightMatrixRow-i*peSize);
 						int numColMatrix = min(peSize, (double) weightMatrixCol-j*peSize);
-						
+						extern int tileStartRow;
+						peStartRow = tileStartRow + i * peSize;
 						vector<vector<double> > pEMemoryOld;
 						pEMemoryOld = CopyPEArray(oldMemory, i*peSize, j*peSize, numRowMatrix, numColMatrix);
 						vector<vector<double> > pEMemory;
