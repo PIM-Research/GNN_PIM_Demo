@@ -59,7 +59,7 @@
 using namespace std;
 
 vector<vector<double> > getNetStructure(const string &inputfile);
-
+void getUpdatedVertexs(const string& inputfile);
 int main(int argc, char * argv[]) {   
 
 	auto start = chrono::high_resolution_clock::now();
@@ -68,7 +68,12 @@ int main(int argc, char * argv[]) {
 	
 	vector<vector<double> > netStructure;
 	netStructure = getNetStructure(argv[2]);
-	
+	cout << argv[5 + netStructure.size() * 4];
+	getUpdatedVertexs(argv[5 + netStructure.size() * 4]);
+	for (int i : updatedVertexs) {
+		cout << i << " ";
+	}
+	cout << endl;
 	// define weight/input/memory precision from wrapper
 	param->synapseBit = atoi(argv[3]);             		 // precision of synapse weight
 	param->numBitInput = atoi(argv[4]);            		 // precision of input neural activation
@@ -814,5 +819,23 @@ vector<vector<double> > getNetStructure(const string &inputfile) {
 	netStructure.clear();
 }	
 
-
+void getUpdatedVertexs(const string& inputfile) {
+	ifstream inFile(inputfile.c_str());
+	string inputLine;
+	string inputVal;
+	if (!inFile.good()) {
+		cerr << "Error: the updated vextex input file cannot be opened!" << endl;
+		exit(1);
+	}
+	else {
+		while (getline(inFile, inputLine, '\n')) {
+			istringstream iss(inputLine);
+			vector<int> colVar;
+			while (getline(iss, inputVal, ',')) {
+				updatedVertexs.push_back(atoi(inputVal.c_str()));
+			}
+		}
+	}
+	inFile.close();
+}
 

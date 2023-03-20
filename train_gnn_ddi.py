@@ -5,7 +5,7 @@ from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 from models import GAT, GCN, SAGE, LinkPredictor, QW, QG, C
 from util import recorder, train_test_ddi, train_decorator
 from util.global_variable import *
-from util.other import norm_adj, dec2bin
+from util.other import norm_adj, dec2bin, reset_adj_matrix, get_updated_vertex
 import numpy as np
 from torch_geometric.utils import add_self_loops
 from torch_sparse import SparseTensor
@@ -32,19 +32,17 @@ def main():
                                      transform=T.ToSparseTensor())
 
     data = dataset[0]
-    # adj_matrix_tensor = add_self_loops(data.adj_t)
-    # adj_matrix_size = adj_matrix_tensor[0].shape[0]
-    # adj_matrix = SparseTensor(row=adj_matrix_tensor[0][0], col=adj_matrix_tensor[0][1],
-    #                           sparse_sizes=(adj_matrix_size, adj_matrix_size)).to_dense().numpy()
-    #adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
-    #run_recorder.record('', 'adj_matrix.csv', adj_matrix, delimiter=',', fmt='%d')
+
     adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
+    # adj_matrix = reset_adj_matrix(data.adj_t, adj_matrix, args.percentile)
+    updated_vertex = get_updated_vertex(data.adj_t, args.percentile)
+    run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
     adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
     adj_binary_col, scale = dec2bin(adj_matrix, args.bl_activate)
     for i, b in enumerate(adj_binary_col):
         adj_binary[:, i::args.bl_activate] = b
     run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
-    activity = np.sum(adj_matrix.astype(np.float), axis=None) / np.size(adj_matrix)
+    activity = np.sum(adj_matrix.astype(np.float64), axis=None) / np.size(adj_matrix)
     # 获取ddi数据集的邻接矩阵，格式为SparseTensor
 
     adj_t = data.adj_t.to(device)
@@ -115,16 +113,16 @@ def main():
                               f'Train: {100 * train_hits:.2f}%, '
                               f'Valid: {100 * valid_hits:.2f}%, '
                               f'Test: {100 * test_hits:.2f}%')
-                    print('---') 
+                    print('---')
             call(["chmod", "o+x", run_recorder.bootstrap_path])
             call(["/bin/bash", run_recorder.bootstrap_path])
-		
+
         for key in loggers.keys():
             print(key)
             loggers[key].print_statistics(run)
 
-       # model.record_cost()
-	
+    # model.record_cost()
+
     for key in loggers.keys():
         print(key)
         loggers[key].print_statistics()

@@ -64,7 +64,7 @@ using namespace std;
 extern Param *param;
 double globalBusWidth = 0;
 int numBufferCore = 0;
-
+int tileStartRow = 0;
 /*** Circuit Modules ***/
 Buffer *globalBuffer;
 HTree *GhTree;
@@ -418,8 +418,8 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 		int numMemInRow = (netStructure[maxIFMLayer][0]-netStructure[maxIFMLayer][3]+1)*(netStructure[maxIFMLayer][1]-netStructure[maxIFMLayer][4]+1);
 		int numMemInCol = netStructure[maxIFMLayer][2]*param->numBitInput;
 		cout<<numMemInRow<<" "<<netStructure[maxIFMLayer][2]<<endl;
-		int temp = numMemInRow*netStructure[maxIFMLayer][2];
-		weightGradientUnit->Initialize(temp , numMemInCol);
+		// int temp = numMemInRow*netStructure[maxIFMLayer][2];
+		weightGradientUnit->Initialize(numMemInRow , numMemInCol);
 		int maxWeight = 0;
 		for (int i=0; i<netStructure.size(); i++) {
 			double weight = netStructure[i][2]*netStructure[i][3]*netStructure[i][4]*netStructure[i][5];  // IFM_Row * IFM_Column * IFM_depth
@@ -709,7 +709,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 			for (int j=0; j<ceil((double) netStructure[l][5]*(double) numColPerSynapse/(double) desiredTileSizeCM); j++) {   // # of tiles in Column
 				int numRowMatrix = min(desiredTileSizeCM, weightMatrixRow-i*desiredTileSizeCM);
 				int numColMatrix = min(desiredTileSizeCM, weightMatrixCol-j*desiredTileSizeCM);
-				
+				tileStartRow = i * desiredTileSizeCM;
 				// assign weight and input to specific tile
 				vector<vector<double> > tileMemoryOld;
 				tileMemoryOld = CopyArray(oldMemory, i*desiredTileSizeCM, j*desiredTileSizeCM, numRowMatrix, numColMatrix);

@@ -36,7 +36,7 @@ class TrainDecorator:
                     self.hook_handle_list.append(layer.register_forward_pre_hook(hook_set_epoch))
                 for index_c, (name_c, layer_c) in enumerate(layer.gcn_conv.named_children()):
                     self.hook_handle_list.append(layer_c.register_forward_hook(hook_combination_input_output))
-                #self.hook_handle_list.append(layer.register_forward_hook(hook_Layer_output))
+                # self.hook_handle_list.append(layer.register_forward_hook(hook_Layer_output))
 
     def quantify_activation(self, model):
         for name, param in list(model.named_parameters())[::-1]:
@@ -48,6 +48,8 @@ class TrainDecorator:
                 model.weight_acc[name] = w_acc
 
     def clear_hooks(self, model, batch_index, cur_epoch):
+        f = open(self.recorder.bootstrap_path, 'a')
+        f.write('updated_vertex.csv')
         if batch_index == 0:
             for handle in self.hook_handle_list:
                 handle.remove()
