@@ -48,9 +48,9 @@ class TrainDecorator:
                 model.weight_acc[name] = w_acc
 
     def clear_hooks(self, model, batch_index, cur_epoch):
-        f = open(self.recorder.bootstrap_path, 'a')
-        f.write('updated_vertex.csv')
         if batch_index == 0:
+            f = open(self.recorder.bootstrap_path, 'a')
+            f.write(os.path.join(self.recorder.dir_name, 'updated_vertex.csv'))
             for handle in self.hook_handle_list:
                 handle.remove()
             for name, param in list(model.named_parameters())[::-1]:
