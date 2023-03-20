@@ -709,7 +709,8 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 			for (int j=0; j<ceil((double) netStructure[l][5]*(double) numColPerSynapse/(double) desiredTileSizeCM); j++) {   // # of tiles in Column
 				int numRowMatrix = min(desiredTileSizeCM, weightMatrixRow-i*desiredTileSizeCM);
 				int numColMatrix = min(desiredTileSizeCM, weightMatrixCol-j*desiredTileSizeCM);
-				tileStartRow = i * desiredTileSizeCM;
+				if ((l + 1) % 2 == 0) tileStartRow = i * desiredTileSizeCM;
+				else tileStartRow = -1;
 				// assign weight and input to specific tile
 				vector<vector<double> > tileMemoryOld;
 				tileMemoryOld = CopyArray(oldMemory, i*desiredTileSizeCM, j*desiredTileSizeCM, numRowMatrix, numColMatrix);

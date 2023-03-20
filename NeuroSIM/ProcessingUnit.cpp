@@ -330,7 +330,8 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 					// sweep different sub-array
 					if ((i*param->numRowSubArray < weightMatrixRow) && (j*param->numColSubArray < weightMatrixCol) && (i*param->numRowSubArray < weightMatrixRow) ) {
 						extern int peStartRow;
-						subArrayStartRow = peStartRow + i * param->numRowSubArray;
+						if (peStartRow > 0)subArrayStartRow = peStartRow + i * param->numRowSubArray;
+						else subArrayStartRow = -1;
 						// assign weight and input to specific subArray
 						vector<vector<double> > subArrayMemoryOld;
 						subArrayMemoryOld = CopySubArray(oldMemory, i*param->numRowSubArray, j*param->numColSubArray, numRowMatrix, numColMatrix);
@@ -444,7 +445,8 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 			*coreLatencyOther = (*coreLatencyOther)/(arrayDupRow*arrayDupCol);
 		} else {
 			extern int peStartRow;
-			subArrayStartRow = peStartRow;
+			if (peStartRow > 0)subArrayStartRow = peStartRow;
+			else subArrayStartRow = -1;
 			// assign weight and input to specific subArray
 			vector<vector<double> > subArrayMemoryOld;
 			subArrayMemoryOld = CopySubArray(oldMemory, 0, 0, weightMatrixRow, weightMatrixCol);
@@ -531,7 +533,8 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 					int numRowMatrix = min(param->numRowSubArray, weightMatrixRow-i*param->numRowSubArray);
 					int numColMatrix = min(param->numColSubArray, weightMatrixCol-j*param->numColSubArray);
 					extern int peStartRow;
-					subArrayStartRow = peStartRow + i * param->numRowSubArray;
+					if (peStartRow > 0)subArrayStartRow = peStartRow + i * param->numRowSubArray;
+					else subArrayStartRow = -1;
 					// assign weight and input to specific subArray
 					vector<vector<double> > subArrayMemoryOld;
 					subArrayMemoryOld = CopySubArray(oldMemory, i*param->numRowSubArray, j*param->numColSubArray, numRowMatrix, numColMatrix);
@@ -888,7 +891,7 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 		int numSetWritePulse = 0;						// num of set pulse of each row
 		int numResetWritePulse = 0;						// num of reset pulse of each row
 		bool rowSelected = false;
-		if (updatedVertexs[subArrayStartRow + i] == 0) continue;
+		if (subArrayStartRow > 0 && updatedVertexs[subArrayStartRow + i] == 0) continue;
 		for (int j=0; j<newMemory[0].size(); j++) {   	// sweep column for a row
 			if (param->memcelltype != 1) { // eNVM
 				if (abs(newMemory[i][j]-oldMemory[i][j]) >= minDeltaConductance) {
