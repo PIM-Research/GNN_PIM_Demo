@@ -418,8 +418,8 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 		int numMemInRow = (netStructure[maxIFMLayer][0]-netStructure[maxIFMLayer][3]+1)*(netStructure[maxIFMLayer][1]-netStructure[maxIFMLayer][4]+1);
 		int numMemInCol = netStructure[maxIFMLayer][2]*param->numBitInput;
 		cout<<numMemInRow<<" "<<netStructure[maxIFMLayer][2]<<endl;
-		int temp = numMemInRow*netStructure[maxIFMLayer][2];
-		weightGradientUnit->Initialize(temp , numMemInCol);
+		// int temp = numMemInRow*netStructure[maxIFMLayer][2];
+		weightGradientUnit->Initialize(numMemInRow , numMemInCol);
 		int maxWeight = 0;
 		for (int i=0; i<netStructure.size(); i++) {
 			double weight = netStructure[i][2]*netStructure[i][3]*netStructure[i][4]*netStructure[i][5];  // IFM_Row * IFM_Column * IFM_depth

@@ -1,4 +1,4 @@
-import torch
+import numpy as np
 from torch_sparse import *
 from torch_sparse import sum as sparse_sum
 
@@ -39,3 +39,17 @@ def dec2bin(x, n):
         out.append(y.copy())
         scale_list.append(base * delta)
     return out, scale_list
+
+
+def reset_adj_matrix(adj_original: SparseTensor, adj_norm: np.ndarray, percentage):
+    adj_coo = adj_original.coo()
+    des_vertex = adj_coo[1]
+    vertex_deg = np.zeros(adj_original.size(dim=0))
+    for i in des_vertex:
+        vertex_deg[i] += 1
+    n_percentile = np.percentile(vertex_deg, percentage)
+    for i, deg in enumerate(vertex_deg):
+        if deg < n_percentile:
+            print(i)
+            adj_norm[:, i] = 0
+    return adj_norm

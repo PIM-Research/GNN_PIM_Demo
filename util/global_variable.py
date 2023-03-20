@@ -8,6 +8,7 @@ dir_name = f'./record/ddi/{create_time}'
 run_recorder = recorder.Recorder(dir_name)
 parser = argparse.ArgumentParser(description='OGBN-ddi (GNN)')
 parser.add_argument('--device', type=int, default=0)
+parser.add_argument('--percentile', type=int, default=50)
 parser.add_argument('--log_steps', type=int, default=1)
 parser.add_argument('--eval_steps', type=int, default=1)
 parser.add_argument('--use_sage', action='store_true')

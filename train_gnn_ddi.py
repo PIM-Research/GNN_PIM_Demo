@@ -5,7 +5,7 @@ from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 from models import GAT, GCN, SAGE, LinkPredictor, QW, QG, C
 from util import recorder, train_test_ddi, train_decorator
 from util.global_variable import *
-from util.other import norm_adj, dec2bin
+from util.other import norm_adj, dec2bin, reset_adj_matrix
 import numpy as np
 from torch_geometric.utils import add_self_loops
 from torch_sparse import SparseTensor
@@ -39,6 +39,7 @@ def main():
     #adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
     #run_recorder.record('', 'adj_matrix.csv', adj_matrix, delimiter=',', fmt='%d')
     adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
+    adj_matrix = reset_adj_matrix(data.adj, adj_matrix, args.percentile)
     adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
     adj_binary_col, scale = dec2bin(adj_matrix, args.bl_activate)
     for i, b in enumerate(adj_binary_col):
