@@ -285,14 +285,17 @@ void WeightGradientUnit::CalculateLatency(int numRead, int numBitDataLoad) {
 			
 			readLatency = 0;
 			readLatency += MAX(wlSwitchMatrix.readLatency, (mux.readLatency+muxDecoder.readLatency));
+			cout << "wlSwitchMatrix.readLatency:" << wlSwitchMatrix.readLatency << " mux.readLatency+muxDecoder.readLatency:" << mux.readLatency + muxDecoder.readLatency << endl;
 			readLatency += precharger.readLatency;
 			readLatency += colDelay;
+			cout << "precharger.readLatency:" << precharger.readLatency << " colDelay:" << colDelay << endl;
 			readLatency += multilevelSenseAmp.readLatency;
 			readLatency += multilevelSAEncoder.readLatency;
+			cout << "multilevelSenseAmp.readLatency:" << multilevelSenseAmp.readLatency << " multilevelSAEncoder.readLatency:" << multilevelSAEncoder.readLatency << endl;
 			readLatency += shiftAdd.readLatency;
 			readLatency += accumulation.readLatency;
 			readLatency += sarADC.readLatency;
-			
+			cout << "shiftAdd.readLatency:" << shiftAdd.readLatency << " accumulation.readLatency:" << accumulation.readLatency << " sarADC.readLatency:" << sarADC.readLatency << endl;
 			// Write (assume the average delay of pullup and pulldown inverter in SRAM cell)
 			double resPull;
 			resPull = (CalculateOnResistance(param->widthSRAMCellNMOS * tech.featureSize, NMOS, inputParameter.temperature, tech) 
