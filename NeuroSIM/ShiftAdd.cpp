@@ -152,7 +152,7 @@ void ShiftAdd::CalculateLatency(double numRead) {
 		cout << "[ShiftAdd] Error: Require initialization first!" << endl;
 	} else {
 		readLatency = 0;
-		
+		cout << "spikingMode:" << spikingMode;
 		// Assume the delay of INV and NAND2 are negligible
 		if (spikingMode == NONSPIKING) {   // NONSPIKING: binary format
 			// We can shift and add the weighted sum data in the next vector pulse integration cycle
@@ -160,6 +160,8 @@ void ShiftAdd::CalculateLatency(double numRead) {
 			// But there is at least one time of shift-and-add, which is at the last vector pulse cycle
 			adder.CalculateLatency(1e20, dff.capTgDrain, 1);
 			dff.CalculateLatency(1e20, 1);
+			cout << "adder.readLatency:" << adder.readLatency << " dff.readLatency:" << dff.readLatency << endl;
+			cout << "cell.readPulseWidth:" << cell.readPulseWidth<<" numRead:"<< numRead;
 			double shiftAddLatency = adder.readLatency + dff.readLatency;
 			if (shiftAddLatency > cell.readPulseWidth)    // Completely hidden in the vector pulse cycle if smaller
 				readLatency += (shiftAddLatency - cell.readPulseWidth) * (numRead - 1);
@@ -169,6 +171,8 @@ void ShiftAdd::CalculateLatency(double numRead) {
 			// Thus the shiftout time can be partially hidden by the vector pulse integration time at the next cycle
 			// But there is at least one time of shiftout, which is at the last vector pulse cycle
 			dff.CalculateLatency(1e20, numBitPerDff);	// Need numBitPerDff cycles to shift out the weighted sum data
+			cout << "dff.readLatency:" << dff.readLatency << endl;
+			cout << "cell.readPulseWidth:" << cell.readPulseWidth << " numRead:" << numRead;
 			double shiftLatency = dff.readLatency;
 			if (shiftLatency > cell.readPulseWidth)	// Completely hidden in the vector pulse cycle if smaller
 				readLatency += (shiftLatency - cell.readPulseWidth) * (numRead - 1);
