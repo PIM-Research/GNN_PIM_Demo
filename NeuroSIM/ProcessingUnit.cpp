@@ -893,7 +893,7 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 		int numResetWritePulse = 0;						// num of reset pulse of each row
 		bool rowSelected = false;
 		// cout << "vertex index:" << subArrayStartRow + i << "isUpdated:" << updatedVertexs[subArrayStartRow + i] << endl;
-		//if (subArrayStartRow >= 0 && updatedVertexs[subArrayStartRow + i] == 0) continue;
+		if (subArrayStartRow >= 0 && updatedVertexs[subArrayStartRow + i] == 0) continue;
 		
 		for (int j=0; j<newMemory[0].size(); j++) {   	// sweep column for a row
 			if (param->memcelltype != 1) { // eNVM
@@ -957,12 +957,12 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 	numSelectedColSet = numSelectedRowSet==0? 0:ceil(numSelectedColSet/numSelectedRowSet);
 	numSelectedColReset = numSelectedRowReset==0? 0:ceil(numSelectedColReset/numSelectedRowReset);
 	cout << "numSelectedRowSet:" << numSelectedRowSet << " numSelectedRowReset:" << numSelectedRowReset << endl;
-	cout << "numSelectedColSet:" << numSelectedColSet << " numSelectedColReSet" << numSelectedColReset << endl;
+	cout << "numSelectedColSet:" << numSelectedColSet << " numSelectedColReSet:" << numSelectedColReset << endl;
 	*totalNumWritePulse = totalNumResetWritePulse + totalNumSetWritePulse;
 	*numWritePulseAVG = (*totalNumWritePulse)/(MAX(1, (numSelectedRowSet+numSelectedRowReset)/2.0));
 	*activityColWrite = ((numSelectedColSet+numSelectedColReset)/2.0)/newMemory[0].size();
 	*activityRowWrite = ((numSelectedRowSet+numSelectedRowReset)/2.0)/newMemory.size();	
-	cout << "Subarray Start Row:" << subArrayStartRow << " totalNumWritePulse:" << *totalNumWritePulse << " numWritePulseAVG:" << *numWritePulseAVG << " activityColWrite:" << *activityColWrite << " activityRowWrite" << *activityRowWrite << endl;
+	cout << "Subarray Start Row:" << subArrayStartRow << " totalNumWritePulse:" << *totalNumWritePulse << " numWritePulseAVG:" << *numWritePulseAVG << " activityColWrite:" << *activityColWrite << " activityRowWrite:" << *activityRowWrite << endl;
 	// calculate WL BL and SL energy
 	if (cell.memCellType == Type::RRAM || cell.memCellType == Type::FeFET) {
 		if (cell.accessType == CMOS_access) {
