@@ -893,7 +893,7 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 		int numResetWritePulse = 0;						// num of reset pulse of each row
 		bool rowSelected = false;
 		// cout << "vertex index:" << subArrayStartRow + i << "isUpdated:" << updatedVertexs[subArrayStartRow + i] << endl;
-		if (subArrayStartRow >= 0 && updatedVertexs[subArrayStartRow + i] == 0) continue;
+		//if (subArrayStartRow >= 0 && updatedVertexs[subArrayStartRow + i] == 0) continue;
 		
 		for (int j=0; j<newMemory[0].size(); j++) {   	// sweep column for a row
 			if (param->memcelltype != 1) { // eNVM
