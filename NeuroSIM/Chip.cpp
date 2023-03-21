@@ -416,8 +416,8 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 	dRAM->Initialize(param->dramType);
 	if (param->trainingEstimation) {
 		int numMemInRow = (netStructure[maxIFMLayer][0]-netStructure[maxIFMLayer][3]+1)*(netStructure[maxIFMLayer][1]-netStructure[maxIFMLayer][4]+1);
-		int numMemInCol = netStructure[maxIFMLayer][2]*param->numBitInput;
-		cout<<numMemInRow<<" "<<netStructure[maxIFMLayer][2]<<endl;
+		int numMemInCol = netStructure[maxIFMLayer][5]*param->numBitInput;
+		// cout<<numMemInRow<<" "<<netStructure[maxIFMLayer][2]<<endl;
 		// int temp = numMemInRow*netStructure[maxIFMLayer][2];
 		weightGradientUnit->Initialize(numMemInRow , numMemInCol);
 		int maxWeight = 0;
@@ -711,7 +711,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 				int numColMatrix = min(desiredTileSizeCM, weightMatrixCol-j*desiredTileSizeCM);
 				if ((l + 1) % 2 == 0) tileStartRow = i * desiredTileSizeCM;
 				else tileStartRow = -1;
-				cout << "tileStartRow:" << tileStartRow << endl;
+				// cout << "tileStartRow:" << tileStartRow << endl;
 				// assign weight and input to specific tile
 				vector<vector<double> > tileMemoryOld;
 				tileMemoryOld = CopyArray(oldMemory, i*desiredTileSizeCM, j*desiredTileSizeCM, numRowMatrix, numColMatrix);

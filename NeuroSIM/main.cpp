@@ -68,12 +68,7 @@ int main(int argc, char * argv[]) {
 	
 	vector<vector<double> > netStructure;
 	netStructure = getNetStructure(argv[2]);
-	cout << argv[5 + netStructure.size() * 4];
 	getUpdatedVertexs(argv[5 + netStructure.size() * 4]);
-	for (int i : updatedVertexs) {
-		cout << i << " ";
-	}
-	cout << endl;
 	// define weight/input/memory precision from wrapper
 	param->synapseBit = atoi(argv[3]);             		 // precision of synapse weight
 	param->numBitInput = atoi(argv[4]);            		 // precision of input neural activation

@@ -702,7 +702,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 	}
 	*writeLatencyPeakWU = (*writeLatencyWU);
 	*writeDynamicEnergyPeakWU = (*writeDynamicEnergyWU);
-	cout << "subArrayStartRow:" << subArrayStartRow << endl;
+	// cout << "subArrayStartRow:" << subArrayStartRow << endl;
 	return 0;
 }
 
@@ -954,13 +954,13 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 	// get average num of selected column for set and reset
 	numSelectedColSet = numSelectedRowSet==0? 0:ceil(numSelectedColSet/numSelectedRowSet);
 	numSelectedColReset = numSelectedRowReset==0? 0:ceil(numSelectedColReset/numSelectedRowReset);
-	cout << "numSelectedRowSet:" << numSelectedRowSet << " numSelectedRowReset:" << numSelectedRowReset << endl;
-	cout << "numSelectedColSet:" << numSelectedColSet << " numSelectedColReSet:" << numSelectedColReset << endl;
+	// cout << "numSelectedRowSet:" << numSelectedRowSet << " numSelectedRowReset:" << numSelectedRowReset << endl;
+	// cout << "numSelectedColSet:" << numSelectedColSet << " numSelectedColReSet:" << numSelectedColReset << endl;
 	*totalNumWritePulse = totalNumResetWritePulse + totalNumSetWritePulse;
 	*numWritePulseAVG = (*totalNumWritePulse)/(MAX(1, (numSelectedRowSet+numSelectedRowReset)/2.0));
 	*activityColWrite = ((numSelectedColSet+numSelectedColReset)/2.0)/newMemory[0].size();
 	*activityRowWrite = ((numSelectedRowSet+numSelectedRowReset)/2.0)/newMemory.size();	
-	cout << "Subarray Start Row:" << subArrayStartRow << " totalNumWritePulse:" << *totalNumWritePulse << " numWritePulseAVG:" << *numWritePulseAVG << " activityColWrite:" << *activityColWrite << " activityRowWrite:" << *activityRowWrite << endl;
+	// cout << "Subarray Start Row:" << subArrayStartRow << " totalNumWritePulse:" << *totalNumWritePulse << " numWritePulseAVG:" << *numWritePulseAVG << " activityColWrite:" << *activityColWrite << " activityRowWrite:" << *activityRowWrite << endl;
 	// calculate WL BL and SL energy
 	if (cell.memCellType == Type::RRAM || cell.memCellType == Type::FeFET) {
 		if (cell.accessType == CMOS_access) {

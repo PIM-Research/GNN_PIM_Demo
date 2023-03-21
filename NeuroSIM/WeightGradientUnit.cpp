@@ -84,7 +84,7 @@ void WeightGradientUnit::Initialize(int _numMemRow, int _numMemCol) {
 	unitWireRes = param->unitLengthWireResistance;
 	numArrayInRow = ceil((double)numMemRow / numRow);
 	numArrayInCol = ceil((double)numMemCol / numCol);
-	cout<<"numArrayInRow:"<<numArrayInRow<<" numArrayInCol:"<<numArrayInRow<<endl; 
+	cout<<"numArrayInRow:"<<numArrayInRow<<" numArrayInCol:"<< numArrayInCol <<endl;
 	//numArrayInRow = floor(numMemRow/numRow);           
 	//numArrayInCol = floor(numMemCol/numCol);
 	
