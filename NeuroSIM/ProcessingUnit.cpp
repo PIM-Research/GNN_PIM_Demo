@@ -892,7 +892,7 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 		int numSetWritePulse = 0;						// num of set pulse of each row
 		int numResetWritePulse = 0;						// num of reset pulse of each row
 		bool rowSelected = false;
-		cout << "vertex index:" << subArrayStartRow + i << "isUpdated:" << updatedVertexs[subArrayStartRow + i] << endl;
+		// cout << "vertex index:" << subArrayStartRow + i << "isUpdated:" << updatedVertexs[subArrayStartRow + i] << endl;
 		if (subArrayStartRow >= 0 && updatedVertexs[subArrayStartRow + i] == 0) continue;
 		
 		for (int j=0; j<newMemory[0].size(); j++) {   	// sweep column for a row
@@ -956,7 +956,7 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 	// get average num of selected column for set and reset
 	numSelectedColSet = numSelectedRowSet==0? 0:ceil(numSelectedColSet/numSelectedRowSet);
 	numSelectedColReset = numSelectedRowReset==0? 0:ceil(numSelectedColReset/numSelectedRowReset);
-	cout << "Subarray Start Row:" << subArrayStartRow << "numSelectedColSet:" << numSelectedColSet << "numSelectedColReSet" << numSelectedColReset << endl;
+	cout << "Subarray Start Row:" << subArrayStartRow << " numSelectedColSet:" << numSelectedColSet << " numSelectedColReSet" << numSelectedColReset << endl;
 	*totalNumWritePulse = totalNumResetWritePulse + totalNumSetWritePulse;
 	*numWritePulseAVG = (*totalNumWritePulse)/(MAX(1, (numSelectedRowSet+numSelectedRowReset)/2.0));
 	*activityColWrite = ((numSelectedColSet+numSelectedColReset)/2.0)/newMemory[0].size();
