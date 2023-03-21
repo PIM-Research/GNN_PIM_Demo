@@ -941,11 +941,9 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 		}
 		if (rowSelected && (numSet>0)) {  			 // if set happens in this row
 			numSelectedRowSet += 1;
-		} else if (rowSelected && (numReset>0)) { 	 // if reset happens in this row
+		}
+		if (rowSelected && (numReset>0)) { 	 // if reset happens in this row
 			numSelectedRowReset += 1;
-		} else {
-			numSelectedRowSet += 0;
-			numSelectedRowReset += 0;
 		}
 		numSelectedColSet += numSet;
 		numSelectedColReset += numReset;
