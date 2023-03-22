@@ -97,7 +97,7 @@ void WeightGradientUnit::Initialize(int _numMemRow, int _numMemCol) {
 	
 	resRow = lengthRow * unitWireRes; 
 	resCol = lengthCol * unitWireRes;
-	
+	spikingMode = NONSPIKING;
 	// SRAM based 
 	int numColPerSynapse = param->numBitInput;             // the activation will be written into the SRAM array, so use input precision to define numColPerSynapse
 	//firstly calculate the CMOS resistance and capacitance
