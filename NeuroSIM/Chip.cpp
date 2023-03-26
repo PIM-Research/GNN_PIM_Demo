@@ -440,8 +440,8 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 	
 	//globalBuffer->Initialize(param->numBitInput*maxLayerInput, globalBusWidth, 1, param->unitLengthWireResistance, param->clkFreq, param->globalBufferType);
 	numBufferCore = ceil(bufferSize/(param->globalBufferCoreSizeRow*param->globalBufferCoreSizeCol));
-	cout << "param->globalBufferCoreSizeRow:" << param->globalBufferCoreSizeRow << " param->globalBufferCoreSizeCol:" << param->globalBufferCoreSizeCol << endl;
-	cout << "bufferSize:" << bufferSize << " numBufferCore:" << numBufferCore << endl;
+	// cout << "param->globalBufferCoreSizeRow:" << param->globalBufferCoreSizeRow << " param->globalBufferCoreSizeCol:" << param->globalBufferCoreSizeCol << endl;
+	// cout << "bufferSize:" << bufferSize << " numBufferCore:" << numBufferCore << endl;
 	//numBufferCore = ceil(1.5*numBufferCore);
 	globalBuffer->Initialize((param->globalBufferCoreSizeRow*param->globalBufferCoreSizeCol), param->globalBufferCoreSizeCol, 1, param->unitLengthWireResistance, param->clkFreq, param->globalBufferType);
 	
@@ -827,7 +827,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		// since multi-core buffer has improve the parallelism
 		globalBuffer->readLatency /= MIN(numBufferCore, ceil(globalBusWidth/globalBuffer->interface_width));
 		globalBuffer->writeLatency /= MIN(numBufferCore, ceil(globalBusWidth/globalBuffer->interface_width));
-		cout << "numBufferCore:" << numBufferCore << endl;
+		// cout << "numBufferCore:" << numBufferCore << endl;
 		// each time, only a part of the ic is used to transfer data to a part of the tiles
 		globalBuffer->readLatency *= ceil(totalNumTile/(numTileEachLayer[0][l]*numTileEachLayer[1][l]));
 		globalBuffer->writeLatency *= ceil(totalNumTile/(numTileEachLayer[0][l]*numTileEachLayer[1][l]));
@@ -1046,7 +1046,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		// since multi-core buffer has improve the parallelism
 		globalBuffer->readLatency /= MIN(numBufferCore, ceil(globalBusWidth/globalBuffer->interface_width));
 		globalBuffer->writeLatency /= MIN(numBufferCore, ceil(globalBusWidth/globalBuffer->interface_width));
-		cout << "numBufferCore:" << numBufferCore << endl;
+		// cout << "numBufferCore:" << numBufferCore << endl;
 		// calculation of weight gradient
 		weightGradientUnit->CalculateLatency(netStructure[l][5], (netStructure[l][0]-netStructure[l][3]+1)*(netStructure[l][1]-netStructure[l][4]+1)*param->numBitInput);
 		weightGradientUnit->CalculatePower(netStructure[l][5], (netStructure[l][0]-netStructure[l][3]+1)*(netStructure[l][1]-netStructure[l][4]+1)*param->numBitInput);
@@ -1080,9 +1080,9 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		*bufferDynamicEnergy += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy);
 		*dramLatency += dRAM->readLatency; 
 		*dramDynamicEnergy += dRAM->readDynamicEnergy;
-		cout << "globalBuffer->interface_width:" << globalBuffer->interface_width << " numBufferCore:" << numBufferCore << endl;
-		cout << "dataLoadWeight:" << dataLoadWeight << " globalBusWidth:" << globalBusWidth << endl;
-		cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
+		// cout << "globalBuffer->interface_width:" << globalBuffer->interface_width << " numBufferCore:" << numBufferCore << endl;
+		// cout << "dataLoadWeight:" << dataLoadWeight << " globalBusWidth:" << globalBusWidth << endl;
+		// cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
 		// Before weight update: accumulation of weight gradient
 		// need to load weight gradient data from DRAM back to chip
 		*readLatencyWG += dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency);

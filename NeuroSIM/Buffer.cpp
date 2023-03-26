@@ -176,9 +176,9 @@ void Buffer::CalculateLatency(double numAccessBitRead, double numRead, double nu
 		avgBitWriteLatency = (double) writeWholeLatency/(numBit/interface_width);
 		readLatency = avgBitReadLatency*numRead;
 		writeLatency = avgBitWriteLatency*numWrite;
-		cout << "readWholeLatency:" << readWholeLatency << " writeWholeLatency:" << writeWholeLatency << endl;
-		cout << "avgBitReadLatency:" << avgBitReadLatency << " avgBitWriteLatency:" << avgBitWriteLatency << endl;
-		cout << "readLatency:" << readLatency << " writeLatency:" << writeLatency << endl;
+		// cout << "readWholeLatency:" << readWholeLatency << " writeWholeLatency:" << writeWholeLatency << endl;
+		// cout << "avgBitReadLatency:" << avgBitReadLatency << " avgBitWriteLatency:" << avgBitWriteLatency << endl;
+		// cout << "readLatency:" << readLatency << " writeLatency:" << writeLatency << endl;
 	}
 }
 
