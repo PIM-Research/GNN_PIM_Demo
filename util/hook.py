@@ -10,6 +10,7 @@ import torch
 current_layer = -1
 current_epoch = 1
 matrix_activity = 0
+vertex_map = None
 
 
 def hook_set_epoch(self: NamedGCNConv, input_data):
@@ -50,9 +51,17 @@ def hook_combination_input_output(self: nn.Linear, input_data, output_data):
     if args.bl_activate != -1:
         output_data = C(output_data, args.bl_activate)  # keeps the gradients
     output_data = WAGERounding.apply(output_data, args.bl_activate, args.bl_error, None)
-    weight_a = run_recorder.record(f'layer_run/epoch{current_epoch}', f'convs.{layer}.gcn_conv.lin.output_C.csv',
-                                   output_data.data.to('cpu').data.numpy(),
-                                   delimiter=',', fmt='%10.5f')
+
+    # 判断drop模式是否是GLOBAL
+    if vertex_map is not None:
+        weight_a = run_recorder.record_acc_vertex_map(f'layer_run/epoch{current_epoch}',
+                                                      f'convs.{layer}.gcn_conv.lin.output_C.csv',
+                                                      output_data.data.to('cpu').data.numpy(), vertex_map,
+                                                      delimiter=',', fmt='%10.5f')
+    else:
+        weight_a = run_recorder.record(f'layer_run/epoch{current_epoch}', f'convs.{layer}.gcn_conv.lin.output_C.csv',
+                                       output_data.data.to('cpu').data.numpy(), delimiter=',', fmt='%10.5f')
+
     # weight_updated_a = f'convs.{layer - 1}.gcn_conv.lin.output_C.csv'
     weight_updated_a = os.path.join(run_recorder.dir_name, f'layer_run/epoch{current_epoch}',
                                     f'convs.{layer - 1}.gcn_conv.lin.output_C.csv')
@@ -73,3 +82,8 @@ def get_current_layer():
     if current_layer == args.num_layers:
         current_layer = 0
     return current_layer
+
+
+def set_vertex_map(vertex_pointer):
+    global vertex_map
+    vertex_map = vertex_pointer

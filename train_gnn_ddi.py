@@ -3,12 +3,12 @@ import torch_geometric.transforms as T
 from util.logger import Logger
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 from models import GAT, GCN, SAGE, LinkPredictor, QW, QG, C
-from util import recorder, train_test_ddi, train_decorator
+from util import train_test_ddi, train_decorator
 from util.global_variable import *
-from util.other import norm_adj, dec2bin, reset_adj_matrix, get_updated_vertex
+from util.other import norm_adj, dec2bin, get_updated_vertex_list
+from util.definition import DropMode
+from util.hook import set_vertex_map
 import numpy as np
-from torch_geometric.utils import add_self_loops
-from torch_sparse import SparseTensor
 import os
 from subprocess import call
 
@@ -33,19 +33,31 @@ def main():
 
     data = dataset[0]
 
+    # 将邻接矩阵正则化
     adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
-    # adj_matrix = reset_adj_matrix(data.adj_t, adj_matrix, args.percentile)
-    updated_vertex = get_updated_vertex(data.adj_t, args.percentile)
-    run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
+
+    # # 转换为2进制
     adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
     adj_binary_col, scale = dec2bin(adj_matrix, args.bl_activate)
     for i, b in enumerate(adj_binary_col):
         adj_binary[:, i::args.bl_activate] = b
-    run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
-    activity = np.sum(adj_matrix.astype(np.float64), axis=None) / np.size(adj_matrix)
-    # 获取ddi数据集的邻接矩阵，格式为SparseTensor
+    activity = np.sum(adj_binary.astype(np.float64), axis=None) / np.size(adj_binary)
 
+    # 获取顶点特征更新列表
+    drop_mode = DropMode(args.drop_mode)
+    if drop_mode == DropMode.GLOBAL:
+        updated_vertex, vertex_pointer = get_updated_vertex_list(data.adj_t, args.percentile, args.array_size,
+                                                                 drop_mode)
+        set_vertex_map(vertex_pointer)
+        run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_pointer, delimiter=',', fmt='%s')
+    else:
+        updated_vertex = get_updated_vertex_list(data.adj_t, args.percentile, args.array_size, drop_mode)
+        run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
+    run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
+
+    # 获取ddi数据集的邻接矩阵，格式为SparseTensor
     adj_t = data.adj_t.to(device)
+
     # 将边数据集拆分为训练集，验证集，测试集，其中验证集和测试集有两个属性，edge代表图中存在的边（正边），edge_neg代表图中不存在的边（负边）
     split_edge = dataset.get_edge_split()
 

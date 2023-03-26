@@ -315,6 +315,10 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 	*coreLatencyAccum = 0;
 	*coreLatencyOther = 0;
 	
+	extern int numArrayWriteParallel;
+	int arrayNum = 0;
+	double subArrayWriteLatencyParallelMax = 0;
+
 	double subArrayReadLatency, subArrayReadDynamicEnergy, subArrayLeakage, subArrayLatencyADC, subArrayLatencyAccum, subArrayLatencyOther;
 	double subArrayReadLatencyAG, subArrayReadDynamicEnergyAG, subArrayWriteLatencyWU, subArrayWriteDynamicEnergyWU;
 	
@@ -330,6 +334,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 					// sweep different sub-array
 					if ((i*param->numRowSubArray < weightMatrixRow) && (j*param->numColSubArray < weightMatrixCol) && (i*param->numRowSubArray < weightMatrixRow) ) {
 						extern int peStartRow;
+						arrayNum++;
 						if (peStartRow > 0)subArrayStartRow = peStartRow + i * param->numRowSubArray;
 						else subArrayStartRow = -1;
 						// assign weight and input to specific subArray
@@ -403,7 +408,16 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 						}
 						// accumulate write latency as array need to be write sequentially (worst case)
 						// limitation by on-chip buffer, write latency will be divided by numArrayWriteParallel (real case)
-						*writeLatencyWU += subArray->writeLatency*((param->trainingEstimation)==true? 1:0);
+						if (!param->trainingEstimation)
+							*writeLatencyWU = 0;
+						else {
+							if ((arrayNum - 1) % numArrayWriteParallel == 0) {
+								*writeLatencyWU += subArrayWriteLatencyParallelMax;
+								subArrayWriteLatencyParallelMax = subArray->writeLatency;
+							}
+							else
+								subArrayWriteLatencyParallelMax = max(subArrayWriteLatencyParallelMax, subArray->writeLatency);
+						}
 						*writeDynamicEnergyWU += subArray->writeDynamicEnergy*((param->trainingEstimation)==true? 1:0);
 						if (NMpe) {
 							adderTreeNM->CalculateLatency((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), ceil((double) weightMatrixRow/(double) param->numRowSubArray), 0);
@@ -435,6 +449,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 					}
 				}
 			}
+			*writeLatencyWU += subArrayWriteLatencyParallelMax;
 			*writeDynamicEnergyWU *= (arrayDupRow*arrayDupCol);
 
 			// considering speedup, the latency of processing each layer is decreased
@@ -517,6 +532,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 				*coreEnergyOther += subArray->readDynamicEnergyOther;
 			}
 			*writeLatencyWU += subArray->writeLatency*((param->trainingEstimation)==true? 1:0);
+			*writeLatencyWU /= (arrayDupRow * arrayDupCol - (arrayDupRow * arrayDupCol % numArrayWriteParallel) - 0.0) / numArrayWriteParallel;
 			*writeDynamicEnergyWU += subArray->writeDynamicEnergy*(arrayDupRow*arrayDupCol)*((param->trainingEstimation)==true? 1:0);
 			// do not pass adderTree 
 			*readLatency = subArrayReadLatency/(arrayDupRow*arrayDupCol);
@@ -530,6 +546,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 		for (int i=0; i<numSubArrayRow/*ceil((double) weightMatrixRow/(double) param->numRowSubArray)*/; i++) {
 			for (int j=0; j<numSubArrayCol/*ceil((double) weightMatrixCol/(double) param->numColSubArray)*/; j++) {
 				if ((i*param->numRowSubArray < weightMatrixRow) && (j*param->numColSubArray < weightMatrixCol) && (i*param->numRowSubArray < weightMatrixRow) ) {
+					arrayNum++;
 					int numRowMatrix = min(param->numRowSubArray, weightMatrixRow-i*param->numRowSubArray);
 					int numColMatrix = min(param->numColSubArray, weightMatrixCol-j*param->numColSubArray);
 					extern int peStartRow;
@@ -607,7 +624,16 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 					}
 					// accumulate write latency as array need to be write sequentially (worst case)
 					// limitation by on-chip buffer, write latency will be divided by numArrayWriteParallel (real case)
-					*writeLatencyWU += subArray->writeLatency*((param->trainingEstimation)==true? 1:0);
+					if (!param->trainingEstimation)
+						*writeLatencyWU = 0;
+					else {
+						if ((arrayNum - 1) % numArrayWriteParallel == 0) {
+							*writeLatencyWU += subArrayWriteLatencyParallelMax;
+							subArrayWriteLatencyParallelMax = subArray->writeLatency;
+						}
+						else
+							subArrayWriteLatencyParallelMax = max(subArrayWriteLatencyParallelMax, subArray->writeLatency);
+					}
 					*writeDynamicEnergyWU += subArray->writeDynamicEnergy*((param->trainingEstimation)==true? 1:0);
 					*readLatency = MAX(subArrayReadLatency, (*readLatency));
 					*readLatencyAG = MAX(subArrayReadLatencyAG, (*readLatencyAG));
@@ -617,6 +643,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 				}
 			}
 		}
+		*writeLatencyWU += subArrayWriteLatencyParallelMax;
 		if (NMpe) {
 			adderTreeNM->CalculateLatency((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), ceil((double) weightMatrixRow/(double) param->numRowSubArray), 0);
 			adderTreeNM->CalculatePower((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), ceil((double) weightMatrixRow/(double) param->numRowSubArray));
