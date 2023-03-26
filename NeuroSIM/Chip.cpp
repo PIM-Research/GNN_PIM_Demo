@@ -406,7 +406,7 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 	}
 	// define bufferSize for inference operation
 	int bufferSize = param->numBitInput*maxLayerInput;
-	
+	cout << "bufferSize:" << bufferSize << endl;
 	// consider limited buffer to store gradient of weight: only part of the weight matrix is processed at a specific cycle
 	// we could set a bufferOverheadConstraint to limit the overhead and speed of computation and weight-update
 	// start: at least can support gradient of one weight matrix = subArray size * weightPrecision/cellPrecision
@@ -441,6 +441,7 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 	
 	//globalBuffer->Initialize(param->numBitInput*maxLayerInput, globalBusWidth, 1, param->unitLengthWireResistance, param->clkFreq, param->globalBufferType);
 	numBufferCore = ceil(bufferSize/(param->globalBufferCoreSizeRow*param->globalBufferCoreSizeCol));
+	cout << "param->globalBufferCoreSizeRow:" << param->globalBufferCoreSizeRow << " param->globalBufferCoreSizeCol:" << param->globalBufferCoreSizeCol << endl;
 	//numBufferCore = ceil(1.5*numBufferCore);
 	globalBuffer->Initialize((param->globalBufferCoreSizeRow*param->globalBufferCoreSizeCol), param->globalBufferCoreSizeCol, 1, param->unitLengthWireResistance, param->clkFreq, param->globalBufferType);
 	
