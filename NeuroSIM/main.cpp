@@ -55,7 +55,7 @@
 #include "ProcessingUnit.h"
 #include "SubArray.h"
 #include "Definition.h"
-#include <io.h>
+//#include <io.h>
 using namespace std;
 
 int numArrayWriteParallel = 0;
@@ -63,7 +63,7 @@ int numArrayWriteParallel = 0;
 vector<vector<double> > getNetStructure(const string &inputfile);
 void getUpdatedVertexs(const string& inputfile);
 string getCurrentTime();
-string createBreakdownParentFile();
+//string createBreakdownParentFile();
 int main(int argc, char * argv[]) {   
 
 	auto start = chrono::high_resolution_clock::now();
@@ -848,17 +848,17 @@ string getCurrentTime() {
 	return string(buffer);
 }
 
-string createBreakdownParentFile() {
-	const char* dir = "./NeuroSim_Results_Each_Epoch/";
-	string currentTime = getCurrentTime();
-	string fPath = dir + currentTime;
-	if (_access(dir, 0) == -1) {
-		string command = "mkdir -p " + fPath;
-		system(command.c_str());
-	}
-	else {
-		string command = "mkdir " + fPath;
-		system(command.c_str());
-	}
-	return fPath;
-}
+//string createBreakdownParentFile() {
+//	const char* dir = "./NeuroSim_Results_Each_Epoch/";
+//	string currentTime = getCurrentTime();
+//	string fPath = dir + currentTime;
+//	if (_access(dir, 0) == -1) {
+//		string command = "mkdir -p " + fPath;
+//		system(command.c_str());
+//	}
+//	else {
+//		string command = "mkdir " + fPath;
+//		system(command.c_str());
+//	}
+//	return fPath;
+//}
