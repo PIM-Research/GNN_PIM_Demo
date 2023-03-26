@@ -62,7 +62,7 @@ int numArrayWriteParallel = 0;
 
 vector<vector<double> > getNetStructure(const string &inputfile);
 void getUpdatedVertexs(const string& inputfile);
-string getCurrentTime();
+//string getCurrentTime();
 //string createBreakdownParentFile();
 int main(int argc, char * argv[]) {   
 
@@ -838,15 +838,15 @@ void getUpdatedVertexs(const string& inputfile) {
 	inFile.close();
 }
 
-string getCurrentTime() {
-	char buffer[80];
-	time_t rawtime;
-	time(&rawtime);
-	tm info;
-	localtime_s(&info, &rawtime);
-	strftime(buffer, 80, "%Y_%m_%d_%H_%M_%S", &info);
-	return string(buffer);
-}
+//string getCurrentTime() {
+//	char buffer[80];
+//	time_t rawtime;
+//	time(&rawtime);
+//	tm info;
+//	localtime_s(&info, &rawtime);
+//	strftime(buffer, 80, "%Y_%m_%d_%H_%M_%S", &info);
+//	return string(buffer);
+//}
 
 //string createBreakdownParentFile() {
 //	const char* dir = "./NeuroSim_Results_Each_Epoch/";
