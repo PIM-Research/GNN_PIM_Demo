@@ -1078,6 +1078,8 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		*bufferDynamicEnergy += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy);
 		*dramLatency += dRAM->readLatency; 
 		*dramDynamicEnergy += dRAM->readDynamicEnergy;
+		cout << "globalBuffer->interface_width:" << globalBuffer->interface_width << " numBufferCore:" << numBufferCore << endl;
+		cout << "dataLoadWeight:" << dataLoadWeight << " globalBusWidth:" << globalBusWidth << endl;
 		cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
 		// Before weight update: accumulation of weight gradient
 		// need to load weight gradient data from DRAM back to chip
