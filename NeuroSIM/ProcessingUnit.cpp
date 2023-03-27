@@ -624,7 +624,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 					}
 					// accumulate write latency as array need to be write sequentially (worst case)
 					// limitation by on-chip buffer, write latency will be divided by numArrayWriteParallel (real case)
-					cout << "subArray->writeLatency:" << subArray->writeLatency << endl;
+					cout << "subArray->writeLatency:" << subArray->writeLatency << " subArrayWriteLatencyParallelMax:" << subArrayWriteLatencyParallelMax << endl;
 					if (!param->trainingEstimation)
 						*writeLatencyWU = 0;
 					else {
