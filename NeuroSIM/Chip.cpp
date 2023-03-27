@@ -406,12 +406,12 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 	}
 	// define bufferSize for inference operation
 	int bufferSize = param->numBitInput*maxLayerInput;
-	if (param->trainingEstimation) {
-		int numMemInRow = (netStructure[maxIFMLayer][0] - netStructure[maxIFMLayer][3] + 1) * (netStructure[maxIFMLayer][1] - netStructure[maxIFMLayer][4] + 1);
-		int numMemInCol = netStructure[maxIFMLayer][5] * param->numBitInput;
-		// int temp = numMemInRow*netStructure[maxIFMLayer][2];
-		weightGradientUnit->Initialize(numMemInRow, numMemInCol);
-	}
+	//if (param->trainingEstimation) {
+	//	int numMemInRow = (netStructure[maxIFMLayer][0] - netStructure[maxIFMLayer][3] + 1) * (netStructure[maxIFMLayer][1] - netStructure[maxIFMLayer][4] + 1);
+	//	int numMemInCol = netStructure[maxIFMLayer][5] * param->numBitInput;
+	//	// int temp = numMemInRow*netStructure[maxIFMLayer][2];
+	//	weightGradientUnit->Initialize(numMemInRow, numMemInCol);
+	//}
 	// consider limited buffer to store gradient of weight: only part of the weight matrix is processed at a specific cycle
 	// we could set a bufferOverheadConstraint to limit the overhead and speed of computation and weight-update
 	// start: at least can support gradient of one weight matrix = subArray size * weightPrecision/cellPrecision
@@ -421,11 +421,10 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 	
 	dRAM->Initialize(param->dramType);
 	if (param->trainingEstimation) {
-		//int numMemInRow = (netStructure[maxIFMLayer][0]-netStructure[maxIFMLayer][3]+1)*(netStructure[maxIFMLayer][1]-netStructure[maxIFMLayer][4]+1);
-		//int numMemInCol = netStructure[maxIFMLayer][5]*param->numBitInput;
-		//
-		//// int temp = numMemInRow*netStructure[maxIFMLayer][2];
-		//weightGradientUnit->Initialize(numMemInRow , numMemInCol);
+		int numMemInRow = (netStructure[maxIFMLayer][0]-netStructure[maxIFMLayer][3]+1)*(netStructure[maxIFMLayer][1]-netStructure[maxIFMLayer][4]+1);
+		int numMemInCol = netStructure[maxIFMLayer][5]*param->numBitInput;
+		// int temp = numMemInRow*netStructure[maxIFMLayer][2];
+		weightGradientUnit->Initialize(numMemInRow , numMemInCol);
 		int maxWeight = 0;
 		for (int i=0; i<netStructure.size(); i++) {
 			double weight = netStructure[i][2]*netStructure[i][3]*netStructure[i][4]*netStructure[i][5];  // IFM_Row * IFM_Column * IFM_depth
@@ -441,7 +440,7 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 			bufferOverHead *= 2;
 			*numArrayWriteParallel *= 2;
 		}
-		// cout << "numArrayWriteParallel:" << *numArrayWriteParallel << endl;
+		cout << "numArrayWriteParallel:" << *numArrayWriteParallel << endl;
 		// update the buffer size to save weight gradient
 		bufferSize += bufferOverHead;
 		gradientAccum->Initialize(weightGradientUnit->outPrecision+ceil(log2(param->batchSize)), (*numArrayWriteParallel)*param->numRowSubArray*param->numColSubArray);
@@ -1023,7 +1022,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		*readDynamicEnergyWG += (dRAM->readDynamicEnergy)*2;
 		*dramLatency = (dRAM->readLatency)*6*((layerNumber!=0)==true? 6:4); // 2 for forward, 2 for AG, 2 for WG
 		*dramDynamicEnergy = (dRAM->readDynamicEnergy)*6*((layerNumber!=0)==true? 6:4);
-		cout << "dRAM->readLatency loadData:" << dRAM->readLatency << endl;
+		// cout << "dRAM->readLatency loadData:" << dRAM->readLatency << endl;
 		// since for each iteration, need *batchSize computation
 		*readLatency *= param->batchSize;
 		*readDynamicEnergy *= param->batchSize;
@@ -1078,9 +1077,9 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		*readDynamicEnergyPeakWG = (weightGradientUnit->readDynamicEnergyPeak + weightGradientUnit->writeDynamicEnergyPeak)*actualUsedArray*(netStructure[l][3]*netStructure[l][4]);
 		*readLatencyWG += (*readLatencyPeakWG);
 		*readDynamicEnergyWG += (*readDynamicEnergyPeakWG);
-		cout << "weightGradientUnit->readLatencyPeak:" << weightGradientUnit->readLatencyPeak << " weightGradientUnit->writeLatencyPeak:" << weightGradientUnit->writeLatencyPeak << endl;
+		/*cout << "weightGradientUnit->readLatencyPeak:" << weightGradientUnit->readLatencyPeak << " weightGradientUnit->writeLatencyPeak:" << weightGradientUnit->writeLatencyPeak << endl;
 		cout << "readLatencyPeakWG:" << *readLatencyPeakWG << " readDynamicEnergyWG:" << *readDynamicEnergyWG << endl;
-		cout << "dRAM->readLatency loadWeight:" << dRAM->readLatency << endl;
+		cout << "dRAM->readLatency loadWeight:" << dRAM->readLatency << endl;*/
 		// weight gradient need to be send back to DRAM
 		*readLatencyWG += dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency);
 		*readDynamicEnergyWG += dRAM->readDynamicEnergy + (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy);
@@ -1091,7 +1090,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		*dramDynamicEnergy += dRAM->readDynamicEnergy;
 		// cout << "globalBuffer->interface_width:" << globalBuffer->interface_width << " numBufferCore:" << numBufferCore << endl;
 		// cout << "dataLoadWeight:" << dataLoadWeight << " globalBusWidth:" << globalBusWidth << endl;
-		cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
+		// cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
 		// Before weight update: accumulation of weight gradient
 		// need to load weight gradient data from DRAM back to chip
 		*readLatencyWG += dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency);
@@ -1109,7 +1108,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		*readDynamicEnergyWG += gradientAccum->readDynamicEnergy;
 		*readLatencyPeakWG += gradientAccum->readLatency;
 		*readDynamicEnergyPeakWG += gradientAccum->readDynamicEnergy;
-		cout << "gradientAccum->readLatency:" << gradientAccum->readLatency << endl;
+		// cout << "gradientAccum->readLatency:" << gradientAccum->readLatency << endl;
 		// weight gradient also need *batchSize computation
 		*readLatencyWG *= param->batchSize;
 		*readDynamicEnergyWG *= param->batchSize;
@@ -1125,7 +1124,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		
 		// since the latency of weightUpdate is accumulated as seperate subArrays
 		// one update every batch
-		*writeLatencyWU /= numArrayWriteParallel;
+		// *writeLatencyWU /= numArrayWriteParallel;
 		
 		
 		// since for each epoch, need *numIteration computation

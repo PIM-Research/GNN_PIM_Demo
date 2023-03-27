@@ -626,7 +626,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 					// accumulate write latency as array need to be write sequentially (worst case)
 					// limitation by on-chip buffer, write latency will be divided by numArrayWriteParallel (real case)
 					*writeLatencyWU += subArray->writeLatency;
-					/*if (!param->trainingEstimation)
+					if (!param->trainingEstimation)
 						*writeLatencyWU = 0;
 					else {
 						if ((arrayNum - 1) % numArrayWriteParallel == 0) {
@@ -637,7 +637,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 						else
 							subArrayWriteLatencyParallelMax = max(subArrayWriteLatencyParallelMax, subArray->writeLatency);
 					}
-					cout << "subArray->writeLatency:" << subArray->writeLatency << " subArrayWriteLatencyParallelMax:" << subArrayWriteLatencyParallelMax << endl;*/
+					// cout << "subArray->writeLatency:" << subArray->writeLatency << " subArrayWriteLatencyParallelMax:" << subArrayWriteLatencyParallelMax << endl;
 					*writeDynamicEnergyWU += subArray->writeDynamicEnergy*((param->trainingEstimation)==true? 1:0);
 					*readLatency = MAX(subArrayReadLatency, (*readLatency));
 					*readLatencyAG = MAX(subArrayReadLatencyAG, (*readLatencyAG));
@@ -647,8 +647,8 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 				}
 			}
 		}
-		// *writeLatencyWU += subArrayWriteLatencyParallelMax;
-		cout << "writeLatencyWU:" << *writeLatencyWU << endl;
+		*writeLatencyWU += subArrayWriteLatencyParallelMax;
+		// cout << "writeLatencyWU:" << *writeLatencyWU << endl;
 		if (NMpe) {
 			adderTreeNM->CalculateLatency((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), ceil((double) weightMatrixRow/(double) param->numRowSubArray), 0);
 			adderTreeNM->CalculatePower((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), ceil((double) weightMatrixRow/(double) param->numRowSubArray));
