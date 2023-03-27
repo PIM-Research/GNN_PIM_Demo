@@ -631,7 +631,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 						if ((arrayNum - 1) % numArrayWriteParallel == 0) {
 							*writeLatencyWU += subArrayWriteLatencyParallelMax;
 							subArrayWriteLatencyParallelMax = subArray->writeLatency;
-							cout << "writeLatencyWU:" << *writeLatencyWU << endl;
+							cout << "writeLatencyWU:" << *writeLatencyWU * 1e9 << endl;
 						}
 						else
 							subArrayWriteLatencyParallelMax = max(subArrayWriteLatencyParallelMax, subArray->writeLatency);
