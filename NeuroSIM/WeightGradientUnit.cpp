@@ -135,7 +135,7 @@ void WeightGradientUnit::Initialize(int _numMemRow, int _numMemCol) {
 		}
 		accumulation.Initialize(numArrayInRow, log2((double)param->levelOutputWG)+param->numBitInput+1, ceil((double)numArrayInCol*(double)numCol/(double)param->numRowMuxedWG));
 		outPrecision = log2((double)param->levelOutputWG)+param->numBitInput+accumulation.numStage;
-		cout << "param->levelOutputWG:" << param->levelOutputWG << " param->numBitInput:" << param->numBitInput << " accumulation.numStage:" << accumulation.numStage << endl;
+		// cout << "param->levelOutputWG:" << param->levelOutputWG << " param->numBitInput:" << param->numBitInput << " accumulation.numStage:" << accumulation.numStage << endl;
 	}	
 	precharger.Initialize(numCol, resCol, param->activityColWriteWG, numCol, numCol);
 	sramWriteDriver.Initialize(numCol, param->activityColWriteWG, numCol);

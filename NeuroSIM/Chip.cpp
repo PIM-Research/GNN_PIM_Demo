@@ -416,7 +416,7 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 	// we could set a bufferOverheadConstraint to limit the overhead and speed of computation and weight-update
 	// start: at least can support gradient of one weight matrix = subArray size * weightPrecision/cellPrecision
 	int bufferOverHead = param->numRowSubArray*param->numColSubArray*param->numColPerSynapse*(weightGradientUnit->outPrecision+ceil(log2(param->batchSize)));
-	cout << "weightGradientUnit->outPrecision:" << weightGradientUnit->outPrecision << endl;
+	// cout << "weightGradientUnit->outPrecision:" << weightGradientUnit->outPrecision << endl;
 	*numArrayWriteParallel = floor(bufferOverHead/((param->numRowSubArray*param->numColSubArray)*param->synapseBit));
 	
 	dRAM->Initialize(param->dramType);
@@ -436,7 +436,7 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 		// consider limited buffer to store gradient of weight: only part of the weight matrix is processed at a specific cycle
 		// we could set a bufferOverheadConstraint to limit the overhead and speed of computation and weight-update
 		// start: at least can support gradient of one weight matrix = subArray size * weightPrecision/cellPrecision
-		cout << "bufferOverHead:" << bufferOverHead << " bufferOverHeadConstraint:" << param->bufferOverHeadConstraint << endl;
+		// cout << "bufferOverHead:" << bufferOverHead << " bufferOverHeadConstraint:" << param->bufferOverHeadConstraint << endl;
 		while((bufferSize+bufferOverHead) < bufferSize*(param->bufferOverHeadConstraint+1)) {
 			bufferOverHead *= 2;
 			*numArrayWriteParallel *= 2;
@@ -1022,7 +1022,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		*readDynamicEnergyWG += (dRAM->readDynamicEnergy)*2;
 		*dramLatency = (dRAM->readLatency)*6*((layerNumber!=0)==true? 6:4); // 2 for forward, 2 for AG, 2 for WG
 		*dramDynamicEnergy = (dRAM->readDynamicEnergy)*6*((layerNumber!=0)==true? 6:4);
-		// cout << "dRAM->readLatency loadData:" << dRAM->readLatency << endl;
+		cout << "dRAM->readLatency loadData:" << dRAM->readLatency << endl;
 		// since for each iteration, need *batchSize computation
 		*readLatency *= param->batchSize;
 		*readDynamicEnergy *= param->batchSize;
@@ -1077,9 +1077,9 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		*readDynamicEnergyPeakWG = (weightGradientUnit->readDynamicEnergyPeak + weightGradientUnit->writeDynamicEnergyPeak)*actualUsedArray*(netStructure[l][3]*netStructure[l][4]);
 		*readLatencyWG += (*readLatencyPeakWG);
 		*readDynamicEnergyWG += (*readDynamicEnergyPeakWG);
-		// cout << "weightGradientUnit->readLatencyPeak:" << weightGradientUnit->readLatencyPeak << " weightGradientUnit->writeLatencyPeak:" << weightGradientUnit->writeLatencyPeak << endl;
-		// cout << "readLatencyPeakWG:" << *readLatencyPeakWG << " readDynamicEnergyWG:" << *readDynamicEnergyWG << endl;
-		// cout << "dRAM->readLatency loadWeight:" << dRAM->readLatency << endl;
+		cout << "weightGradientUnit->readLatencyPeak:" << weightGradientUnit->readLatencyPeak << " weightGradientUnit->writeLatencyPeak:" << weightGradientUnit->writeLatencyPeak << endl;
+		cout << "readLatencyPeakWG:" << *readLatencyPeakWG << " readDynamicEnergyWG:" << *readDynamicEnergyWG << endl;
+		cout << "dRAM->readLatency loadWeight:" << dRAM->readLatency << endl;
 		// weight gradient need to be send back to DRAM
 		*readLatencyWG += dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency);
 		*readDynamicEnergyWG += dRAM->readDynamicEnergy + (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy);
@@ -1090,7 +1090,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		*dramDynamicEnergy += dRAM->readDynamicEnergy;
 		// cout << "globalBuffer->interface_width:" << globalBuffer->interface_width << " numBufferCore:" << numBufferCore << endl;
 		// cout << "dataLoadWeight:" << dataLoadWeight << " globalBusWidth:" << globalBusWidth << endl;
-		// cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
+		cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
 		// Before weight update: accumulation of weight gradient
 		// need to load weight gradient data from DRAM back to chip
 		*readLatencyWG += dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency);
