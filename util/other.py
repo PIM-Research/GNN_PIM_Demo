@@ -95,7 +95,7 @@ def get_updated_vertex_list(adj: SparseTensor, percentage, array_size, drop_mode
     # 根据drop的模式选择对应的方法生成待更新顶点列表
     if drop_mode is DropMode.GLOBAL:  # 每一个crossbar上均匀分布各个度大小的顶点，然后按照全体顶点度的n百分位数选择待更新顶点
         vertex_deg_global, vertex_pointer = get_vertex_deg_global(vertex_deg, array_size)
-        updated_vertex[:] = list(map(lambda x: x if x > n_percentile else 0, vertex_deg_global))
+        updated_vertex[:] = list(map(lambda x: 1 if x > n_percentile else 0, vertex_deg_global))
         return updated_vertex, vertex_pointer
     elif drop_mode is DropMode.LOCAL:  # 每一个crossbar按原始顶点顺序映射顶点特征，然后当前crossbar上映射顶点的n百分位数选择待更新顶点
         for i in range(0, array_num):
@@ -103,12 +103,12 @@ def get_updated_vertex_list(adj: SparseTensor, percentage, array_size, drop_mode
                 n_percentile = np.percentile(vertex_deg[i * array_size:(i + 1) * array_size], percentage)
                 # print('n_percentile1:', n_percentile)
                 updated_vertex[i * array_size:(i + 1) * array_size] = list(
-                    map(lambda x: x if x > n_percentile else 0, vertex_deg[i * array_size:(i + 1) * array_size]))
+                    map(lambda x: 1 if x > n_percentile else 0, vertex_deg[i * array_size:(i + 1) * array_size]))
             else:
                 n_percentile = np.percentile(vertex_deg[i * array_size:vertex_num], percentage)
                 # print('n_percentile2:', n_percentile)
                 updated_vertex[i * array_size:vertex_num] = list(
-                    map(lambda x: x if x > n_percentile else 0, vertex_deg[i * array_size:vertex_num]))
+                    map(lambda x: 1 if x > n_percentile else 0, vertex_deg[i * array_size:vertex_num]))
     elif drop_mode is DropMode.ORIGINAL:  # 每一个crossbar按原始顶点顺序映射顶点特征，然后按照全体顶点度的n百分位数选择待更新顶点
-        updated_vertex[:] = list(map(lambda x: x if x > n_percentile else 0, vertex_deg))
+        updated_vertex[:] = list(map(lambda x: 1 if x > n_percentile else 0, vertex_deg))
     return updated_vertex
