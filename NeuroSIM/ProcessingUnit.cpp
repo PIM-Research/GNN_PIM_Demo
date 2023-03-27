@@ -316,6 +316,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 	*coreLatencyOther = 0;
 	
 	extern int numArrayWriteParallel;
+	cout << "numArrayWriteParallel in pE:" << numArrayWriteParallel << endl;
 	int arrayNum = 0;
 	double subArrayWriteLatencyParallelMax = 0;
 
