@@ -87,7 +87,7 @@ public:
 	
 	int numArrayInRow;           
 	int numArrayInCol;
-	int outPrecision;
+	int outPrecision = 0;
 	
 	double unitWireRes, lengthRow, lengthCol, capRow1, capRow2, capCol, resRow, resCol, resCellAccess, capCellAccess, colDelay, capSRAMCell;
 	double heightArray;

@@ -406,6 +406,12 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 	}
 	// define bufferSize for inference operation
 	int bufferSize = param->numBitInput*maxLayerInput;
+	if (param->trainingEstimation) {
+		int numMemInRow = (netStructure[maxIFMLayer][0] - netStructure[maxIFMLayer][3] + 1) * (netStructure[maxIFMLayer][1] - netStructure[maxIFMLayer][4] + 1);
+		int numMemInCol = netStructure[maxIFMLayer][5] * param->numBitInput;
+		// int temp = numMemInRow*netStructure[maxIFMLayer][2];
+		weightGradientUnit->Initialize(numMemInRow, numMemInCol);
+	}
 	// consider limited buffer to store gradient of weight: only part of the weight matrix is processed at a specific cycle
 	// we could set a bufferOverheadConstraint to limit the overhead and speed of computation and weight-update
 	// start: at least can support gradient of one weight matrix = subArray size * weightPrecision/cellPrecision
@@ -415,11 +421,11 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 	
 	dRAM->Initialize(param->dramType);
 	if (param->trainingEstimation) {
-		int numMemInRow = (netStructure[maxIFMLayer][0]-netStructure[maxIFMLayer][3]+1)*(netStructure[maxIFMLayer][1]-netStructure[maxIFMLayer][4]+1);
-		int numMemInCol = netStructure[maxIFMLayer][5]*param->numBitInput;
-		// cout<<numMemInRow<<" "<<netStructure[maxIFMLayer][2]<<endl;
-		// int temp = numMemInRow*netStructure[maxIFMLayer][2];
-		weightGradientUnit->Initialize(numMemInRow , numMemInCol);
+		//int numMemInRow = (netStructure[maxIFMLayer][0]-netStructure[maxIFMLayer][3]+1)*(netStructure[maxIFMLayer][1]-netStructure[maxIFMLayer][4]+1);
+		//int numMemInCol = netStructure[maxIFMLayer][5]*param->numBitInput;
+		//
+		//// int temp = numMemInRow*netStructure[maxIFMLayer][2];
+		//weightGradientUnit->Initialize(numMemInRow , numMemInCol);
 		int maxWeight = 0;
 		for (int i=0; i<netStructure.size(); i++) {
 			double weight = netStructure[i][2]*netStructure[i][3]*netStructure[i][4]*netStructure[i][5];  // IFM_Row * IFM_Column * IFM_depth
