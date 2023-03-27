@@ -1125,7 +1125,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		
 		// since the latency of weightUpdate is accumulated as seperate subArrays
 		// one update every batch
-		// *writeLatencyWU /= numArrayWriteParallel;
+		*writeLatencyWU /= numArrayWriteParallel;
 		
 		
 		// since for each epoch, need *numIteration computation
