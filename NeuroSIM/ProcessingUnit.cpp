@@ -544,8 +544,8 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 		}
 	} else {
 		// weight matrix is further partitioned inside PE (among subArray) --> no duplicated
-		for (int i = 0; i < numSubArrayRow/*ceil((double) weightMatrixRow/(double) param->numRowSubArray)*/; i++) {
-			for (int j = 0; j < numSubArrayCol/*ceil((double) weightMatrixCol/(double) param->numColSubArray)*/; j++) {
+		for (int j = 0; j < numSubArrayCol/*ceil((double) weightMatrixCol/(double) param->numColSubArray)*/; j++) {
+			for (int i = 0; i < numSubArrayRow/*ceil((double) weightMatrixRow/(double) param->numRowSubArray)*/; i++) {
 				if ((i*param->numRowSubArray < weightMatrixRow) && (j*param->numColSubArray < weightMatrixCol) && (i*param->numRowSubArray < weightMatrixRow) ) {
 					arrayNum++;
 					int numRowMatrix = min(param->numRowSubArray, weightMatrixRow-i*param->numRowSubArray);
