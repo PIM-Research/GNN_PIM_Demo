@@ -3,14 +3,15 @@ from torch.utils.data import DataLoader
 from torch_geometric.utils import negative_sampling
 from models import GCN
 from .train_decorator import TrainDecorator
+from .global_variable import args
 
 
 def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, train_decorator: TrainDecorator,
           cur_epoch=0):
     row, col, _ = adj_t.coo()
     edge_index = torch.stack([col, row], dim=0)
-
-    train_decorator.create_bash_command(cur_epoch, model.bits_W, model.bits_A)
+    if args.call_neurosim:
+        train_decorator.create_bash_command(cur_epoch, model.bits_W, model.bits_A)
     model.train()
     predictor.train()
     # 获取训练集的边集，即图中存在的所有边的集合，类型是tensor，共两维，行数代表边数，列为源节点和目标节点
@@ -25,7 +26,8 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         train_decorator.quantify_weight(model, i, cur_epoch)
 
         # 绑定钩子函数，记录各层的输入
-        train_decorator.bind_hooks(model, i, cur_epoch)
+        if args.call_neurosim:
+            train_decorator.bind_hooks(model, i, cur_epoch)
 
         optimizer.zero_grad()
 
@@ -67,7 +69,8 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         total_examples += num_examples
 
         # 清楚钩子
-        train_decorator.clear_hooks(model, i, cur_epoch)
+        if args.call_neurosim:
+            train_decorator.clear_hooks(model, i, cur_epoch)
 
     return total_loss / total_examples
 
