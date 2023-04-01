@@ -7,7 +7,7 @@ from util import train_test_ddi, train_decorator
 from util.global_variable import *
 from util.other import norm_adj, dec2bin, get_updated_vertex_list
 from util.definition import DropMode
-from util.hook import set_vertex_map, set_updated_vertex_map, hook_backward_set_grad_zero
+from util.hook import set_vertex_map, set_updated_vertex_map, hook_forward_set_grad_zero
 import numpy as np
 import os
 from subprocess import call
@@ -108,7 +108,8 @@ def main():
     # 添加钩子使得drop掉的顶点特征不更新
     if args.percentile != 0:
         for index, (name, layer) in enumerate(model.convs.named_children()):
-            layer.gcn_conv.register_backward_hook(hook_backward_set_grad_zero)
+            for index_c, (name_c, layer_c) in enumerate(layer.gcn_conv.named_children()):
+                layer_c.register_forward_hook(hook_forward_set_grad_zero)
 
     for run in range(args.runs):
         torch.nn.init.xavier_uniform_(emb.weight)
