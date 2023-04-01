@@ -45,14 +45,18 @@ def main():
 
     # 获取顶点特征更新列表
     drop_mode = DropMode(args.drop_mode)
-    if drop_mode == DropMode.GLOBAL:
-        updated_vertex, vertex_pointer = get_updated_vertex_list(data.adj_t, args.percentile, args.array_size,
-                                                                 drop_mode)
-        set_vertex_map(vertex_pointer)
-        run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_pointer, delimiter=',', fmt='%s')
+    if args.percentile != 0:
+        if drop_mode == DropMode.GLOBAL:
+            updated_vertex, vertex_pointer = get_updated_vertex_list(data.adj_t, args.percentile, args.array_size,
+                                                                     drop_mode)
+            set_vertex_map(vertex_pointer)
+            run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_pointer, delimiter=',',
+                                               fmt='%s')
+        else:
+            updated_vertex = get_updated_vertex_list(data.adj_t, args.percentile, args.array_size, drop_mode)
+            run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
     else:
-        updated_vertex = get_updated_vertex_list(data.adj_t, args.percentile, args.array_size, drop_mode)
-        run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
+        updated_vertex = np.zeros(max(data.adj_t.size(dim=0), data.adj_t.size(dim=1)))
     run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
     set_updated_vertex_map(updated_vertex)
 
