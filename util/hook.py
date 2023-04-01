@@ -32,7 +32,7 @@ def hook_backward_set_grad_zero(module, grad_input, grad_output):
         for i, is_updated in enumerate(updated_vertex_map):
             if is_updated == 0:
                 grad_output[0][i] = 0
-    return grad_output
+    return grad_input, grad_output
 
 
 def hook_Layer_output(self: NamedGCNConv, input_data, output_data):
