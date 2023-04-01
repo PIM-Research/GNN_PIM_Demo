@@ -7,7 +7,7 @@ from util import train_test_ddi, train_decorator
 from util.global_variable import *
 from util.other import norm_adj, dec2bin, get_updated_vertex_list
 from util.definition import DropMode
-from util.hook import set_vertex_map
+from util.hook import set_vertex_map, set_updated_vertex_map, hook_backward_set_grad_zero
 import numpy as np
 import os
 from subprocess import call
@@ -54,6 +54,7 @@ def main():
         updated_vertex = get_updated_vertex_list(data.adj_t, args.percentile, args.array_size, drop_mode)
         run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
     run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
+    set_updated_vertex_map(updated_vertex)
 
     # 获取ddi数据集的邻接矩阵，格式为SparseTensor
     adj_t = data.adj_t.to(device)
@@ -96,6 +97,11 @@ def main():
         'Hits@20': Logger(args.runs, args),
         'Hits@30': Logger(args.runs, args),
     }
+
+    # 添加钩子使得drop掉的顶点特征不更新
+    if args.percentile != 0:
+        for index, (name, layer) in enumerate(model.convs.named_children()):
+            layer.gcn_conv.register_backward_hook(hook_backward_set_grad_zero)
 
     for run in range(args.runs):
         torch.nn.init.xavier_uniform_(emb.weight)

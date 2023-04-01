@@ -11,6 +11,7 @@ current_layer = -1
 current_epoch = 1
 matrix_activity = 0
 vertex_map = None
+updated_vertex_map = None
 
 
 def hook_set_epoch(self: NamedGCNConv, input_data):
@@ -19,6 +20,19 @@ def hook_set_epoch(self: NamedGCNConv, input_data):
     if current_epoch == 1:
         global matrix_activity
         matrix_activity = self.adj_activity
+
+
+def hook_backward_set_grad_zero(module, grad_input, grad_output):
+    assert updated_vertex_map is not None
+    if vertex_map is not None:
+        for i, vertex_index in enumerate(vertex_map):
+            if updated_vertex_map[i] == 0:
+                grad_output[0, vertex_index] = 0
+    else:
+        for i, is_updated in enumerate(updated_vertex_map):
+            if is_updated == 0:
+                grad_output[0, i] = 0
+    return grad_output
 
 
 def hook_Layer_output(self: NamedGCNConv, input_data, output_data):
@@ -87,3 +101,8 @@ def get_current_layer():
 def set_vertex_map(vertex_pointer):
     global vertex_map
     vertex_map = vertex_pointer
+
+
+def set_updated_vertex_map(updated_vertex):
+    global updated_vertex_map
+    updated_vertex_map = updated_vertex
