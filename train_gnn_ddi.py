@@ -11,10 +11,12 @@ from util.hook import set_vertex_map, set_updated_vertex_map, hook_forward_set_g
 import numpy as np
 import os
 from subprocess import call
+from tensorboardX import SummaryWriter
 
 
 def main():
     print(args)
+    writer = SummaryWriter()
     if not os.path.exists('./NeuroSim_Results_Each_Epoch'):
         os.makedirs('./NeuroSim_Results_Each_Epoch')
     # 定义量化权重和梯度的lambda函数以及权重clip函数
@@ -122,6 +124,7 @@ def main():
         for epoch in range(1, 1 + args.epochs):
             loss = train_test_ddi.train(model, predictor, emb.weight, adj_t, split_edge,
                                         optimizer, args.batch_size, train_decorator=train_dec, cur_epoch=epoch)
+            writer.add_scalar('Loss', loss, epoch)
 
             if epoch % args.eval_steps == 0:
                 results = train_test_ddi.test(model, predictor, emb.weight, adj_t, split_edge,
@@ -139,6 +142,9 @@ def main():
                               f'Train: {100 * train_hits:.2f}%, '
                               f'Valid: {100 * valid_hits:.2f}%, '
                               f'Test: {100 * test_hits:.2f}%')
+                        writer.add_scalar('Train accuracy', 100 * train_hits, epoch)
+                        writer.add_scalar('Valid accuracy', 100 * valid_hits, epoch)
+                        writer.add_scalar('Test accuracy', 100 * test_hits, epoch)
                     print('---')
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
