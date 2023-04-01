@@ -27,11 +27,11 @@ def hook_backward_set_grad_zero(module, grad_input, grad_output):
     if vertex_map is not None:
         for i, vertex_index in enumerate(vertex_map):
             if updated_vertex_map[i] == 0:
-                grad_output[0, vertex_index] = 0
+                grad_output[0][vertex_index] = 0
     else:
         for i, is_updated in enumerate(updated_vertex_map):
             if is_updated == 0:
-                grad_output[0, i] = 0
+                grad_output[0][i] = 0
     return grad_output
 
 
