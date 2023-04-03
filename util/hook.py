@@ -26,11 +26,11 @@ def hook_forward_set_grad_zero(module, input_data, output_data):
     assert updated_vertex_map is not None
     if vertex_map is not None:
         for i, vertex_index in enumerate(vertex_map):
-            if updated_vertex_map[i] == 0:
+            if updated_vertex_map[i] != 0:
                 output_data[vertex_index, :] = input_data[0][vertex_index, :]
     else:
         for i, is_updated in enumerate(updated_vertex_map):
-            if is_updated == 0:
+            if is_updated != 0:
                 output_data[i, :] = input_data[0][i, :]
     return output_data
 
