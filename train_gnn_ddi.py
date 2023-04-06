@@ -150,7 +150,7 @@ def main():
 
         for key in loggers.keys():
             print(key)
-            loggers[key].print_statistics(run)
+            loggers[key].print_statistics(run, key=key)
 
     # model.record_cost()
 

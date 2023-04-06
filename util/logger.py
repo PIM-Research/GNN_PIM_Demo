@@ -47,3 +47,8 @@ class Logger(object):
             print(f'  Final Train: {r.mean():.2f} ± {r.std():.2f}')
             r = best_result[:, 3]
             print(f'   Final Test: {r.mean():.2f} ± {r.std():.2f}')
+            with open(result_file_path, 'a') as f:
+                f.writelines([f'{key}\n', f'All runs:\n', f'Highest Train: {r.mean():.2f} ± {r.std():.2f}\n',
+                              f'Highest Valid: {r.mean():.2f} ± {r.std():.2f}\n',
+                              f'  Final Train: {r.mean():.2f} ± {r.std():.2f}',
+                              f'   Final Test: {r.mean():.2f} ± {r.std():.2f}\n'])

@@ -43,4 +43,4 @@ if not os.path.exists('./result'):
     os.makedirs('./result')
 result_file_path = f'./result/{create_time}.txt'
 with open(result_file_path, 'w') as f:
-    f.write(str(args))
+    f.write(f'{str(args)}\n')
