@@ -9,7 +9,6 @@ from util.other import norm_adj, dec2bin, get_updated_vertex_list
 from util.definition import DropMode
 from util.hook import set_vertex_map, set_updated_vertex_map, hook_forward_set_grad_zero
 import numpy as np
-import os
 from subprocess import call
 from tensorboardX import SummaryWriter
 
@@ -17,8 +16,7 @@ from tensorboardX import SummaryWriter
 def main():
     print(args)
     writer = SummaryWriter()
-    if not os.path.exists('./NeuroSim_Results_Each_Epoch'):
-        os.makedirs('./NeuroSim_Results_Each_Epoch')
+
     # 定义量化权重和梯度的lambda函数以及权重clip函数
     weight_quantification = lambda x, scale: QW(x, args.bl_weight, scale)
     grad_quantiication = lambda x: QG(x, args.bl_grad, args.bl_rand, args.lr)
@@ -158,7 +156,7 @@ def main():
 
     for key in loggers.keys():
         print(key)
-        loggers[key].print_statistics()
+        loggers[key].print_statistics(key=key)
 
 
 if __name__ == "__main__":

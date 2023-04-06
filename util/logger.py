@@ -1,4 +1,5 @@
 import torch
+from .global_variable import result_file_path
 
 
 class Logger(object):
@@ -8,10 +9,10 @@ class Logger(object):
 
     def add_result(self, run, result):
         assert len(result) == 3
-        assert run >= 0 and run < len(self.results)
+        assert 0 <= run < len(self.results)
         self.results[run].append(result)
 
-    def print_statistics(self, run=None):
+    def print_statistics(self, run=None, key=None):
         if run is not None:
             result = 100 * torch.tensor(self.results[run])
             argmax = result[:, 1].argmax().item()
@@ -20,6 +21,10 @@ class Logger(object):
             print(f'Highest Valid: {result[:, 1].max():.2f}')
             print(f'  Final Train: {result[argmax, 0]:.2f}')
             print(f'   Final Test: {result[argmax, 2]:.2f}')
+            with open(result_file_path, 'a') as f:
+                f.writelines([f'{key}\n', f'Run {run + 1:02d}:\n', f'Highest Train: {result[:, 0].max():.2f}\n',
+                              f'Highest Valid: {result[:, 1].max():.2f}\n', f'  Final Train: {result[argmax, 0]:.2f}\n',
+                              f'   Final Test: {result[argmax, 2]:.2f}\n'])
         else:
             result = 100 * torch.tensor(self.results)
 

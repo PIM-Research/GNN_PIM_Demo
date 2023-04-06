@@ -1,6 +1,7 @@
 import argparse
 import time
 from util import recorder
+import os
 
 # 实例化recorder
 create_time = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
@@ -35,3 +36,11 @@ parser.add_argument('--bl-error', type=int, default=8, metavar='N',
 parser.add_argument('--bl-rand', type=int, default=16, metavar='N',
                     help='word length in bits for rand number; -1 if full precision.')
 args = parser.parse_args()
+
+if not os.path.exists('./NeuroSim_Results_Each_Epoch'):
+    os.makedirs('./NeuroSim_Results_Each_Epoch')
+if not os.path.exists('./result'):
+    os.makedirs('./result')
+result_file_path = f'./result/{create_time}.txt'
+with open(result_file_path, 'w') as f:
+    f.write(str(args))
