@@ -968,7 +968,7 @@ void SubArray::CalculateArea() {  //calculate layout area for total design
 	}
 }
 
-void SubArray::CalculateLatency(double columnRes, const vector<double> &columnResistance, const vector<double> &rowResistance) {   //calculate latency for different mode 
+void SubArray::CalculateLatency(double columnRes, const vector<double> &columnResistance, const vector<double> &rowResistance, int layerNumber) {   //calculate latency for different mode 
 	if (!initialized) {
 		cout << "[Subarray] Error: Require initialization first!" << endl;
 	} else {
@@ -1027,7 +1027,7 @@ void SubArray::CalculateLatency(double columnRes, const vector<double> &columnRe
 				writeLatency += sramWriteDriver.writeLatency;
 				
 				/* Transpose Peripheral for BP */
-				if (trainingEstimation) {
+				if (trainingEstimation && ((layerNumber + 1) % 2 != 0)) {
 					readLatencyAG = 0;
 					if (layerNumber != 0) {
 						int numReadOperationPerCol = (int)ceil((double)numCol/numReadCellPerOperationNeuro);
@@ -1126,7 +1126,7 @@ void SubArray::CalculateLatency(double columnRes, const vector<double> &columnRe
 				
 				
 				/* Transpose Peripheral for BP */
-				if (trainingEstimation) {
+				if (trainingEstimation && ((layerNumber + 1) % 2 != 0)) {
 					readLatencyAG = 0;
 					if (layerNumber != 0) {
 						int numReadOperationPerCol = (int)ceil((double)numCol/numReadCellPerOperationNeuro);
@@ -1408,7 +1408,7 @@ void SubArray::CalculateLatency(double columnRes, const vector<double> &columnRe
 				writeLatency += writeLatencyArray;
 				
 				/* Transpose Peripheral for BP */
-				if (trainingEstimation) {
+				if (trainingEstimation&&((layerNumber+1)%2!=0)) {
 					readLatencyAG = 0;
 					if (layerNumber != 0) {
 						double capRow = lengthRow * 0.2e-15/1e-6 + CalculateDrainCap(cell.widthAccessCMOS * tech.featureSize, NMOS, cell.widthInFeatureSize * tech.featureSize, tech) * numCol;
@@ -1507,7 +1507,7 @@ void SubArray::CalculateLatency(double columnRes, const vector<double> &columnRe
 				writeLatency += writeLatencyArray;
 				
 				/* Transpose Peripheral for BP */
-				if (trainingEstimation) {
+				if (trainingEstimation && ((layerNumber + 1) % 2 != 0)) {
 					readLatencyAG = 0;
 					if (layerNumber != 0) {
 						double capRow = lengthRow * 0.2e-15/1e-6 + CalculateDrainCap(cell.widthAccessCMOS * tech.featureSize, NMOS, cell.widthInFeatureSize * tech.featureSize, tech) * numCol;

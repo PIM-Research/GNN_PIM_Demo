@@ -504,15 +504,15 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 					accumulationCM->CalculateLatency((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), ceil((double)weightMatrixRow/(double)peSize), 0);
 					accumulationCM->CalculatePower((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), ceil((double)weightMatrixRow/(double)peSize));
 					*readLatency += accumulationCM->readLatency; 
-					*readLatencyAG += accumulationCM->readLatency*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0); 
+					*readLatencyAG += accumulationCM->readLatency * ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 1 : 0);
 					*readLatencyPeakFW += accumulationCM->readLatency; 
-					*readLatencyPeakAG += accumulationCM->readLatency*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0); 
+					*readLatencyPeakAG += accumulationCM->readLatency* ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 1 : 0);
 					*readDynamicEnergy += accumulationCM->readDynamicEnergy;
-					*readDynamicEnergyAG += accumulationCM->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0);
+					*readDynamicEnergyAG += accumulationCM->readDynamicEnergy* ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 1 : 0);
 					*readDynamicEnergyPeakFW += accumulationCM->readDynamicEnergy;
-					*readDynamicEnergyPeakAG += accumulationCM->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0);
-					*coreLatencyAccum += accumulationCM->readLatency*((param->trainingEstimation)&&(layerNumber!=0)==true? 2:1); 
-					*coreEnergyAccum += accumulationCM->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0)==true? 2:1);
+					*readDynamicEnergyPeakAG += accumulationCM->readDynamicEnergy* ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 1 : 0);
+					*coreLatencyAccum += accumulationCM->readLatency * ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 2 : 1);
+					*coreEnergyAccum += accumulationCM->readDynamicEnergy * ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 2 : 1);
 				}
 			}
 			
@@ -580,15 +580,15 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 			accumulationCM->CalculateLatency((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), numPE, 0);
 			accumulationCM->CalculatePower((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), numPE);
 			*readLatency += accumulationCM->readLatency;
-			*readLatencyAG += accumulationCM->readLatency*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0);
+			*readLatencyAG += accumulationCM->readLatency * ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 1 : 0);
 			*readLatencyPeakFW += accumulationCM->readLatency;
-			*readLatencyPeakAG += accumulationCM->readLatency*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0);
+			*readLatencyPeakAG += accumulationCM->readLatency * ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 1 : 0);
 			*readDynamicEnergy += accumulationCM->readDynamicEnergy;
-			*readDynamicEnergyAG += accumulationCM->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0);
+			*readDynamicEnergyAG += accumulationCM->readDynamicEnergy * ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 1 : 0);
 			*readDynamicEnergyPeakFW += accumulationCM->readDynamicEnergy;
-			*readDynamicEnergyPeakAG += accumulationCM->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0);
-			*coreLatencyAccum += accumulationCM->readLatency*((param->trainingEstimation)&&(layerNumber!=0)==true? 2:1);
-			*coreEnergyAccum += accumulationCM->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0)==true? 2:1);
+			*readDynamicEnergyPeakAG += accumulationCM->readDynamicEnergy * ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 1 : 0);
+			*coreLatencyAccum += accumulationCM->readLatency * ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 2 : 1);
+			*coreEnergyAccum += accumulationCM->readDynamicEnergy * ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 2 : 1);
 		}
 		double numBitToLoadOut, numBitToLoadIn;								 
 		if (!param->chipActivation) {
@@ -656,17 +656,19 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 		*icDynamicEnergy += hTreeCM->readDynamicEnergy;
 		
 		if (param->trainingEstimation) {
-			*readLatencyAG += (inputBufferCM->readLatency + inputBufferCM->writeLatency)*((layerNumber!=0)==true? 1:0);
-			*readDynamicEnergyAG += (inputBufferCM->readDynamicEnergy + inputBufferCM->writeDynamicEnergy)*((layerNumber!=0)==true? 1:0);
-			*readLatencyAG += (outputBufferCM->readLatency + outputBufferCM->writeLatency)*((layerNumber!=0)==true? 1:0);
-			*readDynamicEnergyAG += (outputBufferCM->readDynamicEnergy + outputBufferCM->writeDynamicEnergy)*((layerNumber!=0)==true? 1:0);
-			*readLatencyAG += hTreeCM->readLatency*((layerNumber!=0)==true? 1:0);
-			*readDynamicEnergyAG += hTreeCM->readDynamicEnergy*((layerNumber!=0)==true? 1:0);
-			
-			*bufferLatency += (inputBufferCM->readLatency + outputBufferCM->readLatency + inputBufferCM->writeLatency + outputBufferCM->writeLatency)*((layerNumber!=0)==true? 1:0);
-			*icLatency += hTreeCM->readLatency*((layerNumber!=0)==true? 1:0);
-			*bufferDynamicEnergy += (inputBufferCM->readDynamicEnergy + outputBufferCM->readDynamicEnergy + inputBufferCM->writeDynamicEnergy + outputBufferCM->writeDynamicEnergy)*((layerNumber!=0)==true? 1:0);
-			*icDynamicEnergy += hTreeCM->readDynamicEnergy*((layerNumber!=0)==true? 1:0);
+			if ((layerNumber + 1) % 2 != 0) {
+				*readLatencyAG += (inputBufferCM->readLatency + inputBufferCM->writeLatency) * ((layerNumber != 0) == true ? 1 : 0);
+				*readDynamicEnergyAG += (inputBufferCM->readDynamicEnergy + inputBufferCM->writeDynamicEnergy) * ((layerNumber != 0) == true ? 1 : 0);
+				*readLatencyAG += (outputBufferCM->readLatency + outputBufferCM->writeLatency) * ((layerNumber != 0) == true ? 1 : 0);
+				*readDynamicEnergyAG += (outputBufferCM->readDynamicEnergy + outputBufferCM->writeDynamicEnergy) * ((layerNumber != 0) == true ? 1 : 0);
+				*readLatencyAG += hTreeCM->readLatency * ((layerNumber != 0) == true ? 1 : 0);
+				*readDynamicEnergyAG += hTreeCM->readDynamicEnergy * ((layerNumber != 0) == true ? 1 : 0);
+
+				*bufferLatency += (inputBufferCM->readLatency + outputBufferCM->readLatency + inputBufferCM->writeLatency + outputBufferCM->writeLatency) * ((layerNumber != 0) == true ? 1 : 0);
+				*icLatency += hTreeCM->readLatency * ((layerNumber != 0) == true ? 1 : 0);
+				*bufferDynamicEnergy += (inputBufferCM->readDynamicEnergy + outputBufferCM->readDynamicEnergy + inputBufferCM->writeDynamicEnergy + outputBufferCM->writeDynamicEnergy) * ((layerNumber != 0) == true ? 1 : 0);
+				*icDynamicEnergy += hTreeCM->readDynamicEnergy * ((layerNumber != 0) == true ? 1 : 0);
+			}
 			
 			// for delta weight transfer
 			double numDeltaWeightBit = weightMatrixRow*weightMatrixCol;
@@ -749,16 +751,16 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 		accumulationNM->CalculateLatency((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), numPE, 0);
 		accumulationNM->CalculatePower((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), numPE);
 		*readLatency += accumulationNM->readLatency;
-		*readLatencyAG += accumulationNM->readLatency*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0);
+		*readLatencyAG += accumulationNM->readLatency*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 1:0);
 		*readDynamicEnergy += accumulationNM->readDynamicEnergy;
-		*readDynamicEnergyAG += accumulationNM->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0);
+		*readDynamicEnergyAG += accumulationNM->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 1:0);
 		*readLatencyPeakFW += accumulationNM->readLatency;
 		*readDynamicEnergyPeakFW += accumulationNM->readDynamicEnergy;
-		*readLatencyPeakAG += accumulationNM->readLatency*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0);
-		*readDynamicEnergyPeakAG += accumulationNM->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0);
+		*readLatencyPeakAG += accumulationNM->readLatency*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 1:0);
+		*readDynamicEnergyPeakAG += accumulationNM->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 1:0);
 		
-		*coreLatencyAccum += accumulationNM->readLatency*((param->trainingEstimation)&&(layerNumber!=0)==true? 2:1);
-		*coreEnergyAccum += accumulationNM->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0)==true? 2:1);
+		*coreLatencyAccum += accumulationNM->readLatency*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 2:1);
+		*coreEnergyAccum += accumulationNM->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 2:1);
 		
 		//considering buffer activation: no matter speedup or not, the total number of data transferred is fixed
 		double numBitToLoadOut, numBitToLoadIn;
@@ -826,17 +828,19 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 		*icDynamicEnergy += hTreeNM->readDynamicEnergy;
 
 		if (param->trainingEstimation) {
-			*readLatencyAG += (inputBufferNM->readLatency + inputBufferNM->writeLatency)*((layerNumber!=0)==true? 1:0);
-			*readDynamicEnergyAG += (inputBufferNM->readDynamicEnergy + inputBufferNM->writeDynamicEnergy)*((layerNumber!=0)==true? 1:0);
-			*readLatencyAG += (outputBufferNM->readLatency + outputBufferNM->writeLatency)*((layerNumber!=0)==true? 1:0);
-			*readDynamicEnergyAG += (outputBufferNM->readDynamicEnergy + outputBufferNM->writeDynamicEnergy)*((layerNumber!=0)==true? 1:0);
-			*readLatencyAG += hTreeNM->readLatency*((layerNumber!=0)==true? 1:0);
-			*readDynamicEnergyAG += hTreeNM->readDynamicEnergy*((layerNumber!=0)==true? 1:0);
-			
-			*bufferLatency += (inputBufferNM->readLatency + outputBufferNM->readLatency + inputBufferNM->writeLatency + outputBufferNM->writeLatency)*((layerNumber!=0)==true? 1:0);
-			*icLatency += hTreeNM->readLatency*((layerNumber!=0)==true? 1:0);
-			*bufferDynamicEnergy += (inputBufferNM->readDynamicEnergy + outputBufferNM->readDynamicEnergy + inputBufferNM->writeDynamicEnergy + outputBufferNM->writeDynamicEnergy)*((layerNumber!=0)==true? 1:0);
-			*icDynamicEnergy += hTreeNM->readDynamicEnergy*((layerNumber!=0)==true? 1:0);
+			if ((layerNumber + 1) % 2 != 0) {
+				*readLatencyAG += (inputBufferNM->readLatency + inputBufferNM->writeLatency) * ((layerNumber != 0) == true ? 1 : 0);
+				*readDynamicEnergyAG += (inputBufferNM->readDynamicEnergy + inputBufferNM->writeDynamicEnergy) * ((layerNumber != 0) == true ? 1 : 0);
+				*readLatencyAG += (outputBufferNM->readLatency + outputBufferNM->writeLatency) * ((layerNumber != 0) == true ? 1 : 0);
+				*readDynamicEnergyAG += (outputBufferNM->readDynamicEnergy + outputBufferNM->writeDynamicEnergy) * ((layerNumber != 0) == true ? 1 : 0);
+				*readLatencyAG += hTreeNM->readLatency * ((layerNumber != 0) == true ? 1 : 0);
+				*readDynamicEnergyAG += hTreeNM->readDynamicEnergy * ((layerNumber != 0) == true ? 1 : 0);
+
+				*bufferLatency += (inputBufferNM->readLatency + outputBufferNM->readLatency + inputBufferNM->writeLatency + outputBufferNM->writeLatency) * ((layerNumber != 0) == true ? 1 : 0);
+				*icLatency += hTreeNM->readLatency * ((layerNumber != 0) == true ? 1 : 0);
+				*bufferDynamicEnergy += (inputBufferNM->readDynamicEnergy + outputBufferNM->readDynamicEnergy + inputBufferNM->writeDynamicEnergy + outputBufferNM->writeDynamicEnergy) * ((layerNumber != 0) == true ? 1 : 0);
+				*icDynamicEnergy += hTreeNM->readDynamicEnergy * ((layerNumber != 0) == true ? 1 : 0);
+			}
 			
 			// for delta weight transfer
 			double numDeltaWeightBit = weightMatrixRow*weightMatrixCol;

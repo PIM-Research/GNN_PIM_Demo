@@ -80,7 +80,7 @@ public:
 	void PrintProperty();
 	void Initialize(int _numRow, int _numCol, double _unitWireRes);
 	void CalculateArea();
-	void CalculateLatency(double _rampInput, const vector<double> &columnResistance, const vector<double> &rowResistance);
+	void CalculateLatency(double _rampInput, const vector<double> &columnResistance, const vector<double> &rowResistance,int layerNumber);
 	void CalculatePower(const vector<double> &columnResistance, const vector<double> &rowResistance);
 
 	/* Properties */	

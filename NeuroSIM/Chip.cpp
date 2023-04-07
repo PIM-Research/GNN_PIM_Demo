@@ -1016,13 +1016,19 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		// to load data size = IFM
 		*readLatency += (dRAM->readLatency)*2;
 		*readDynamicEnergy += (dRAM->readDynamicEnergy)*2;
-		*readLatencyAG += (dRAM->readLatency)*2*((layerNumber!=0)==true? 1:0);
-		*readDynamicEnergyAG += (dRAM->readDynamicEnergy)*2*((layerNumber!=0)==true? 1:0);
-		*readLatencyWG += (dRAM->readLatency)*2;
-		*readDynamicEnergyWG += (dRAM->readDynamicEnergy)*2;
-		*dramLatency = (dRAM->readLatency)*6*((layerNumber!=0)==true? 6:4); // 2 for forward, 2 for AG, 2 for WG
-		*dramDynamicEnergy = (dRAM->readDynamicEnergy)*6*((layerNumber!=0)==true? 6:4);
-		cout << "read activation and error(part)(dRAM->readLatency loadData*2):" << dRAM->readLatency * 2 << endl;
+		if ((layerNumber + 1) % 2 != 0) {
+			*readLatencyAG += (dRAM->readLatency) * 2 * ((layerNumber != 0) == true ? 1 : 0);
+			*readDynamicEnergyAG += (dRAM->readDynamicEnergy) * 2 * ((layerNumber != 0) == true ? 1 : 0);
+			*readLatencyWG += (dRAM->readLatency) * 2;
+			*readDynamicEnergyWG += (dRAM->readDynamicEnergy) * 2;
+			*dramLatency = (dRAM->readLatency) * 6 * ((layerNumber != 0) == true ? 6 : 4); // 2 for forward, 2 for AG, 2 for WG
+			*dramDynamicEnergy = (dRAM->readDynamicEnergy) * 6 * ((layerNumber != 0) == true ? 6 : 4);
+		}
+		else {
+			*dramLatency = (dRAM->readLatency) * 6 * 2;
+			*dramDynamicEnergy = (dRAM->readDynamicEnergy) * 6 * 2;
+		}
+		// cout << "read activation and error(part)(dRAM->readLatency loadData*2):" << dRAM->readLatency * 2 << endl;
 		// since for each iteration, need *batchSize computation
 		*readLatency *= param->batchSize;
 		*readDynamicEnergy *= param->batchSize;
@@ -1043,78 +1049,81 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		*coreEnergyAccum *= param->batchSize;
 		
 		
-		// For weight gradient transfer
-		dRAM->CalculateLatency(dataLoadWeight);
-		dRAM->CalculatePower(dataLoadWeight);
-		// Dring calculation of weight gradient, need to load in activation and gradient of activation
-		globalBuffer->CalculateLatency(globalBuffer->interface_width, dataLoadWeight/globalBuffer->interface_width,
-								globalBuffer->interface_width, dataLoadWeight/globalBuffer->interface_width);
-		globalBuffer->CalculatePower(globalBuffer->interface_width, dataLoadWeight/globalBuffer->interface_width,
-								globalBuffer->interface_width, dataLoadWeight/globalBuffer->interface_width);
-		// since multi-core buffer has improve the parallelism
-		globalBuffer->readLatency /= MIN(numBufferCore, ceil(globalBusWidth/globalBuffer->interface_width));
-		globalBuffer->writeLatency /= MIN(numBufferCore, ceil(globalBusWidth/globalBuffer->interface_width));
-		// cout << "numBufferCore:" << numBufferCore << endl;
-		// calculation of weight gradient
-		weightGradientUnit->CalculateLatency(netStructure[l][5], (netStructure[l][0]-netStructure[l][3]+1)*(netStructure[l][1]-netStructure[l][4]+1)*param->numBitInput);
-		weightGradientUnit->CalculatePower(netStructure[l][5], (netStructure[l][0]-netStructure[l][3]+1)*(netStructure[l][1]-netStructure[l][4]+1)*param->numBitInput);
-		// here consider speed up 
-		double thisMatrixRow = (netStructure[l][0]-netStructure[l][3]+1)*(netStructure[l][1]-netStructure[l][4]+1);
-		double thisMatrixCol = netStructure[l][2]*param->numBitInput;
-		double arrayNeedRow = ceil(thisMatrixRow/param->numRowSubArrayWG)==0? 1:ceil(thisMatrixRow/param->numRowSubArrayWG);
-		double arrayNeedCol = ceil(thisMatrixCol/param->numColSubArrayWG)==0? 1:ceil(thisMatrixCol/param->numColSubArrayWG);
-		double speedUpRow, speedUpCol;
-		if (thisMatrixRow != 1) {
-			speedUpRow = floor(weightGradientUnit->numArrayInRow/arrayNeedRow)==0? 1:floor(weightGradientUnit->numArrayInRow/arrayNeedRow);
-			speedUpCol = floor(weightGradientUnit->numArrayInCol/arrayNeedCol)==0? 1:floor(weightGradientUnit->numArrayInCol/arrayNeedCol);
-		} else{
-			speedUpRow = weightGradientUnit->numArrayInRow;
-			speedUpCol = floor(thisMatrixCol/param->numColSubArrayWG)==0? 1:floor(thisMatrixCol/param->numColSubArrayWG);
-		}
-		double actualUsedArray = thisMatrixRow*thisMatrixCol/(weightGradientUnit->numArrayInRow*weightGradientUnit->numArrayInCol*param->numRowSubArrayWG*param->numColSubArrayWG);
-		
-		*readLatencyPeakWG = (weightGradientUnit->readLatencyPeak/(speedUpRow*speedUpCol) + weightGradientUnit->writeLatencyPeak)*(netStructure[l][3]*netStructure[l][4]);
-		*readDynamicEnergyPeakWG = (weightGradientUnit->readDynamicEnergyPeak + weightGradientUnit->writeDynamicEnergyPeak)*actualUsedArray*(netStructure[l][3]*netStructure[l][4]);
-		*readLatencyWG += (*readLatencyPeakWG);
-		cout << "caculate weight gradient Latency(all):" << *readLatencyPeakWG << endl;
-		*readDynamicEnergyWG += (*readDynamicEnergyPeakWG);
-		cout << "weightGradientUnit->readLatencyPeak:" << weightGradientUnit->readLatencyPeak << " weightGradientUnit->writeLatencyPeak:" << weightGradientUnit->writeLatencyPeak << endl;
-		//cout << "readLatencyPeakWG:" << *readLatencyPeakWG << " readDynamicEnergyWG:" << *readDynamicEnergyWG << endl;
-		cout << "dRAM->readLatency loadWeight:" << dRAM->readLatency << endl;
-		cout << "write weight gradient to DRAM(all):" << dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency) << endl;
-		// weight gradient need to be send back to DRAM
-		*readLatencyWG += dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency);
-		*readDynamicEnergyWG += dRAM->readDynamicEnergy + (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy);
-		// Data Transfer during Weight Gradient
-		*bufferLatency += (globalBuffer->readLatency + globalBuffer->writeLatency);
-		*bufferDynamicEnergy += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy);
-		*dramLatency += dRAM->readLatency; 
-		*dramDynamicEnergy += dRAM->readDynamicEnergy;
-		// cout << "globalBuffer->interface_width:" << globalBuffer->interface_width << " numBufferCore:" << numBufferCore << endl;
-		// cout << "dataLoadWeight:" << dataLoadWeight << " globalBusWidth:" << globalBusWidth << endl;
-		// cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
-		// Before weight update: accumulation of weight gradient
-		// need to load weight gradient data from DRAM back to chip
-		cout << "load weight gradient data from DRAM back to chip Latency(all):" << dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency) << endl;
-		*readLatencyWG += dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency);
-		*readDynamicEnergyWG += dRAM->readDynamicEnergy + (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy);
-		// Data Transfer before weight update
-		cout << "Transfer weight Gradicent Latency--read:" << globalBuffer->readLatency + globalBuffer->writeLatency << endl;
-		*bufferLatency += (globalBuffer->readLatency + globalBuffer->writeLatency);
-		*bufferDynamicEnergy += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy);
-		*dramLatency += dRAM->readLatency; 
-		*dramDynamicEnergy += dRAM->readDynamicEnergy;
+		if ((layerNumber + 1) % 2 != 0) {
+			// For weight gradient transfer
+			dRAM->CalculateLatency(dataLoadWeight);
+			dRAM->CalculatePower(dataLoadWeight);
+			// Dring calculation of weight gradient, need to load in activation and gradient of activation
+			globalBuffer->CalculateLatency(globalBuffer->interface_width, dataLoadWeight / globalBuffer->interface_width,
+				globalBuffer->interface_width, dataLoadWeight / globalBuffer->interface_width);
+			globalBuffer->CalculatePower(globalBuffer->interface_width, dataLoadWeight / globalBuffer->interface_width,
+				globalBuffer->interface_width, dataLoadWeight / globalBuffer->interface_width);
+			// since multi-core buffer has improve the parallelism
+			globalBuffer->readLatency /= MIN(numBufferCore, ceil(globalBusWidth / globalBuffer->interface_width));
+			globalBuffer->writeLatency /= MIN(numBufferCore, ceil(globalBusWidth / globalBuffer->interface_width));
+			// cout << "numBufferCore:" << numBufferCore << endl;
+			// calculation of weight gradient
+			weightGradientUnit->CalculateLatency(netStructure[l][5], (netStructure[l][0] - netStructure[l][3] + 1)* (netStructure[l][1] - netStructure[l][4] + 1)* param->numBitInput);
+			weightGradientUnit->CalculatePower(netStructure[l][5], (netStructure[l][0] - netStructure[l][3] + 1)* (netStructure[l][1] - netStructure[l][4] + 1)* param->numBitInput);
+			// here consider speed up 
+			double thisMatrixRow = (netStructure[l][0] - netStructure[l][3] + 1) * (netStructure[l][1] - netStructure[l][4] + 1);
+			double thisMatrixCol = netStructure[l][2] * param->numBitInput;
+			double arrayNeedRow = ceil(thisMatrixRow / param->numRowSubArrayWG) == 0 ? 1 : ceil(thisMatrixRow / param->numRowSubArrayWG);
+			double arrayNeedCol = ceil(thisMatrixCol / param->numColSubArrayWG) == 0 ? 1 : ceil(thisMatrixCol / param->numColSubArrayWG);
+			double speedUpRow, speedUpCol;
+			if (thisMatrixRow != 1) {
+				speedUpRow = floor(weightGradientUnit->numArrayInRow / arrayNeedRow) == 0 ? 1 : floor(weightGradientUnit->numArrayInRow / arrayNeedRow);
+				speedUpCol = floor(weightGradientUnit->numArrayInCol / arrayNeedCol) == 0 ? 1 : floor(weightGradientUnit->numArrayInCol / arrayNeedCol);
+			}
+			else {
+				speedUpRow = weightGradientUnit->numArrayInRow;
+				speedUpCol = floor(thisMatrixCol / param->numColSubArrayWG) == 0 ? 1 : floor(thisMatrixCol / param->numColSubArrayWG);
+			}
+			double actualUsedArray = thisMatrixRow * thisMatrixCol / (weightGradientUnit->numArrayInRow * weightGradientUnit->numArrayInCol * param->numRowSubArrayWG * param->numColSubArrayWG);
 
-		gradientAccum->CalculateLatency(1e20, 0, ceil(netStructure[l][2]*netStructure[l][3]*netStructure[l][4]*netStructure[l][5]/gradientAccum->numAdder));
-		gradientAccum->CalculatePower(ceil(netStructure[l][2]*netStructure[l][3]*netStructure[l][4]*netStructure[l][5]/gradientAccum->numAdder), 
-						MIN(netStructure[l][2]*netStructure[l][3]*netStructure[l][4]*netStructure[l][5], gradientAccum->numAdder));
-		cout << "Transfer weight Gradicent Latency--caculate(all):" << gradientAccum->readLatency << endl;
-		*readLatencyWG += gradientAccum->readLatency;
-		*readDynamicEnergyWG += gradientAccum->readDynamicEnergy;
-		*readLatencyPeakWG += gradientAccum->readLatency;
-		*readDynamicEnergyPeakWG += gradientAccum->readDynamicEnergy;
-		// cout << "gradientAccum->readLatency:" << gradientAccum->readLatency << endl;
-		// weight gradient also need *batchSize computation
+			*readLatencyPeakWG = (weightGradientUnit->readLatencyPeak / (speedUpRow * speedUpCol) + weightGradientUnit->writeLatencyPeak) * (netStructure[l][3] * netStructure[l][4]);
+			*readDynamicEnergyPeakWG = (weightGradientUnit->readDynamicEnergyPeak + weightGradientUnit->writeDynamicEnergyPeak) * actualUsedArray * (netStructure[l][3] * netStructure[l][4]);
+			*readLatencyWG += (*readLatencyPeakWG);
+			// cout << "caculate weight gradient Latency(all):" << *readLatencyPeakWG << endl;
+			*readDynamicEnergyWG += (*readDynamicEnergyPeakWG);
+			// cout << "weightGradientUnit->readLatencyPeak:" << weightGradientUnit->readLatencyPeak << " weightGradientUnit->writeLatencyPeak:" << weightGradientUnit->writeLatencyPeak << endl;
+			// cout << "readLatencyPeakWG:" << *readLatencyPeakWG << " readDynamicEnergyWG:" << *readDynamicEnergyWG << endl;
+			// cout << "dRAM->readLatency loadWeight:" << dRAM->readLatency << endl;
+			// cout << "write weight gradient to DRAM(all):" << dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency) << endl;
+			// weight gradient need to be send back to DRAM
+			*readLatencyWG += dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency);
+			*readDynamicEnergyWG += dRAM->readDynamicEnergy + (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy);
+			// Data Transfer during Weight Gradient
+			*bufferLatency += (globalBuffer->readLatency + globalBuffer->writeLatency);
+			*bufferDynamicEnergy += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy);
+			*dramLatency += dRAM->readLatency;
+			*dramDynamicEnergy += dRAM->readDynamicEnergy;
+			// cout << "globalBuffer->interface_width:" << globalBuffer->interface_width << " numBufferCore:" << numBufferCore << endl;
+			// cout << "dataLoadWeight:" << dataLoadWeight << " globalBusWidth:" << globalBusWidth << endl;
+			// cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
+			// Before weight update: accumulation of weight gradient
+			// need to load weight gradient data from DRAM back to chip
+			// cout << "load weight gradient data from DRAM back to chip Latency(all):" << dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency) << endl;
+			*readLatencyWG += dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency);
+			*readDynamicEnergyWG += dRAM->readDynamicEnergy + (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy);
+			// Data Transfer before weight update
+			// cout << "Transfer weight Gradicent Latency--read:" << globalBuffer->readLatency + globalBuffer->writeLatency << endl;
+			*bufferLatency += (globalBuffer->readLatency + globalBuffer->writeLatency);
+			*bufferDynamicEnergy += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy);
+			*dramLatency += dRAM->readLatency;
+			*dramDynamicEnergy += dRAM->readDynamicEnergy;
+
+			gradientAccum->CalculateLatency(1e20, 0, ceil(netStructure[l][2] * netStructure[l][3] * netStructure[l][4] * netStructure[l][5] / gradientAccum->numAdder));
+			gradientAccum->CalculatePower(ceil(netStructure[l][2] * netStructure[l][3] * netStructure[l][4] * netStructure[l][5] / gradientAccum->numAdder),
+				MIN(netStructure[l][2] * netStructure[l][3] * netStructure[l][4] * netStructure[l][5], gradientAccum->numAdder));
+			// cout << "Transfer weight Gradicent Latency--caculate(all):" << gradientAccum->readLatency << endl;
+			*readLatencyWG += gradientAccum->readLatency;
+			*readDynamicEnergyWG += gradientAccum->readDynamicEnergy;
+			*readLatencyPeakWG += gradientAccum->readLatency;
+			*readDynamicEnergyPeakWG += gradientAccum->readDynamicEnergy;
+			// cout << "gradientAccum->readLatency:" << gradientAccum->readLatency << endl;
+			// weight gradient also need *batchSize computation
+		}
 		*readLatencyWG *= param->batchSize;
 		*readDynamicEnergyWG *= param->batchSize;
 		*readLatencyPeakWG *= param->batchSize;
