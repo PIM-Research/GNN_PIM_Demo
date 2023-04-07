@@ -557,6 +557,7 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 					*readDynamicEnergyPeakFW += peReadDynamicEnergyPeakFW;
 					*readLatencyPeakAG = MAX(peReadLatencyPeakAG, (*readLatencyPeakAG));
 					*readDynamicEnergyPeakAG += peReadDynamicEnergyPeakAG;
+					cout << "*readLatencyAG(SubArray):" << *readLatencyAG << endl;
 					// accumulate write latency as array need to be write sequentially (worst case)
 					// limitation by on-chip buffer, write latency will be divided by numArrayWriteParallel (real case)
 					*writeLatencyPeakWU += peWriteLatencyPeakWU;
@@ -589,6 +590,7 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 			*readDynamicEnergyPeakAG += accumulationCM->readDynamicEnergy * ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 1 : 0);
 			*coreLatencyAccum += accumulationCM->readLatency * ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 2 : 1);
 			*coreEnergyAccum += accumulationCM->readDynamicEnergy * ((param->trainingEstimation) && (layerNumber != 0) && ((layerNumber + 1) % 2 != 0) == true ? 2 : 1);
+			cout << "*readLatencyAG(accumulationCM):" << *readLatencyAG << endl;
 		}
 		double numBitToLoadOut, numBitToLoadIn;								 
 		if (!param->chipActivation) {

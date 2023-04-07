@@ -757,6 +757,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 					*writeLatencyPeakWU += tileWriteLatencyPeakWU;
 					*writeDynamicEnergyPeakWU += tileWriteDynamicEnergyPeakWU;
 				}
+				cout << "*readLatencyAG(Tile):" << *readLatencyAG << endl;
 				*bufferLatency = MAX(tilebufferLatency, (*bufferLatency));
 				*bufferDynamicEnergy += tilebufferDynamicEnergy;
 				*icLatency = MAX(tileicLatency, (*icLatency));
@@ -800,7 +801,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 			*readDynamicEnergy += Gaccumulation->readDynamicEnergy;
 			*readLatencyPeakFW += Gaccumulation->readLatency;
 			*readDynamicEnergyPeakFW += Gaccumulation->readDynamicEnergy;
-			if ((param->trainingEstimation) && (layerNumber!=0)) {
+			if ((param->trainingEstimation) && (layerNumber!=0)&&(((layerNumber+1)%2)!=0)) {
 				*readLatencyAG += Gaccumulation->readLatency;
 				*readDynamicEnergyAG += Gaccumulation->readDynamicEnergy;
 				*readLatencyPeakAG += Gaccumulation->readLatency;
@@ -934,7 +935,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 			*readDynamicEnergy += Gaccumulation->readDynamicEnergy;
 			*readLatencyPeakFW += Gaccumulation->readLatency;
 			*readDynamicEnergyPeakFW += Gaccumulation->readDynamicEnergy;
-			if ((param->trainingEstimation) && (layerNumber!=0)) {
+			if ((param->trainingEstimation) && (layerNumber!=0)&& ((layerNumber + 1) % 2 != 0)) {
 				*readLatencyAG += Gaccumulation->readLatency;
 				*readDynamicEnergyAG += Gaccumulation->readDynamicEnergy;
 				*readLatencyPeakAG += Gaccumulation->readLatency;
@@ -976,23 +977,23 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	}
 	
 	// training: FW(up and down)->2; AG(up and down)->2; WG(up and down)->2
-	*bufferLatency += (globalBuffer->readLatency + globalBuffer->writeLatency)*((param->trainingEstimation)==true? ((layerNumber!=0)==true? 6:4):1);
-	*bufferDynamicEnergy += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy)*((param->trainingEstimation)==true? ((layerNumber!=0)==true? 6:4):1);
-	*icLatency += GhTree->readLatency*((param->trainingEstimation)&&(layerNumber!=0)==true? 2:1);
-	*icDynamicEnergy += GhTree->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0)==true? 2:1);
+	*bufferLatency += (globalBuffer->readLatency + globalBuffer->writeLatency)*((param->trainingEstimation) && ((layerNumber + 1) % 2 != 0) ==true? ((layerNumber!=0)==true? 6:4):1);
+	*bufferDynamicEnergy += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy)*((param->trainingEstimation) && ((layerNumber + 1) % 2 != 0) ==true? ((layerNumber!=0)==true? 6:4):1);
+	*icLatency += GhTree->readLatency*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 2:1);
+	*icDynamicEnergy += GhTree->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 2:1);
 	
-	*readLatency += (globalBuffer->readLatency + globalBuffer->writeLatency)*((param->trainingEstimation)==true? 2:1);
-	*readDynamicEnergy += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy)*((param->trainingEstimation)==true? 2:1);
+	*readLatency += (globalBuffer->readLatency + globalBuffer->writeLatency)*((param->trainingEstimation) && ((layerNumber + 1) % 2 != 0) ==true? 2:1);
+	*readDynamicEnergy += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy)*((param->trainingEstimation) && ((layerNumber + 1) % 2 != 0) ==true? 2:1);
 	*readLatency += GhTree->readLatency;
 	*readDynamicEnergy += GhTree->readDynamicEnergy;
 	
-	*readLatencyAG += (globalBuffer->readLatency + globalBuffer->writeLatency)*((param->trainingEstimation)&&(layerNumber!=0)==true? 2:0);
-	*readDynamicEnergyAG += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy)*((param->trainingEstimation)&&(layerNumber!=0)==true? 2:0);
-	*readLatencyAG += GhTree->readLatency*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0);
-	*readDynamicEnergyAG += GhTree->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0)==true? 1:0);
+	*readLatencyAG += (globalBuffer->readLatency + globalBuffer->writeLatency)*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 2:0);
+	*readDynamicEnergyAG += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy)*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 2:0);
+	*readLatencyAG += GhTree->readLatency*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 1:0);
+	*readDynamicEnergyAG += GhTree->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 1:0);
 	
-	*readLatencyWG = (globalBuffer->readLatency + globalBuffer->writeLatency)*((param->trainingEstimation)==true? 2:0);
-	*readDynamicEnergyWG = (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy)*((param->trainingEstimation)==true? 2:0);
+	*readLatencyWG = (globalBuffer->readLatency + globalBuffer->writeLatency)*((param->trainingEstimation) && ((layerNumber + 1) % 2 != 0) ==true? 2:0);
+	*readDynamicEnergyWG = (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy)*((param->trainingEstimation) && ((layerNumber + 1) % 2 != 0) ==true? 2:0);
 	
 	int dataLoadIn = (netStructure[0][0])*(netStructure[0][1])*param->numBitInput; 
 	// ONLY LOAD IMAGE
