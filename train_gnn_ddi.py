@@ -59,6 +59,8 @@ def main():
                 run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
     else:
         updated_vertex = np.ones(max(data.adj_t.size(dim=0), data.adj_t.size(dim=1)))
+        if args.call_neurosim:
+            run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
     if args.call_neurosim:
         run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
     set_updated_vertex_map(updated_vertex)
