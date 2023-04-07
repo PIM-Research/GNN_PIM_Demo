@@ -757,7 +757,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 					*writeLatencyPeakWU += tileWriteLatencyPeakWU;
 					*writeDynamicEnergyPeakWU += tileWriteDynamicEnergyPeakWU;
 				}
-				cout << "*readLatencyAG(Tile):" << *readLatencyAG << endl;
+				
 				*bufferLatency = MAX(tilebufferLatency, (*bufferLatency));
 				*bufferDynamicEnergy += tilebufferDynamicEnergy;
 				*icLatency = MAX(tileicLatency, (*icLatency));
