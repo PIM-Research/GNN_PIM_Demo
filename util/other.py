@@ -73,8 +73,11 @@ def map_data(data: np.ndarray, array_size, array_num, vertex_num):
 
 def get_vertex_deg_global(vertex_deg, array_size):
     # 获取顶点度列表的降序排序
-    vertex_deg_dec = np.array(sorted(vertex_deg, reverse=True), dtype=np.int_)
-    vertex_list = np.array(range(0, vertex_deg.shape[0]), dtype=np.int_)
+    index_deg = [(k, v) for k, v in enumerate(vertex_deg)]
+    sorted_index_deg = sorted(index_deg, key=lambda x: x[1], reverse=True)
+    dict_sorted_index_deg = dict(sorted_index_deg)
+    vertex_list = np.array(list(dict_sorted_index_deg.keys()))
+    vertex_deg_dec = np.array(list(dict_sorted_index_deg.values()))
     # 获取顶点数
     vertex_num = vertex_deg.shape[0]
     # 获取列上crossbar array数量
