@@ -5,12 +5,13 @@ from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 from models import GAT, GCN, SAGE, LinkPredictor, QW, QG, C
 from util import train_test_ddi, train_decorator
 from util.global_variable import *
-from util.other import norm_adj, dec2bin, get_updated_vertex_list
-from util.definition import DropMode
+from util.other import norm_adj, dec2bin, get_updated_list, get_vertex_cluster, map_adj_to_cluster_adj
+from util.definition import DropMode, ClusterAlg
 from util.hook import set_vertex_map, set_updated_vertex_map, hook_forward_set_grad_zero
 import numpy as np
 from subprocess import call
 from tensorboardX import SummaryWriter
+from torch_sparse import SparseTensor
 
 
 def main():
@@ -28,13 +29,24 @@ def main():
     device = torch.device(device)
 
     # 从ogb用于边预测的数据集中获取ddi数据集，ddi数据集是一个药物相互作用数据集，边的含义是：两种药物一起使用有相互作用
-    dataset = PygLinkPropPredDataset(name='ogbl-ddi',
-                                     transform=T.ToSparseTensor())
+    dataset = PygLinkPropPredDataset(name='ogbl-ddi', transform=T.ToSparseTensor())
 
     data = dataset[0]
-
     # 将邻接矩阵正则化
     adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
+    # 获取ddi数据集的邻接矩阵，格式为SparseTensor
+    adj_t = data.adj_t.to(device)
+
+    # 获取词嵌入数量
+    embedding_num = data.adj_t.size(0)
+    cluster_label = None
+    if args.use_cluster:
+        cluster_label = get_vertex_cluster(data.adj_t.to_dense().numpy(), ClusterAlg(args.cluster_alg))
+        adj_dense = map_adj_to_cluster_adj(data.adj_t.to_dense().numpy(), cluster_label)
+        adj_t = SparseTensor.from_dense(adj_dense)
+        adj_matrix = norm_adj(adj_t).to_dense().numpy()
+        adj_t = adj_t.to(device)
+        embedding_num = adj_matrix.shape[0]
 
     # # 转换为2进制
     adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
@@ -47,14 +59,14 @@ def main():
     drop_mode = DropMode(args.drop_mode)
     if args.percentile != 0:
         if drop_mode == DropMode.GLOBAL:
-            updated_vertex, vertex_pointer = get_updated_vertex_list(data.adj_t, args.percentile, args.array_size,
-                                                                     drop_mode)
+            updated_vertex, vertex_pointer = get_updated_list(data.adj_t, args.percentile, args.array_size,
+                                                              drop_mode)
             set_vertex_map(vertex_pointer)
             if args.call_neurosim:
                 run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_pointer, delimiter=',',
                                                    fmt='%s')
         else:
-            updated_vertex = get_updated_vertex_list(data.adj_t, args.percentile, args.array_size, drop_mode)
+            updated_vertex = get_updated_list(data.adj_t, args.percentile, args.array_size, drop_mode)
             if args.call_neurosim:
                 run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
     else:
@@ -64,9 +76,6 @@ def main():
     if args.call_neurosim:
         run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
     set_updated_vertex_map(updated_vertex)
-
-    # 获取ddi数据集的邻接矩阵，格式为SparseTensor
-    adj_t = data.adj_t.to(device)
 
     # 将边数据集拆分为训练集，验证集，测试集，其中验证集和测试集有两个属性，edge代表图中存在的边（正边），edge_neg代表图中不存在的边（负边）
     split_edge = dataset.get_edge_split()
@@ -93,8 +102,7 @@ def main():
                     args.dropout).to(device)
 
     # 通过词嵌入的方式获得顶点的特征向量（emb.weight），即IFM，下面的参数中，第一个代表向量数量，第二个代表向量维度，emb.weight就是可学习的权重
-    emb = torch.nn.Embedding(data.adj_t.size(0),
-                             args.hidden_channels).to(device)
+    emb = torch.nn.Embedding(embedding_num, args.hidden_channels).to(device)
 
     # 实例化一个预测器，给定两个顶点的特征向量，预测这两个顶点之间是否存在边
     predictor = LinkPredictor(args.hidden_channels, args.hidden_channels, 1,
@@ -122,13 +130,14 @@ def main():
             list(predictor.parameters()), lr=args.lr)
 
         for epoch in range(1, 1 + args.epochs):
-            loss = train_test_ddi.train(model, predictor, emb.weight, adj_t, split_edge,
-                                        optimizer, args.batch_size, train_decorator=train_dec, cur_epoch=epoch)
+            loss = train_test_ddi.train(model, predictor, emb.weight, adj_t, split_edge, optimizer, args.batch_size,
+                                        train_decorator=train_dec, cur_epoch=epoch,
+                                        cluster_label=cluster_label)
             writer.add_scalar('Loss', loss, epoch)
 
             if epoch % args.eval_steps == 0:
-                results = train_test_ddi.test(model, predictor, emb.weight, adj_t, split_edge,
-                                              evaluator, args.batch_size)
+                results = train_test_ddi.test(model, predictor, emb.weight, adj_t, split_edge, evaluator,
+                                              args.batch_size, cluster_label=cluster_label)
                 for key, result in results.items():
                     loggers[key].add_result(run, result)
 

@@ -6,3 +6,6 @@ class DropMode(Enum):
     GLOBAL = 2
     LOCAL = 3
 
+
+class ClusterAlg(Enum):
+    DBSCAN = 1

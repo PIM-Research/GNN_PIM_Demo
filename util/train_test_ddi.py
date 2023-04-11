@@ -7,7 +7,7 @@ from .global_variable import args
 
 
 def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, train_decorator: TrainDecorator,
-          cur_epoch=0):
+          cur_epoch=0, cluster_label=None):
     row, col, _ = adj_t.coo()
     edge_index = torch.stack([col, row], dim=0)
     if args.call_neurosim:
@@ -36,6 +36,9 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
 
         # 根据perm这个索引获得本次预测需要的边
         edge = pos_train_edge[perm].t()
+        if args.use_cluster:
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
 
         # 预测这两个顶点之间是否存在边，1代表存在，0为不存在
         pos_out = predictor(h[edge[0]], h[edge[1]])
@@ -45,6 +48,9 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         # 什么是负采样？
         edge = negative_sampling(edge_index, num_nodes=x.size(0),
                                  num_neg_samples=perm.size(0), method='dense')
+        if args.use_cluster:
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
 
         # 预测这两个顶点之间是否存在边，1代表存在，0为不存在
         neg_out = predictor(h[edge[0]], h[edge[1]])
@@ -76,7 +82,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
 
 
 @torch.no_grad()
-def test(model, predictor, x, adj_t, split_edge, evaluator, batch_size):
+def test(model, predictor, x, adj_t, split_edge, evaluator, batch_size, cluster_label=None):
     model.eval()
     predictor.eval()
 
@@ -91,30 +97,45 @@ def test(model, predictor, x, adj_t, split_edge, evaluator, batch_size):
     pos_train_preds = []
     for perm in DataLoader(range(pos_train_edge.size(0)), batch_size):
         edge = pos_train_edge[perm].t()
+        if args.use_cluster:
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
         pos_train_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
     pos_train_pred = torch.cat(pos_train_preds, dim=0)
 
     pos_valid_preds = []
     for perm in DataLoader(range(pos_valid_edge.size(0)), batch_size):
         edge = pos_valid_edge[perm].t()
+        if args.use_cluster:
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
         pos_valid_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
     pos_valid_pred = torch.cat(pos_valid_preds, dim=0)
 
     neg_valid_preds = []
     for perm in DataLoader(range(neg_valid_edge.size(0)), batch_size):
         edge = neg_valid_edge[perm].t()
+        if args.use_cluster:
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
         neg_valid_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
     neg_valid_pred = torch.cat(neg_valid_preds, dim=0)
 
     pos_test_preds = []
     for perm in DataLoader(range(pos_test_edge.size(0)), batch_size):
         edge = pos_test_edge[perm].t()
+        if args.use_cluster:
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
         pos_test_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
     pos_test_pred = torch.cat(pos_test_preds, dim=0)
 
     neg_test_preds = []
     for perm in DataLoader(range(neg_test_edge.size(0)), batch_size):
         edge = neg_test_edge[perm].t()
+        if args.use_cluster:
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
         neg_test_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
     neg_test_pred = torch.cat(neg_test_preds, dim=0)
 

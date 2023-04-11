@@ -1,7 +1,10 @@
 import numpy as np
 from torch_sparse import sum as sparse_sum, fill_diag, mul, SparseTensor
-from .definition import DropMode
+from .definition import DropMode, ClusterAlg
 from math import ceil
+from sklearn import cluster
+from .global_variable import args
+import torch
 
 
 def norm_adj(adj_t, add_self_loops=True):
@@ -88,30 +91,99 @@ def get_vertex_deg_global(vertex_deg, array_size):
     return vertex_deg_global, vertex_pointer
 
 
-def get_updated_vertex_list(adj: SparseTensor, percentage, array_size, drop_mode: DropMode):
+def get_updated_list(adj: SparseTensor, percentage, array_size, drop_mode: DropMode):
     # 获取原始的顶点度列表、n百分位数，顶点数量，列上需要的crossbar array数量
     vertex_deg = get_vertex_deg(adj)
     vertex_num = vertex_deg.shape[0]
-    array_num = ceil(vertex_num / array_size)
-    updated_vertex = np.zeros(vertex_deg.shape, dtype=np.int_)
-    n_percentile = np.percentile(vertex_deg, percentage)
+    updated_list = np.zeros(vertex_deg.shape, dtype=np.int_)
+    pointer_list = None
+    if args.use_cluster:
+        # 进行顶点聚类
+        cluster_label = get_vertex_cluster(adj.to_dense().numpy(), ClusterAlg(args.cluster_alg))
+        cluster_avg_deg, cluster_num = get_cluster_avg_deg(cluster_label, vertex_deg)
+        updated_list, pointer_list = get_updated_list_reuse(cluster_avg_deg, cluster_num, percentage, array_size,
+                                                            drop_mode)
+    else:
+        updated_list, pointer_list = get_updated_list_reuse(vertex_deg, vertex_num, percentage, array_size,
+                                                            drop_mode)
+    if drop_mode is DropMode.GLOBAL:
+        return updated_list, pointer_list
+    else:
+        return updated_list
+
+
+def get_updated_list_reuse(deg_list, list_size, percentage, array_size, drop_mode: DropMode):
+    updated_list = np.zeros(deg_list.shape, dtype=np.int_)
+    array_num = ceil(list_size / array_size)
+    n_percentile = np.percentile(deg_list, percentage)
     # 根据drop的模式选择对应的方法生成待更新顶点列表
     if drop_mode is DropMode.GLOBAL:  # 每一个crossbar上均匀分布各个度大小的顶点，然后按照全体顶点度的n百分位数选择待更新顶点
-        vertex_deg_global, vertex_pointer = get_vertex_deg_global(vertex_deg, array_size)
-        updated_vertex[:] = list(map(lambda x: 1 if x > n_percentile else 0, vertex_deg_global))
-        return updated_vertex, vertex_pointer
+        deg_list_global, pointer_list = get_vertex_deg_global(deg_list, array_size)
+        updated_list[:] = list(map(lambda x: 1 if x > n_percentile else 0, deg_list_global))
+        return updated_list, pointer_list
     elif drop_mode is DropMode.LOCAL:  # 每一个crossbar按原始顶点顺序映射顶点特征，然后当前crossbar上映射顶点的n百分位数选择待更新顶点
         for i in range(0, array_num):
-            if (i + 1) * array_size <= vertex_num:
-                n_percentile = np.percentile(vertex_deg[i * array_size:(i + 1) * array_size], percentage)
-                # print('n_percentile1:', n_percentile)
-                updated_vertex[i * array_size:(i + 1) * array_size] = list(
-                    map(lambda x: 1 if x > n_percentile else 0, vertex_deg[i * array_size:(i + 1) * array_size]))
+            if (i + 1) * array_size <= list_size:
+                n_percentile = np.percentile(deg_list[i * array_size:(i + 1) * array_size], percentage)
+                updated_list[i * array_size:(i + 1) * array_size] = list(
+                    map(lambda x: 1 if x > n_percentile else 0, deg_list[i * array_size:(i + 1) * array_size]))
             else:
-                n_percentile = np.percentile(vertex_deg[i * array_size:vertex_num], percentage)
-                # print('n_percentile2:', n_percentile)
-                updated_vertex[i * array_size:vertex_num] = list(
-                    map(lambda x: 1 if x > n_percentile else 0, vertex_deg[i * array_size:vertex_num]))
+                n_percentile = np.percentile(deg_list[i * array_size:list_size], percentage)
+                updated_list[i * array_size:list_size] = list(
+                    map(lambda x: 1 if x > n_percentile else 0, deg_list[i * array_size:list_size]))
     elif drop_mode is DropMode.ORIGINAL:  # 每一个crossbar按原始顶点顺序映射顶点特征，然后按照全体顶点度的n百分位数选择待更新顶点
-        updated_vertex[:] = list(map(lambda x: 1 if x > n_percentile else 0, vertex_deg))
-    return updated_vertex
+        updated_list[:] = list(map(lambda x: 1 if x > n_percentile else 0, deg_list))
+    return updated_list, None
+
+
+def get_vertex_cluster(adj_dense: np.ndarray, cluster_alg: ClusterAlg):
+    if cluster_alg is ClusterAlg.DBSCAN:
+        # 创建DBSCAN，并聚类
+        dbscan = cluster.DBSCAN(eps=np.sqrt(adj_dense.shape[0] * args.eps), min_samples=args.min_samples)
+        dbscan.fit(adj_dense)
+        cluster_label = dbscan.labels_.astype(int)
+        cluster_num = len(set(cluster_label))
+        # 将被DBSCAN算法评定为噪声的点作为单独的一类
+        tag = False
+        for i, label in enumerate(cluster_label):
+            if label == -1:
+                if not tag:
+                    tag = True
+                    cluster_num -= 1
+                cluster_label[i] = cluster_num
+                cluster_num += 1
+    else:
+        cluster_label = np.arange(adj_dense.shape[0])
+    # 返回各个顶点所属聚类标签的列表，顺序是原始顺序
+    return cluster_label
+
+
+def get_cluster_avg_deg(cluster_label: np.ndarray, vertex_deg: np.ndarray):
+    cluster_num = len(np.unique(cluster_label))
+    cluster_deg_sum = np.zeros(cluster_num)
+    cluster_vertex_count = np.zeros(cluster_num)
+
+    # 使用高级索引，快速累加每个聚类的度数和顶点数
+    np.add.at(cluster_deg_sum, cluster_label, vertex_deg)
+    np.add.at(cluster_vertex_count, cluster_label, 1)
+
+    # 计算每个聚类的平均度数
+    cluster_avg_deg = np.divide(cluster_deg_sum, cluster_vertex_count, where=cluster_vertex_count != 0)
+
+    return cluster_avg_deg, cluster_num
+
+
+def map_adj_to_cluster_adj(adj_dense: np.ndarray, cluster_label: np.ndarray) -> torch.Tensor:
+    # 获取簇的数量
+    cluster_num = np.max(cluster_label) + 1
+    # 获取行和列所属的簇
+    rows_cluster = cluster_label[np.nonzero(adj_dense)[0]]
+    cols_cluster = cluster_label[np.nonzero(adj_dense)[1]]
+    # 获取行和列不在同一簇中的元素
+    mask = rows_cluster != cols_cluster
+    rows_cluster, cols_cluster = rows_cluster[mask], cols_cluster[mask]
+    # 创建稠密矩阵
+    cluster_adj = torch.zeros((cluster_num, cluster_num))
+    # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
+    cluster_adj[rows_cluster, cols_cluster] = 1
+    return cluster_adj
