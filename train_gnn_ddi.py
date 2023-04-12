@@ -47,6 +47,7 @@ def main():
         adj_matrix = norm_adj(adj_t).to_dense().numpy()
         adj_t = adj_t.to(device)
         embedding_num = adj_matrix.shape[0]
+        cluster_label = torch.from_numpy(cluster_label)
 
     # # 转换为2进制
     adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
@@ -132,12 +133,12 @@ def main():
         for epoch in range(1, 1 + args.epochs):
             loss = train_test_ddi.train(model, predictor, emb.weight, adj_t, split_edge, optimizer, args.batch_size,
                                         train_decorator=train_dec, cur_epoch=epoch,
-                                        cluster_label=torch.from_numpy(cluster_label))
+                                        cluster_label=cluster_label)
             writer.add_scalar('Loss', loss, epoch)
 
             if epoch % args.eval_steps == 0:
                 results = train_test_ddi.test(model, predictor, emb.weight, adj_t, split_edge, evaluator,
-                                              args.batch_size, cluster_label=torch.from_numpy(cluster_label))
+                                              args.batch_size, cluster_label=cluster_label)
                 for key, result in results.items():
                     loggers[key].add_result(run, result)
 

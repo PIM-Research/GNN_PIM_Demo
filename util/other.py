@@ -140,18 +140,12 @@ def get_vertex_cluster(adj_dense: np.ndarray, cluster_alg: ClusterAlg):
     if cluster_alg is ClusterAlg.DBSCAN:
         # 创建DBSCAN，并聚类
         dbscan = cluster.DBSCAN(eps=np.sqrt(adj_dense.shape[0] * args.eps), min_samples=args.min_samples)
-        dbscan.fit(adj_dense)
-        cluster_label = dbscan.labels_.astype(int)
-        cluster_num = len(set(cluster_label))
+        cluster_label = dbscan.fit_predict(adj_dense)
+        cluster_num = np.max(cluster_label) + 1
         # 将被DBSCAN算法评定为噪声的点作为单独的一类
-        tag = False
-        for i, label in enumerate(cluster_label):
-            if label == -1:
-                if not tag:
-                    tag = True
-                    cluster_num -= 1
-                cluster_label[i] = cluster_num
-                cluster_num += 1
+        vertex_noise = cluster_label == -1
+        cluster_append = np.arange(cluster_num, cluster_num + cluster_label[vertex_noise].shape[0])
+        cluster_label[vertex_noise] = cluster_append
     else:
         cluster_label = np.arange(adj_dense.shape[0])
     # 返回各个顶点所属聚类标签的列表，顺序是原始顺序
