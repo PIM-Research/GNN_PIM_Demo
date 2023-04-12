@@ -584,6 +584,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 						
 						subArray->activityColWrite = activityColWrite;
 						subArray->activityRowWrite = activityRowWrite;
+						cout << "activityRowWrite:" << activityRowWrite << endl;
 						subArray->numWritePulseAVG = numWritePulseAVG;
 						subArray->totalNumWritePulse = totalNumWritePulse;
 						subArray->writeDynamicEnergyArray = writeDynamicEnergyArray;
