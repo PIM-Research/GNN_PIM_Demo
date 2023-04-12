@@ -1463,8 +1463,8 @@ void SubArray::CalculateLatency(double columnRes, const vector<double> &columnRe
 				colDelay = tau * 0.2 * numColMuxed;  // assume the 15~20% voltage drop is enough for sensing
 				/*cout << "resRow:" << resRow << " resCol:" << resCol << endl;
 				cout << "capRow2:" << capRow2 << " capRow1:" << capRow1 << " capCol:" << capCol << endl;
-				cout << "numRow:" << numRow << endl;*/
-				cout << "numWriteOperationPerRow:" << numWriteOperationPerRow << " activityRowWrite:" << activityRowWrite << endl;
+				cout << "numRow:" << numRow << endl;
+				cout << "numWriteOperationPerRow:" << numWriteOperationPerRow << " activityRowWrite:" << activityRowWrite << endl;*/
 				if (cell.accessType == CMOS_access) {
 					wlNewSwitchMatrix.CalculateLatency(1e20, capRow2, resRow, numColMuxed, 2*numWriteOperationPerRow*numRow*activityRowWrite);
 				} else {
