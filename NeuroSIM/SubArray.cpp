@@ -1461,7 +1461,10 @@ void SubArray::CalculateLatency(double columnRes, const vector<double> &columnRe
 				double tau = (capCol)*(cell.resMemCellAvg/(numRow/2));
 				colDelay = horowitz(tau, 0, 1e20, &colRamp);
 				colDelay = tau * 0.2 * numColMuxed;  // assume the 15~20% voltage drop is enough for sensing
-				
+				cout << "resRow:" << resRow << " resCol:" << resCol << endl;
+				cout << "capRow2:" << capRow2 << " capRow1:" << capRow1 << " capCol:" << capCol << endl;
+				cout << "numRow:" << numRow << endl;
+				cout << "numWriteOperationPerRow:" << numWriteOperationPerRow << " activityRowWrite:" << activityRowWrite << endl;
 				if (cell.accessType == CMOS_access) {
 					wlNewSwitchMatrix.CalculateLatency(1e20, capRow2, resRow, numColMuxed, 2*numWriteOperationPerRow*numRow*activityRowWrite);
 				} else {
@@ -1505,8 +1508,8 @@ void SubArray::CalculateLatency(double columnRes, const vector<double> &columnRe
 				writeLatencyArray += totalNumWritePulse * cell.writePulseWidth;
 				writeLatency += MAX(wlNewSwitchMatrix.writeLatency + wlSwitchMatrix.writeLatency, slSwitchMatrix.writeLatency);
 				writeLatency += writeLatencyArray;
-				cout << "writeLatencyArray:" << writeLatencyArray << " wlSwitchMatrix.writeLatency:" << wlSwitchMatrix.writeLatency << endl;
-				cout << "wlNewSwitchMatrix.writeLatency:" << wlNewSwitchMatrix.writeLatency << " slSwitchMatrix.writeLatency:" << slSwitchMatrix.writeLatency << endl;
+				//cout << "writeLatencyArray:" << writeLatencyArray << " wlSwitchMatrix.writeLatency:" << wlSwitchMatrix.writeLatency << endl;
+				//cout << "wlNewSwitchMatrix.writeLatency:" << wlNewSwitchMatrix.writeLatency << " slSwitchMatrix.writeLatency:" << slSwitchMatrix.writeLatency << endl;
 				/* Transpose Peripheral for BP */
 				if (trainingEstimation && ((layerNumber + 1) % 2 != 0)) {
 					readLatencyAG = 0;
