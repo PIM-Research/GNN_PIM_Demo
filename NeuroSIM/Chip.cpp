@@ -405,7 +405,9 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 		globalBusWidth /= 2;
 	}
 	// define bufferSize for inference operation
-	int bufferSize = param->numBitInput*maxLayerInput;
+	// int bufferSize = param->numBitInput*maxLayerInput;
+	int bufferSize = param->numBitInput * 4267;
+
 	//if (param->trainingEstimation) {
 	//	int numMemInRow = (netStructure[maxIFMLayer][0] - netStructure[maxIFMLayer][3] + 1) * (netStructure[maxIFMLayer][1] - netStructure[maxIFMLayer][4] + 1);
 	//	int numMemInCol = netStructure[maxIFMLayer][5] * param->numBitInput;
@@ -440,7 +442,7 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 			bufferOverHead *= 2;
 			*numArrayWriteParallel *= 2;
 		}
-		cout << "numArrayWriteParallel:" << *numArrayWriteParallel << endl;
+		// cout << "numArrayWriteParallel:" << *numArrayWriteParallel << endl;
 		// update the buffer size to save weight gradient
 		bufferSize += bufferOverHead;
 		gradientAccum->Initialize(weightGradientUnit->outPrecision+ceil(log2(param->batchSize)), (*numArrayWriteParallel)*param->numRowSubArray*param->numColSubArray);
