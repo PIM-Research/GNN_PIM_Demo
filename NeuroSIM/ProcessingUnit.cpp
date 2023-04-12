@@ -995,6 +995,7 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 	*totalNumWritePulse = totalNumResetWritePulse + totalNumSetWritePulse;
 	*numWritePulseAVG = (*totalNumWritePulse)/(MAX(1, (numSelectedRowSet+numSelectedRowReset)/2.0));
 	*activityColWrite = ((numSelectedColSet+numSelectedColReset)/2.0)/newMemory[0].size();
+	cout << "numSelectedRowSet:" << numSelectedRowSet << " numSelectedRowReset:" << " newMemory.size():" << newMemory.size() << endl;
 	*activityRowWrite = ((numSelectedRowSet+numSelectedRowReset)/2.0)/newMemory.size();	
 	// cout << "Subarray Start Row:" << subArrayStartRow << " totalNumWritePulse:" << *totalNumWritePulse << " numWritePulseAVG:" << *numWritePulseAVG << " activityColWrite:" << *activityColWrite << " activityRowWrite:" << *activityRowWrite << endl;
 	// calculate WL BL and SL energy
