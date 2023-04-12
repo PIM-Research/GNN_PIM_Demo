@@ -435,7 +435,7 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 		// consider limited buffer to store gradient of weight: only part of the weight matrix is processed at a specific cycle
 		// we could set a bufferOverheadConstraint to limit the overhead and speed of computation and weight-update
 		// start: at least can support gradient of one weight matrix = subArray size * weightPrecision/cellPrecision
-		// cout << "bufferOverHead:" << bufferOverHead << " bufferOverHeadConstraint:" << param->bufferOverHeadConstraint << endl;
+		cout << "bufferOverHead:" << bufferOverHead << " bufferOverHeadConstraint:" << param->bufferOverHeadConstraint << endl;
 		while((bufferSize+bufferOverHead) < bufferSize*(param->bufferOverHeadConstraint+1)) {
 			bufferOverHead *= 2;
 			*numArrayWriteParallel *= 2;
