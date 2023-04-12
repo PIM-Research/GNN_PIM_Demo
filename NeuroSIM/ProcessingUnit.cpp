@@ -652,7 +652,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 			}
 		}
 		*writeLatencyWU += subArrayWriteLatencyParallelMax;
-		// cout << "writeLatencyWU:" << *writeLatencyWU << endl;
+		cout << "writeLatencyWU PE:" << *writeLatencyWU << endl;
 		if (NMpe) {
 			adderTreeNM->CalculateLatency((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), ceil((double) weightMatrixRow/(double) param->numRowSubArray), 0);
 			adderTreeNM->CalculatePower((int)(numInVector/param->numBitInput)*ceil(param->numColMuxed/param->numColPerSynapse), ceil((double) weightMatrixRow/(double) param->numRowSubArray));
