@@ -1,7 +1,7 @@
 import numpy as np
 from torch_sparse import sum as sparse_sum, fill_diag, mul, SparseTensor
 from .definition import DropMode, ClusterAlg
-from math import ceil
+from math import ceil, floor
 from sklearn import cluster
 from .global_variable import args
 import torch
@@ -56,24 +56,24 @@ def get_vertex_deg(adj: SparseTensor):
     return vertex_deg
 
 
-def map_data(data: np.ndarray, array_size, array_num, vertex_num):
-    print('data.shape:', data.shape)
-    print('array_size:', array_size)
-    print('array_num:', array_num)
-    print('vertex_num:', vertex_num)
+def map_data(data: np.ndarray, array_size, vertex_num):
     data_mapped = np.zeros(len(data), dtype=data.dtype)
-    index = 0
-    for i in range(0, array_num):
-        if (array_size - 1) * array_num + i < vertex_num:
-            data_mapped[i * array_size:(i + 1) * array_size] = data[i::array_num]
-        elif (i + 1) * array_size < vertex_num:
-            data_mapped[i * array_size:(i + 1) * array_size - 1] = data[i::array_num]
-            data_mapped[(i + 1) * array_size - 1] = data[
-                (vertex_num % array_size + index + 1) * array_num - 1]
-            index += 1
-        else:
-            data_mapped[i * array_size:vertex_num] = data[
-                                                     i:(vertex_num % array_size * array_num):array_num]
+    region_num = floor(vertex_num / array_size)
+    for i in range(0, region_num):
+        data_mapped[i * array_size:(i + 1) * array_size] = data[i:region_num * array_size:region_num]
+    data_mapped[region_num * array_size:] = data[region_num * array_size:]
+    # index = 0
+    # for i in range(0, array_num):
+    #     if (array_size - 1) * array_num + i < vertex_num:
+    #         data_mapped[i * array_size:(i + 1) * array_size] = data[i::array_num]
+    #     elif (i + 1) * array_size < vertex_num:
+    #         data_mapped[i * array_size:(i + 1) * array_size - 1] = data[i::array_num]
+    #         data_mapped[(i + 1) * array_size - 1] = data[
+    #             (vertex_num % array_size + index + 1) * array_num - 1]
+    #         index += 1
+    #     else:
+    #         data_mapped[i * array_size:vertex_num] = data[
+    #                                                  i:(vertex_num % array_size * array_num):array_num]
     return data_mapped
 
 
@@ -86,11 +86,9 @@ def get_vertex_deg_global(vertex_deg, array_size):
     vertex_deg_dec = np.array(list(dict_sorted_index_deg.values()))
     # 获取顶点数
     vertex_num = vertex_deg.shape[0]
-    # 获取列上crossbar array数量
-    array_num = ceil(vertex_num / array_size)
     # 将vertex_deg_dec分成array_size个区间，每个区间最多有array_num个顶点，每个crossbar按行顺序依次从每一个区间取出一个顶点进行映射
-    vertex_deg_global = map_data(vertex_deg_dec, array_size, array_num, vertex_num)
-    vertex_pointer = map_data(vertex_list, array_size, array_num, vertex_num)
+    vertex_deg_global = map_data(vertex_deg_dec, array_size, vertex_num)
+    vertex_pointer = map_data(vertex_list, array_size, vertex_num)
     return vertex_deg_global, vertex_pointer
 
 
