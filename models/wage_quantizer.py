@@ -56,7 +56,9 @@ def QE(x, bits):
 
 def QG(x, bits_G, bits_R, lr):
     max_entry = x.abs().max()
-    assert max_entry != 0, "QG blow"
+    if max_entry == 0:
+        print(1)
+        return x
     x /= shift(max_entry)
     norm = lr * x
     norm = SR(norm)
