@@ -135,7 +135,7 @@ def get_vertex_cluster(adj_dense: np.ndarray, cluster_alg: ClusterAlg):
         cluster_label = dbscan.fit_predict(adj_dense)
     elif cluster_alg is ClusterAlg.K_MEANS:
         # 创建K_MEANS，并聚类
-        dbscan = cluster.KMeans(n_clusters=adj_dense.shape[0] * args.kmeans_clusters)
+        dbscan = cluster.KMeans(n_clusters=round(adj_dense.shape[0] * args.kmeans_clusters))
         cluster_label = dbscan.fit_predict(adj_dense)
     else:
         cluster_label = np.arange(adj_dense.shape[0])
