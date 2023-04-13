@@ -36,27 +36,33 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
 
         # 根据perm这个索引获得本次预测需要的边
         edge = pos_train_edge[perm].t()
+        print('edge[0]:', edge[0], ' edge[1]:', edge[1])
         if args.use_cluster:
             edge[0] = cluster_label[edge[0]]
             edge[1] = cluster_label[edge[1]]
-
+        print('edge[0]:', edge[0], ' edge[1]:', edge[1])
         # 预测这两个顶点之间是否存在边，1代表存在，0为不存在
         pos_out = predictor(h[edge[0]], h[edge[1]])
+        print('pos_out:', pos_out)
         # 计算损失函数的值
         pos_loss = -torch.log(pos_out + 1e-15).mean()
+        print('pos_loss:', pos_loss)
 
         # 什么是负采样？
         edge = negative_sampling(edge_index, num_nodes=x.size(0),
                                  num_neg_samples=perm.size(0), method='dense')
+        print('edge[0]:', edge[0], ' edge[1]:', edge[1])
         if args.use_cluster:
             edge[0] = cluster_label[edge[0]]
             edge[1] = cluster_label[edge[1]]
+        print('edge[0]:', edge[0], ' edge[1]:', edge[1])
 
         # 预测这两个顶点之间是否存在边，1代表存在，0为不存在
         neg_out = predictor(h[edge[0]], h[edge[1]])
+        print('neg_out:', neg_out)
         # 计算损失函数的值
         neg_loss = -torch.log(1 - neg_out + 1e-15).mean()
-
+        print('neg_loss:', neg_loss)
         loss = pos_loss + neg_loss
         loss.backward()
 

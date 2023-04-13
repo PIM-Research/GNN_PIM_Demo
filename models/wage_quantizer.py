@@ -77,6 +77,7 @@ class WAGERounding(Function):
 
     @staticmethod
     def backward(self, grad_output):
+        print(grad_output)
         if self.bits_E == -1: return grad_output, None, None, None
 
         if self.needs_input_grad[0]:
