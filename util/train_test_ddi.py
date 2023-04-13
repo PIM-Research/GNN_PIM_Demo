@@ -46,7 +46,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         # print('pos_out:', pos_out)
         # 计算损失函数的值
         pos_loss = -torch.log(pos_out + 1e-15).mean()
-        print('pos_loss:', pos_loss)
+        # print('pos_loss:', pos_loss)
 
         # 什么是负采样？
         edge = negative_sampling(edge_index, num_nodes=x.size(0),
@@ -62,7 +62,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         # print('neg_out:', neg_out)
         # 计算损失函数的值
         neg_loss = -torch.log(1 - neg_out + 1e-15).mean()
-        print('neg_loss:', neg_loss)
+        # print('neg_loss:', neg_loss)
         loss = pos_loss + neg_loss
         loss.backward()
 

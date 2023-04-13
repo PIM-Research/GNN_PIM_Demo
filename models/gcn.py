@@ -56,13 +56,13 @@ class GCN(torch.nn.Module):
             # 对激活值输出进行量化
             if self.bits_A != -1:
                 x = C(x, self.bits_A)  # keeps the gradients
-            # x = WAGERounding.apply(x, self.bits_A, self.bits_E, None)
+            x = WAGERounding.apply(x, self.bits_A, self.bits_E, None)
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.convs[-1](x, adj_t)
         # 对激活值输出进行量化
         if self.bits_A != -1:
             x = C(x, self.bits_A)  # keeps the gradients
-        # x = WAGERounding.apply(x, self.bits_A, self.bits_E, None)
+        x = WAGERounding.apply(x, self.bits_A, self.bits_E, None)
         return x
 
     def record_cost(self):
