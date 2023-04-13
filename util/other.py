@@ -52,8 +52,7 @@ def get_vertex_deg(adj: SparseTensor):
     des_max = adj.size(dim=1)
     # 获取原始的顶点度列表
     vertex_deg = np.zeros(max(source_max, des_max), dtype=np.int_)
-    for i in des_vertex:
-        vertex_deg[i] += 1
+    np.add.at(vertex_deg, des_vertex, 1)
     return vertex_deg
 
 
@@ -97,15 +96,8 @@ def get_updated_list(adj: SparseTensor, percentage, array_size, drop_mode: DropM
     vertex_num = vertex_deg.shape[0]
     updated_list = np.zeros(vertex_deg.shape, dtype=np.int_)
     pointer_list = None
-    if args.use_cluster:
-        # 进行顶点聚类
-        cluster_label = get_vertex_cluster(adj.to_dense().numpy(), ClusterAlg(args.cluster_alg))
-        cluster_avg_deg, cluster_num = get_cluster_avg_deg(cluster_label, vertex_deg)
-        updated_list, pointer_list = get_updated_list_reuse(cluster_avg_deg, cluster_num, percentage, array_size,
-                                                            drop_mode)
-    else:
-        updated_list, pointer_list = get_updated_list_reuse(vertex_deg, vertex_num, percentage, array_size,
-                                                            drop_mode)
+    updated_list, pointer_list = get_updated_list_reuse(vertex_deg, vertex_num, percentage, array_size,
+                                                        drop_mode)
     if drop_mode is DropMode.GLOBAL:
         return updated_list, pointer_list
     else:
@@ -141,13 +133,17 @@ def get_vertex_cluster(adj_dense: np.ndarray, cluster_alg: ClusterAlg):
         # 创建DBSCAN，并聚类
         dbscan = cluster.DBSCAN(eps=np.sqrt(adj_dense.shape[0] * args.eps), min_samples=args.min_samples)
         cluster_label = dbscan.fit_predict(adj_dense)
-        cluster_num = np.max(cluster_label) + 1
-        # 将被DBSCAN算法评定为噪声的点作为单独的一类
-        vertex_noise = cluster_label == -1
-        cluster_append = np.arange(cluster_num, cluster_num + cluster_label[vertex_noise].shape[0])
-        cluster_label[vertex_noise] = cluster_append
+    elif cluster_alg is ClusterAlg.K_MEANS:
+        # 创建K_MEANS，并聚类
+        dbscan = cluster.KMeans(n_clusters=adj_dense.shape[0] * args.kmeans_clusters)
+        cluster_label = dbscan.fit_predict(adj_dense)
     else:
         cluster_label = np.arange(adj_dense.shape[0])
+    cluster_num = np.max(cluster_label) + 1
+    # 将被DBSCAN算法评定为噪声的点作为单独的一类
+    vertex_noise = cluster_label == -1
+    cluster_append = np.arange(cluster_num, cluster_num + cluster_label[vertex_noise].shape[0])
+    cluster_label[vertex_noise] = cluster_append
     # 返回各个顶点所属聚类标签的列表，顺序是原始顺序
     return cluster_label
 

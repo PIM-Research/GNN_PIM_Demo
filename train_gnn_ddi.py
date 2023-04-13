@@ -35,7 +35,7 @@ def main():
     # 将邻接矩阵正则化
     adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
     # 获取ddi数据集的邻接矩阵，格式为SparseTensor
-    adj_t = data.adj_t.to(device)
+    adj_t = data.adj_t
 
     # 获取词嵌入数量
     embedding_num = data.adj_t.size(0)
@@ -45,11 +45,10 @@ def main():
         adj_dense = map_adj_to_cluster_adj(data.adj_t.to_dense().numpy(), cluster_label)
         adj_t = SparseTensor.from_dense(adj_dense)
         adj_matrix = norm_adj(adj_t).to_dense().numpy()
-        adj_t = adj_t.to(device)
         embedding_num = adj_matrix.shape[0]
         cluster_label = torch.from_numpy(cluster_label)
 
-    # # 转换为2进制
+    # 转换为2进制
     adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
     adj_binary_col, scale = dec2bin(adj_matrix, args.bl_activate)
     for i, b in enumerate(adj_binary_col):
@@ -60,18 +59,18 @@ def main():
     drop_mode = DropMode(args.drop_mode)
     if args.percentile != 0:
         if drop_mode == DropMode.GLOBAL:
-            updated_vertex, vertex_pointer = get_updated_list(data.adj_t, args.percentile, args.array_size,
+            updated_vertex, vertex_pointer = get_updated_list(adj_t, args.percentile, args.array_size,
                                                               drop_mode)
             set_vertex_map(vertex_pointer)
             if args.call_neurosim:
                 run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_pointer, delimiter=',',
                                                    fmt='%s')
         else:
-            updated_vertex = get_updated_list(data.adj_t, args.percentile, args.array_size, drop_mode)
+            updated_vertex = get_updated_list(adj_t, args.percentile, args.array_size, drop_mode)
             if args.call_neurosim:
                 run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
     else:
-        updated_vertex = np.ones(max(data.adj_t.size(dim=0), data.adj_t.size(dim=1)))
+        updated_vertex = np.ones(max(adj_t.size(dim=0), adj_t.size(dim=1)))
         if args.call_neurosim:
             run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
     if args.call_neurosim:
@@ -115,6 +114,9 @@ def main():
         'Hits@20': Logger(args.runs, args),
         'Hits@30': Logger(args.runs, args),
     }
+
+    # 将邻接矩阵放到设备上
+    adj_t = adj_t.to(device)
 
     # 添加钩子使得drop掉的顶点特征不更新
     if args.percentile != 0:
