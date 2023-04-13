@@ -48,6 +48,7 @@ def QW(x, bits, scale=1.0):
 def QE(x, bits):
     max_entry = x.abs().max()
     if max_entry == 0:
+        print(1)
         return x
     x /= shift(max_entry)
     return Q(C(x, bits), bits)
@@ -78,7 +79,6 @@ class WAGERounding(Function):
 
     @staticmethod
     def backward(self, grad_output):
-        print(grad_output)
         if self.bits_E == -1:
             return grad_output, None, None, None
 
