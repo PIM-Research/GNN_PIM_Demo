@@ -57,6 +57,10 @@ def get_vertex_deg(adj: SparseTensor):
 
 
 def map_data(data: np.ndarray, array_size, array_num, vertex_num):
+    print('data.shape:', data.shape)
+    print('array_size:', array_size)
+    print('array_num:', array_num)
+    print('vertex_num:', vertex_num)
     data_mapped = np.zeros(len(data), dtype=data.dtype)
     index = 0
     for i in range(0, array_num):
@@ -135,8 +139,8 @@ def get_vertex_cluster(adj_dense: np.ndarray, cluster_alg: ClusterAlg):
         cluster_label = dbscan.fit_predict(adj_dense)
     elif cluster_alg is ClusterAlg.K_MEANS:
         # 创建K_MEANS，并聚类
-        dbscan = cluster.KMeans(n_clusters=round(adj_dense.shape[0] * args.kmeans_clusters), n_init=args.n_init)
-        cluster_label = dbscan.fit_predict(adj_dense)
+        k_means = cluster.KMeans(n_clusters=round(adj_dense.shape[0] * args.kmeans_clusters), n_init=args.n_init)
+        cluster_label = k_means.fit_predict(adj_dense)
     else:
         cluster_label = np.arange(adj_dense.shape[0])
     cluster_num = np.max(cluster_label) + 1
