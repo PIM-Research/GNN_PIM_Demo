@@ -48,7 +48,8 @@ def QW(x, bits, scale=1.0):
 def QE(x, bits):
     max_entry = x.abs().max()
     if max_entry != 0:
-        max_entry = 1
+        print(1)
+        return x
     x /= shift(max_entry)
     return Q(C(x, bits), bits)
 
