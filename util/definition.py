@@ -10,3 +10,8 @@ class DropMode(Enum):
 class ClusterAlg(Enum):
     DBSCAN = 1
     K_MEANS = 2
+
+
+class MappingAlg(Enum):
+    UNION = 1
+    MEAN = 2

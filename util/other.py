@@ -1,6 +1,6 @@
 import numpy as np
 from torch_sparse import sum as sparse_sum, fill_diag, mul, SparseTensor
-from .definition import DropMode, ClusterAlg
+from .definition import DropMode, ClusterAlg, MappingAlg
 from math import ceil, floor
 from sklearn import cluster
 from .global_variable import args
@@ -166,16 +166,38 @@ def get_cluster_avg_deg(cluster_label: np.ndarray, vertex_deg: np.ndarray):
 
 
 def map_adj_to_cluster_adj(adj_dense: np.ndarray, cluster_label: np.ndarray) -> torch.Tensor:
+    mapping_alg = MappingAlg(args.mapping_alg)
     # 获取簇的数量
     cluster_num = np.max(cluster_label) + 1
-    # 获取行和列所属的簇
-    rows_cluster = cluster_label[np.nonzero(adj_dense)[0]]
-    cols_cluster = cluster_label[np.nonzero(adj_dense)[1]]
-    # 获取行和列不在同一簇中的元素
-    mask = rows_cluster != cols_cluster
-    rows_cluster, cols_cluster = rows_cluster[mask], cols_cluster[mask]
     # 创建稠密矩阵
     cluster_adj = torch.zeros((cluster_num, cluster_num))
-    # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
-    cluster_adj[rows_cluster, cols_cluster] = 1
+    # 根据不同的映射方式将顶点的邻接矩阵转换为类的邻接矩阵
+    if mapping_alg is MappingAlg.UNION:
+        # 获取行和列所属的簇
+        rows_cluster = cluster_label[np.nonzero(adj_dense)[0]]
+        cols_cluster = cluster_label[np.nonzero(adj_dense)[1]]
+        # 获取行和列不在同一簇中的元素
+        mask = rows_cluster != cols_cluster
+        rows_cluster, cols_cluster = rows_cluster[mask], cols_cluster[mask]
+        # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
+        cluster_adj[rows_cluster, cols_cluster] = 1
+    elif mapping_alg is MappingAlg.MEAN:
+        vertex_deg = np.sum(adj_dense, axis=0)
+        cluster_avg_deg = get_cluster_avg_deg(cluster_label, vertex_deg)[0]
+        cluster_vertex_num = np.bincount(cluster_label, minlength=cluster_num)
+        for label in range(cluster_num):
+            if cluster_vertex_num[label] > 1:
+                cluster_vertex_index = np.where(cluster_label == label)[0]
+                cluster_vertex_deg = vertex_deg[cluster_vertex_index]
+                min_index = np.argmin(np.abs(cluster_vertex_deg - cluster_avg_deg[label]))
+                represent_vertex = cluster_vertex_index[min_index]
+            else:
+                represent_vertex = np.where(cluster_label == label)[0]
+            rows_cluster = label
+            cols_cluster = cluster_label[np.nonzero(adj_dense[represent_vertex])]
+            # 获取行和列不在同一簇中的元素
+            mask = cols_cluster != rows_cluster
+            cols_cluster = cols_cluster[mask]
+            # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
+            cluster_adj[rows_cluster, cols_cluster] = 1
     return cluster_adj
