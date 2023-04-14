@@ -177,8 +177,9 @@ def map_adj_to_cluster_adj(adj_dense: np.ndarray, cluster_label: np.ndarray) -> 
         rows_cluster = cluster_label[np.nonzero(adj_dense)[0]]
         cols_cluster = cluster_label[np.nonzero(adj_dense)[1]]
         # 获取行和列不在同一簇中的元素
-        mask = rows_cluster != cols_cluster
-        rows_cluster, cols_cluster = rows_cluster[mask], cols_cluster[mask]
+        if args.add_self_loop is False:
+            mask = rows_cluster != cols_cluster
+            rows_cluster, cols_cluster = rows_cluster[mask], cols_cluster[mask]
         # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
         cluster_adj[rows_cluster, cols_cluster] = 1
     elif mapping_alg is MappingAlg.MEAN:
@@ -196,8 +197,9 @@ def map_adj_to_cluster_adj(adj_dense: np.ndarray, cluster_label: np.ndarray) -> 
             rows_cluster = label
             cols_cluster = cluster_label[np.nonzero(adj_dense[represent_vertex])]
             # 获取行和列不在同一簇中的元素
-            mask = cols_cluster != rows_cluster
-            cols_cluster = cols_cluster[mask]
+            if args.add_self_loop is False:
+                mask = cols_cluster != rows_cluster
+                cols_cluster = cols_cluster[mask]
             # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
             cluster_adj[rows_cluster, cols_cluster] = 1
     return cluster_adj
