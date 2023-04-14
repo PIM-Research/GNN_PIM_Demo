@@ -144,7 +144,7 @@ def get_vertex_cluster(adj_dense: np.ndarray, cluster_alg: ClusterAlg):
     cluster_num = np.max(cluster_label) + 1
     # 将被DBSCAN算法评定为噪声的点作为单独的一类
     vertex_noise = cluster_label == -1
-    cluster_append = np.arange(cluster_num, cluster_num + cluster_label[vertex_noise].shape[0])
+    cluster_append = np.random.permutation(np.arange(cluster_num, cluster_num + cluster_label[vertex_noise].shape[0]))
     cluster_label[vertex_noise] = cluster_append
     # 返回各个顶点所属聚类标签的列表，顺序是原始顺序
     return cluster_label
