@@ -36,7 +36,7 @@ def main():
     adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
     # 获取ddi数据集的邻接矩阵，格式为SparseTensor
     adj_t = data.adj_t
-    
+
     run_recorder.record('', 'adj_dense.csv', data.adj_t.to_dense().numpy(), delimiter=',', fmt='%s')
 
     # 获取词嵌入数量
