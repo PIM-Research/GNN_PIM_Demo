@@ -52,7 +52,7 @@ def main():
         adj_t = adj_t.coalesce()
         adj_matrix = norm_adj(adj_t).to_dense().numpy()
         embedding_num = adj_matrix.shape[0]
-        cluster_label = torch.from_numpy(cluster_label).to(device)
+        cluster_label = torch.from_numpy(cluster_label).long().to(device)
 
     # 转换为2进制
     adj_binary = None
