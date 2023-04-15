@@ -9,7 +9,7 @@ from .global_variable import args
 def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, train_decorator: TrainDecorator,
           cur_epoch=0, cluster_label=None):
     row, col, _ = adj_t.coo()
-    edge_index = torch.stack([col, row], dim=0)
+    edge_index = torch.stack([row, col], dim=0)
     if args.call_neurosim:
         train_decorator.create_bash_command(cur_epoch, model.bits_W, model.bits_A)
     model.train()
