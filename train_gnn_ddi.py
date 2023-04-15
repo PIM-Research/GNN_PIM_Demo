@@ -36,6 +36,7 @@ def main():
     adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
     # 获取ddi数据集的邻接矩阵，格式为SparseTensor
     adj_t = data.adj_t
+    run_recorder.record('', 'adj_dense.csv', data.adj_t.to_dense().numpy(), delimiter=',', fmt='%s')
 
     # 获取词嵌入数量
     embedding_num = data.adj_t.size(0)
@@ -43,17 +44,22 @@ def main():
     if args.use_cluster:
         cluster_label = get_vertex_cluster(data.adj_t.to_dense().numpy(), ClusterAlg(args.cluster_alg))
         adj_dense = map_adj_to_cluster_adj(data.adj_t.to_dense().numpy(), cluster_label)
+        run_recorder.record('', 'cluster_adj_dense.csv', adj_dense, delimiter=',', fmt='%s')
+        run_recorder.record('', 'cluster_label.csv', cluster_label, delimiter=',', fmt='%s')
         adj_t = SparseTensor.from_dense(adj_dense)
         adj_matrix = norm_adj(adj_t).to_dense().numpy()
         embedding_num = adj_matrix.shape[0]
         cluster_label = torch.from_numpy(cluster_label)
 
     # 转换为2进制
-    adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
-    adj_binary_col, scale = dec2bin(adj_matrix, args.bl_activate)
-    for i, b in enumerate(adj_binary_col):
-        adj_binary[:, i::args.bl_activate] = b
-    activity = np.sum(adj_binary.astype(np.float64), axis=None) / np.size(adj_binary)
+    adj_binary = None
+    activity = 0
+    if args.call_neurosim:
+        adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
+        adj_binary_col, scale = dec2bin(adj_matrix, args.bl_activate)
+        for i, b in enumerate(adj_binary_col):
+            adj_binary[:, i::args.bl_activate] = b
+        activity = np.sum(adj_binary.astype(np.float64), axis=None) / np.size(adj_binary)
 
     # 获取顶点特征更新列表
     drop_mode = DropMode(args.drop_mode)
