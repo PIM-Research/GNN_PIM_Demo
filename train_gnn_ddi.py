@@ -36,7 +36,6 @@ def main():
     adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
     # 获取ddi数据集的邻接矩阵，格式为SparseTensor
     adj_t = data.adj_t
-    adj_origin = data.adj_t.to(device)
 
     run_recorder.record('', 'adj_dense.csv', data.adj_t.to_dense().numpy(), delimiter=',', fmt='%s')
 
@@ -145,7 +144,7 @@ def main():
         for epoch in range(1, 1 + args.epochs):
             loss = train_test_ddi.train(model, predictor, emb.weight, adj_t, split_edge, optimizer, args.batch_size,
                                         train_decorator=train_dec, cur_epoch=epoch,
-                                        cluster_label=cluster_label, adj_origin=adj_origin)
+                                        cluster_label=cluster_label)
             writer.add_scalar('Loss', loss, epoch)
 
             if epoch % args.eval_steps == 0:
