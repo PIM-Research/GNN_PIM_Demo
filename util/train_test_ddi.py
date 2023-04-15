@@ -59,10 +59,11 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
 
         # 预测这两个顶点之间是否存在边，1代表存在，0为不存在
         neg_out = predictor(h[edge[0]], h[edge[1]])
-        print('pos_loss:', pos_loss, 'neg_out:', neg_out)
+
         # 计算损失函数的值
         neg_loss = -torch.log(1 - neg_out + 1e-15).mean()
         # print('neg_loss:', neg_loss)
+        print('pos_loss:', pos_loss, 'neg_loss:', neg_loss)
         loss = pos_loss + neg_loss
         loss.backward()
 

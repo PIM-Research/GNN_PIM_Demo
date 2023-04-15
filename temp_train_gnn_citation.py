@@ -195,7 +195,7 @@ def main():
         adj_matrix = norm_adj(adj_t).to_dense().numpy()
         embedding_num = adj_matrix.shape[0]
         cluster_label = torch.from_numpy(cluster_label)
-        data.x = torch.nn.Embedding(embedding_num, data.num_features).to(device)
+        data.x = torch.nn.Embedding(embedding_num, data.num_features).to(device).weight
 
     # 转换为2进制
     adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
