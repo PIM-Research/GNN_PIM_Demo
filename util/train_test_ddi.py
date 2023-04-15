@@ -7,15 +7,9 @@ from .global_variable import args
 
 
 def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, train_decorator: TrainDecorator,
-          cur_epoch=0, cluster_label=None, adj_origin=None):
-    row, col, _ = adj_origin.coo()
+          cur_epoch=0, cluster_label=None):
+    row, col, _ = adj_t.coo()
     edge_index = torch.stack([row, col], dim=0)
-
-    source_max = adj_origin.size(dim=0)
-    des_max = adj_origin.size(dim=1)
-    # 获取原始的顶点度列表
-    vertex_num = max(source_max, des_max)
-
     if args.call_neurosim:
         train_decorator.create_bash_command(cur_epoch, model.bits_W, model.bits_A)
     model.train()
@@ -58,14 +52,10 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         # print('pos_loss:', pos_loss)
 
         # 什么是负采样？
-        edge = negative_sampling(edge_index, num_nodes=vertex_num,
+        edge = negative_sampling(edge_index, num_nodes=x.size(0),
                                  num_neg_samples=perm.size(0), method='dense')
-        if args.use_cluster:
-            src = cluster_label[edge[0]]
-            dst = cluster_label[edge[1]]
-        else:
-            src = edge[0]
-            dst = edge[1]
+        src = edge[0]
+        dst = edge[1]
 
         # 预测这两个顶点之间是否存在边，1代表存在，0为不存在
         neg_out = predictor(h[src], h[dst])
