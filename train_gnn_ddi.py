@@ -47,7 +47,7 @@ def main():
         run_recorder.record('', 'cluster_adj_dense.csv', adj_dense, delimiter=',', fmt='%s')
         run_recorder.record('', 'cluster_label.csv', cluster_label, delimiter=',', fmt='%s')
         adj_t = SparseTensor.from_dense(adj_dense)
-        adj_t.value()[:] = None  # 将value属性置为None
+        adj_t.value = None  # 将value属性置为None
         adj_t = adj_t.coalesce()
         adj_matrix = norm_adj(adj_t).to_dense().numpy()
         embedding_num = adj_matrix.shape[0]
