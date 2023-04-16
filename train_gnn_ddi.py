@@ -164,9 +164,9 @@ def main():
                               f'Train: {100 * train_hits:.2f}%, '
                               f'Valid: {100 * valid_hits:.2f}%, '
                               f'Test: {100 * test_hits:.2f}%')
-                        writer.add_scalar('Train accuracy', 100 * train_hits, epoch)
-                        writer.add_scalar('Valid accuracy', 100 * valid_hits, epoch)
-                        writer.add_scalar('Test accuracy', 100 * test_hits, epoch)
+                        writer.add_scalar(f'{key} Train accuracy', 100 * train_hits, epoch)
+                        writer.add_scalar(f'{key} Valid accuracy', 100 * valid_hits, epoch)
+                        writer.add_scalar(f'{key} Test accuracy', 100 * test_hits, epoch)
                     print('---')
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])

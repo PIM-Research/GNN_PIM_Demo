@@ -75,7 +75,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         # 计算损失函数的值
         neg_loss = -torch.log(1 - neg_out + 1e-15).mean()
         # print('neg_loss:', neg_loss)
-        print('pos_loss:', pos_loss, 'neg_loss:', neg_loss)
+        # print('pos_loss:', pos_loss, 'neg_loss:', neg_loss)
         loss = pos_loss + neg_loss
         loss.backward()
 
