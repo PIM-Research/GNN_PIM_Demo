@@ -1,6 +1,6 @@
 import numpy as np
 from torch_sparse import sum as sparse_sum, fill_diag, mul, SparseTensor
-from .definition import DropMode, ClusterAlg, MappingAlg
+from .definition import DropMode, ClusterAlg, MappingAlg, ClusterBasis
 from math import ceil, floor
 from sklearn import cluster
 from .global_variable import args
@@ -131,8 +131,9 @@ def get_updated_list_reuse(deg_list, list_size, percentage, array_size, drop_mod
 
 
 def get_vertex_cluster(adj_dense: np.ndarray, cluster_alg: ClusterAlg):
-    # 转置邻接矩阵，按照源节点聚类
-    # adj_dense = np.transpose(adj_dense)
+    # 若按照源节点聚类，则转置邻接矩阵
+    if ClusterBasis(args.cluster_basis) is ClusterBasis.SRC:
+        adj_dense = np.transpose(adj_dense)
     if cluster_alg is ClusterAlg.DBSCAN:
         # 采用DBSCAN算法聚类
         dbscan = cluster.DBSCAN(eps=np.sqrt(adj_dense.shape[0] * args.eps), min_samples=args.min_samples)

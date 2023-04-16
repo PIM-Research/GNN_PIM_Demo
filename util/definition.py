@@ -16,3 +16,13 @@ class ClusterAlg(Enum):
 class MappingAlg(Enum):
     UNION = 1
     MEAN = 2
+
+
+class ClusterBasis(Enum):
+    DST = 1
+    SRC = 2
+
+
+class NEGS(Enum):
+    CLUSTER = 1
+    VERTEX = 2

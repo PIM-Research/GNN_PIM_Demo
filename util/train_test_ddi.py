@@ -4,11 +4,19 @@ from torch_geometric.utils import negative_sampling
 from models import GCN
 from .train_decorator import TrainDecorator
 from .global_variable import args
+from .definition import NEGS
 
 
 def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, train_decorator: TrainDecorator,
-          cur_epoch=0, cluster_label=None):
-    row, col, _ = adj_t.coo()
+          cur_epoch=0, cluster_label=None, adj_origin=None):
+    if NEGS(args.negs) is NEGS.CLUSTER:
+        row, col, _ = adj_t.coo()
+        vertex_num = x.size(0)
+    else:
+        row, col, _ = adj_origin.coo()
+        source_max = adj_origin.size(dim=0)
+        des_max = adj_origin.size(dim=1)
+        vertex_num = max(source_max, des_max)
     edge_index = torch.stack([col, row], dim=0)
     if args.call_neurosim:
         train_decorator.create_bash_command(cur_epoch, model.bits_W, model.bits_A)
@@ -52,10 +60,14 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         # print('pos_loss:', pos_loss)
 
         # 什么是负采样？
-        edge = negative_sampling(edge_index, num_nodes=x.size(0),
+        edge = negative_sampling(edge_index, num_nodes=vertex_num,
                                  num_neg_samples=perm.size(0), method='dense')
-        src = edge[0]
-        dst = edge[1]
+        if args.use_cluster and (NEGS(args.negs) is not NEGS.CLUSTER):
+            src = cluster_label[edge[0]]
+            dst = cluster_label[edge[1]]
+        else:
+            src = edge[0]
+            dst = edge[1]
 
         # 预测这两个顶点之间是否存在边，1代表存在，0为不存在
         neg_out = predictor(h[src], h[dst])
