@@ -202,7 +202,7 @@ def main():
         deg_inv_sqrt[deg_inv_sqrt == float('inf')] = 0
         adj_t = deg_inv_sqrt.view(-1, 1) * adj_t * deg_inv_sqrt.view(1, -1)
         data.adj_t = adj_t
-        adj_matrix = data.adj_t.to_dense().numpy()
+        adj_matrix = data.adj_t.cpu().to_dense()
 
         # 转换为2进制
         adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
