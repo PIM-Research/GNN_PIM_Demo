@@ -292,3 +292,7 @@ def main():
         logger.print_statistics(run)
     print('GraphSAGE' if args.use_sage else 'GCN')
     logger.print_statistics()
+
+
+if __name__ == "__main__":
+    main()
