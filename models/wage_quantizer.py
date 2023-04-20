@@ -15,7 +15,7 @@ def S(bits):
 
 
 def SR(x):
-    r = torch.FloatTensor(*x.size()).uniform_()
+    r = torch.FloatTensor(*x.size()).uniform_().to(x.device)
     return torch.floor(x + r)
 
 
