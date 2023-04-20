@@ -3,11 +3,6 @@ import time
 from util import recorder
 import os
 
-# 实例化recorder
-create_time = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
-dir_name = f'./record/ddi/{create_time}'
-# 实例化parser
-run_recorder = recorder.Recorder(dir_name)
 parser = argparse.ArgumentParser(description='OGBN-ddi (GNN)')
 parser.add_argument('--device', type=int, default=0)
 parser.add_argument('--percentile', type=int, default=50)
@@ -35,6 +30,7 @@ parser.add_argument('--dropout', type=float, default=0.5)
 parser.add_argument('--lr', type=float, default=0.01)
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--runs', type=int, default=10)
+parser.add_argument('--record-dir', type=str, default='ddi')
 parser.add_argument('--bl-weight', type=int, default=5, metavar='N',
                     help='word length in bits for weight output; -1 if full precision.')
 parser.add_argument('--bl-grad', type=int, default=5, metavar='N',
@@ -46,6 +42,12 @@ parser.add_argument('--bl-error', type=int, default=8, metavar='N',
 parser.add_argument('--bl-rand', type=int, default=16, metavar='N',
                     help='word length in bits for rand number; -1 if full precision.')
 args = parser.parse_args()
+
+# 实例化recorder
+create_time = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
+dir_name = f'./record/{args.record_dir}/{create_time}'
+# 实例化parser
+run_recorder = recorder.Recorder(dir_name)
 
 if not os.path.exists('./NeuroSim_Results_Each_Epoch'):
     os.makedirs('./NeuroSim_Results_Each_Epoch')

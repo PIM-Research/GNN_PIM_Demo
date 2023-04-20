@@ -83,9 +83,6 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
         # Just do some trivial random sampling.
         dst_neg = torch.randint(0, data.num_nodes, src.size(),
                                 dtype=torch.long, device=h.device)
-        # 将原图上的边转换为聚类后图上的边
-        if args.use_cluster:
-            dst_neg = cluster_label[dst_neg]
 
         neg_out = predictor(h[src], h[dst_neg])
         neg_loss = -torch.log(1 - neg_out + 1e-15).mean()
@@ -153,21 +150,6 @@ def test(model, predictor, data, split_edge, evaluator, batch_size, cluster_labe
 
 
 def main():
-    parser = argparse.ArgumentParser(description='OGBL-Citation2 (GNN)')
-    parser.add_argument('--device', type=int, default=0)
-    parser.add_argument('--log_steps', type=int, default=1)
-    parser.add_argument('--use_sage', action='store_true')
-    parser.add_argument('--num_layers', type=int, default=3)
-    parser.add_argument('--hidden_channels', type=int, default=256)
-    parser.add_argument('--dropout', type=float, default=0)
-    parser.add_argument('--batch_size', type=int, default=64 * 1024)
-    parser.add_argument('--lr', type=float, default=0.0005)
-    parser.add_argument('--epochs', type=int, default=50)
-    parser.add_argument('--eval_steps', type=int, default=1)
-    parser.add_argument('--runs', type=int, default=10)
-    args = parser.parse_args()
-    print(args)
-
     device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     device = torch.device(device)
 
@@ -182,49 +164,19 @@ def main():
     grad_clip = lambda x: C(x, args.bl_weight)
 
     train_dec = train_decorator.TrainDecorator(weight_quantification, grad_quantiication, grad_clip, run_recorder)
+    adj_origin = data.adj_t
     # 获取词嵌入数量
     cluster_label = None
-    # 将邻接矩阵正则化
-    adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
-    adj_t = data.adj_t
     if args.use_cluster:
         cluster_label = get_vertex_cluster(data.adj_t.to_dense().numpy(), ClusterAlg(args.cluster_alg))
         adj_dense = map_adj_to_cluster_adj(data.adj_t.to_dense().numpy(), cluster_label)
-        adj_t = SparseTensor.from_dense(adj_dense)
-        data.adj_t = adj_t
-        adj_matrix = norm_adj(adj_t).to_dense().numpy()
-        embedding_num = adj_matrix.shape[0]
+        adj_origin = SparseTensor.from_dense(adj_dense)
+        data.adj_t = adj_origin.to(device)
+        embedding_num = np.max(cluster_label) + 1
         cluster_label = torch.from_numpy(cluster_label)
         data.x = torch.nn.Embedding(embedding_num, data.num_features).to(device).weight
-
-    # 转换为2进制
-    adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
-    adj_binary_col, scale = dec2bin(adj_matrix, args.bl_activate)
-    for i, b in enumerate(adj_binary_col):
-        adj_binary[:, i::args.bl_activate] = b
-    activity = np.sum(adj_binary.astype(np.float64), axis=None) / np.size(adj_binary)
-
-    # 获取顶点特征更新列表
-    drop_mode = DropMode(args.drop_mode)
-    if args.percentile != 0:
-        if drop_mode == DropMode.GLOBAL:
-            updated_vertex, vertex_pointer = get_updated_list(adj_t, args.percentile, args.array_size,
-                                                              drop_mode)
-            set_vertex_map(vertex_pointer)
-            if args.call_neurosim:
-                run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_pointer, delimiter=',',
-                                                   fmt='%s')
-        else:
-            updated_vertex = get_updated_list(adj_t, args.percentile, args.array_size, drop_mode)
-            if args.call_neurosim:
-                run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
-    else:
-        updated_vertex = np.ones(max(adj_t.size(dim=0), adj_t.size(dim=1)))
-        if args.call_neurosim:
-            run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
-    if args.call_neurosim:
-        run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
-    set_updated_vertex_map(updated_vertex)
+        data.num_nodes = embedding_num
+        data.num_edges = torch.sum(adj_dense)
 
     split_edge = dataset.get_edge_split()
 
@@ -238,15 +190,11 @@ def main():
     }
 
     if args.use_sage:
+        adj_binary = np.zeros([data.adj_t.shape[0], data.adj_t.shape[1] * args.bl_activate], dtype=np.str_)
         model = SAGE(data.num_features, args.hidden_channels,
                      args.hidden_channels, args.num_layers,
                      args.dropout).to(device)
     else:
-        model = GCN(data.num_features, args.hidden_channels,
-                    args.hidden_channels, args.num_layers,
-                    args.dropout, bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
-                    recorder=run_recorder, adj_activity=activity).to(device)
-
         # Pre-compute GCN normalization.
         adj_t = data.adj_t.set_diag()
         deg = adj_t.sum(dim=1).to(torch.float)
@@ -254,6 +202,41 @@ def main():
         deg_inv_sqrt[deg_inv_sqrt == float('inf')] = 0
         adj_t = deg_inv_sqrt.view(-1, 1) * adj_t * deg_inv_sqrt.view(1, -1)
         data.adj_t = adj_t
+        adj_matrix = data.adj_t.to_dense().numpy()
+
+        # 转换为2进制
+        adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
+        adj_binary_col, scale = dec2bin(adj_matrix, args.bl_activate)
+        for i, b in enumerate(adj_binary_col):
+            adj_binary[:, i::args.bl_activate] = b
+        activity = np.sum(adj_binary.astype(np.float64), axis=None) / np.size(adj_binary)
+
+        model = GCN(data.num_features, args.hidden_channels,
+                    args.hidden_channels, args.num_layers,
+                    args.dropout, bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
+                    recorder=run_recorder, adj_activity=activity).to(device)
+
+    # 获取顶点特征更新列表
+    drop_mode = DropMode(args.drop_mode)
+    if args.percentile != 0:
+        if drop_mode == DropMode.GLOBAL:
+            updated_vertex, vertex_pointer = get_updated_list(adj_origin, args.percentile, args.array_size,
+                                                              drop_mode)
+            set_vertex_map(vertex_pointer)
+            if args.call_neurosim:
+                run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_pointer, delimiter=',',
+                                                   fmt='%s')
+        else:
+            updated_vertex = get_updated_list(adj_origin, args.percentile, args.array_size, drop_mode)
+            if args.call_neurosim:
+                run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
+    else:
+        updated_vertex = np.ones(max(adj_origin.size(dim=0), adj_origin.size(dim=1)))
+        if args.call_neurosim:
+            run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
+    if args.call_neurosim:
+        run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
+    set_updated_vertex_map(updated_vertex)
 
     predictor = LinkPredictor(args.hidden_channels, args.hidden_channels, 1,
                               args.num_layers, args.dropout).to(device)
@@ -287,6 +270,9 @@ def main():
                           f'Train: {train_mrr:.4f}, '
                           f'Valid: {valid_mrr:.4f}, '
                           f'Test: {test_mrr:.4f}')
+            if args.call_neurosim:
+                call(["chmod", "o+x", run_recorder.bootstrap_path])
+                call(["/bin/bash", run_recorder.bootstrap_path])
 
         print('GraphSAGE' if args.use_sage else 'GCN')
         logger.print_statistics(run)
