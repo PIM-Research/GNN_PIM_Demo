@@ -1,52 +1,25 @@
 import argparse
+from subprocess import call
+
 import torch
-from torch.nn import Parameter
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-import torch_geometric.transforms as T
-from models import GCN, SAGE, QG, QW, C
-from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 
-from util import train_decorator
-from util.definition import DropMode, ClusterAlg
-from util.global_variable import run_recorder, weight_quantification, grad_clip, grad_quantiication
-from util.hook import set_vertex_map, set_updated_vertex_map, hook_forward_set_grad_zero
-from util.logger import Logger
-import numpy as np
-from util.global_variable import args
-from util.other import get_vertex_cluster, map_adj_to_cluster_adj, norm_adj, dec2bin, get_updated_list
-from subprocess import call
-from tensorboardX import SummaryWriter
+import torch_geometric.transforms as T
+
+from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 from torch_sparse import SparseTensor
 
+from models import SAGE, GCN, LinkPredictor
+from util import train_decorator
+from util.definition import ClusterAlg, DropMode
+from util.global_variable import args, run_recorder, weight_quantification, grad_clip, grad_quantiication
+from util.hook import set_vertex_map, set_updated_vertex_map, hook_forward_set_grad_zero
+from util.logger import Logger
+from util.other import get_vertex_cluster, map_adj_to_cluster_adj, get_updated_list, dec2bin
+import numpy as np
+
 from util.train_decorator import TrainDecorator
-
-
-class LinkPredictor(torch.nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels, num_layers,
-                 dropout):
-        super(LinkPredictor, self).__init__()
-
-        self.lins = torch.nn.ModuleList()
-        self.lins.append(torch.nn.Linear(in_channels, hidden_channels))
-        for _ in range(num_layers - 2):
-            self.lins.append(torch.nn.Linear(hidden_channels, hidden_channels))
-        self.lins.append(torch.nn.Linear(hidden_channels, out_channels))
-
-        self.dropout = dropout
-
-    def reset_parameters(self):
-        for lin in self.lins:
-            lin.reset_parameters()
-
-    def forward(self, x_i, x_j):
-        x = x_i * x_j
-        for lin in self.lins[:-1]:
-            x = lin(x)
-            x = F.relu(x)
-            x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.lins[-1](x)
-        return torch.sigmoid(x)
 
 
 def train(model, predictor, data, split_edge, optimizer, batch_size, train_dec: TrainDecorator,
@@ -56,11 +29,11 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_dec: 
     model.train()
     predictor.train()
 
-    source_edge = split_edge['train']['source_node'].to(data.x.device)
-    target_edge = split_edge['train']['target_node'].to(data.x.device)
+    pos_train_edge = split_edge['train']['edge'].to(data.x.device)
 
     total_loss = total_examples = 0
-    for i, perm in enumerate(DataLoader(range(source_edge.size(0)), batch_size, shuffle=True)):
+    for i, perm in enumerate(DataLoader(range(pos_train_edge.size(0)), batch_size,
+                                        shuffle=True)):
         # 量化权重
         train_dec.quantify_weight(model, i, cur_epoch)
 
@@ -71,28 +44,28 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_dec: 
 
         h = model(data.x, data.adj_t)
 
-        src, dst = source_edge[perm], target_edge[perm]
+        edge = pos_train_edge[perm].t()
         # 将原图上的边转换为聚类后图上的边
         if args.use_cluster:
-            src = cluster_label[src]
-            dst = cluster_label[dst]
-
-        pos_out = predictor(h[src], h[dst])
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
+        pos_out = predictor(h[edge[0]], h[edge[1]])
         pos_loss = -torch.log(pos_out + 1e-15).mean()
 
         # Just do some trivial random sampling.
-        dst_neg = torch.randint(0, data.num_nodes, src.size(),
-                                dtype=torch.long, device=h.device)
+        edge = torch.randint(0, data.num_nodes, edge.size(), dtype=torch.long,
+                             device=h.device)
 
-        neg_out = predictor(h[src], h[dst_neg])
+        neg_out = predictor(h[edge[0]], h[edge[1]])
         neg_loss = -torch.log(1 - neg_out + 1e-15).mean()
 
         loss = pos_loss + neg_loss
         loss.backward()
 
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        torch.nn.utils.clip_grad_norm_(predictor.parameters(), 1.0)
         # 量化梯度
         train_dec.quantify_activation(model)
-
         optimizer.step()
 
         num_examples = pos_out.size(0)
@@ -108,55 +81,93 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_dec: 
 
 @torch.no_grad()
 def test(model, predictor, data, split_edge, evaluator, batch_size, cluster_label=None):
-    predictor.eval()
+    model.eval()
 
     h = model(data.x, data.adj_t)
 
-    def test_split(split):
-        source = split_edge[split]['source_node'].to(h.device)
-        target = split_edge[split]['target_node'].to(h.device)
-        target_neg = split_edge[split]['target_node_neg'].to(h.device)
+    pos_train_edge = split_edge['train']['edge'].to(h.device)
+    pos_valid_edge = split_edge['valid']['edge'].to(h.device)
+    neg_valid_edge = split_edge['valid']['edge_neg'].to(h.device)
+    pos_test_edge = split_edge['test']['edge'].to(h.device)
+    neg_test_edge = split_edge['test']['edge_neg'].to(h.device)
 
-        pos_preds = []
-        for perm in DataLoader(range(source.size(0)), batch_size):
-            src, dst = source[perm], target[perm]
-            if args.use_cluster:
-                src = cluster_label[src]
-                dst = cluster_label[dst]
-            pos_preds += [predictor(h[src], h[dst]).squeeze().cpu()]
-        pos_pred = torch.cat(pos_preds, dim=0)
+    pos_train_preds = []
+    for perm in DataLoader(range(pos_train_edge.size(0)), batch_size):
+        edge = pos_train_edge[perm].t()
+        if args.use_cluster:
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
+        pos_train_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
+    pos_train_pred = torch.cat(pos_train_preds, dim=0)
 
-        neg_preds = []
-        source = source.view(-1, 1).repeat(1, 1000).view(-1)
-        target_neg = target_neg.view(-1)
-        for perm in DataLoader(range(source.size(0)), batch_size):
-            src, dst_neg = source[perm], target_neg[perm]
-            if args.use_cluster:
-                src = cluster_label[src]
-                dst_neg = cluster_label[dst_neg]
-            neg_preds += [predictor(h[src], h[dst_neg]).squeeze().cpu()]
-        neg_pred = torch.cat(neg_preds, dim=0).view(-1, 1000)
+    pos_valid_preds = []
+    for perm in DataLoader(range(pos_valid_edge.size(0)), batch_size):
+        edge = pos_valid_edge[perm].t()
+        if args.use_cluster:
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
+        pos_valid_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
+    pos_valid_pred = torch.cat(pos_valid_preds, dim=0)
 
-        return evaluator.eval({
-            'y_pred_pos': pos_pred,
-            'y_pred_neg': neg_pred,
-        })['mrr_list'].mean().item()
+    neg_valid_preds = []
+    for perm in DataLoader(range(neg_valid_edge.size(0)), batch_size):
+        edge = neg_valid_edge[perm].t()
+        if args.use_cluster:
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
+        neg_valid_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
+    neg_valid_pred = torch.cat(neg_valid_preds, dim=0)
 
-    train_mrr = test_split('eval_train')
-    valid_mrr = test_split('valid')
-    test_mrr = test_split('test')
+    pos_test_preds = []
+    for perm in DataLoader(range(pos_test_edge.size(0)), batch_size):
+        edge = pos_test_edge[perm].t()
+        if args.use_cluster:
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
+        pos_test_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
+    pos_test_pred = torch.cat(pos_test_preds, dim=0)
 
-    return train_mrr, valid_mrr, test_mrr
+    neg_test_preds = []
+    for perm in DataLoader(range(neg_test_edge.size(0)), batch_size):
+        edge = neg_test_edge[perm].t()
+        if args.use_cluster:
+            edge[0] = cluster_label[edge[0]]
+            edge[1] = cluster_label[edge[1]]
+        neg_test_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
+    neg_test_pred = torch.cat(neg_test_preds, dim=0)
+
+    results = {}
+    for K in [10, 50, 100]:
+        evaluator.K = K
+        train_hits = evaluator.eval({
+            'y_pred_pos': pos_train_pred,
+            'y_pred_neg': neg_valid_pred,
+        })[f'hits@{K}']
+        valid_hits = evaluator.eval({
+            'y_pred_pos': pos_valid_pred,
+            'y_pred_neg': neg_valid_pred,
+        })[f'hits@{K}']
+        test_hits = evaluator.eval({
+            'y_pred_pos': pos_test_pred,
+            'y_pred_neg': neg_test_pred,
+        })[f'hits@{K}']
+
+        results[f'Hits@{K}'] = (train_hits, valid_hits, test_hits)
+
+    return results
 
 
 def main():
     device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     device = torch.device(device)
 
-    dataset = PygLinkPropPredDataset(name='ogbl-citation2',
+    dataset = PygLinkPropPredDataset(name='ogbl-ppa',
                                      transform=T.ToSparseTensor())
+
     data = dataset[0]
-    data.adj_t = data.adj_t.to_symmetric()
+    data.x = data.x.to(torch.float)
+    if args.use_node_embedding:
+        data.x = torch.cat([data.x, torch.load('embedding.pt')], dim=-1)
     data = data.to(device)
 
     train_dec = train_decorator.TrainDecorator(weight_quantification, grad_quantiication, grad_clip, run_recorder)
@@ -173,17 +184,7 @@ def main():
         data.x = torch.nn.Embedding(embedding_num, data.num_features).to(device).weight
         data.num_nodes = embedding_num
         data.num_edges = torch.sum(adj_dense)
-
     split_edge = dataset.get_edge_split()
-
-    # We randomly pick some training samples that we want to evaluate on:
-    torch.manual_seed(12345)
-    idx = torch.randperm(split_edge['train']['source_node'].numel())[:86596]
-    split_edge['eval_train'] = {
-        'source_node': split_edge['train']['source_node'][idx],
-        'target_node': split_edge['train']['target_node'][idx],
-        'target_node_neg': split_edge['valid']['target_node_neg'],
-    }
 
     if args.use_sage:
         adj_binary = np.zeros([data.adj_t.shape[0], data.adj_t.shape[1] * args.bl_activate], dtype=np.str_)
@@ -209,8 +210,9 @@ def main():
 
         model = GCN(data.num_features, args.hidden_channels,
                     args.hidden_channels, args.num_layers,
-                    args.dropout, bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
-                    recorder=run_recorder, adj_activity=activity).to(device)
+                    args.dropout, bl_weight=args.bl_weight, bl_activate=args.bl_activate,
+                    bl_error=args.bl_error,
+                    recorder=run_recorder, adj_activity=activity).to(device).to(device)
 
     # 获取顶点特征更新列表
     drop_mode = DropMode(args.drop_mode)
@@ -237,8 +239,12 @@ def main():
     predictor = LinkPredictor(args.hidden_channels, args.hidden_channels, 1,
                               args.num_layers, args.dropout).to(device)
 
-    evaluator = Evaluator(name='ogbl-citation2')
-    logger = Logger(args.runs, args)
+    evaluator = Evaluator(name='ogbl-ppa')
+    loggers = {
+        'Hits@10': Logger(args.runs, args),
+        'Hits@50': Logger(args.runs, args),
+        'Hits@100': Logger(args.runs, args),
+    }
 
     # 添加钩子使得drop掉的顶点特征不更新
     if args.percentile != 0:
@@ -257,29 +263,35 @@ def main():
             loss = train(model, predictor, data, split_edge, optimizer,
                          args.batch_size, train_dec=train_dec, cur_epoch=epoch,
                          cluster_label=cluster_label)
-            print(f'Run: {run + 1:02d}, Epoch: {epoch:02d}, Loss: {loss:.4f}')
 
             if epoch % args.eval_steps == 0:
-                result = test(model, predictor, data, split_edge, evaluator,
-                              args.batch_size, cluster_label=cluster_label)
-                logger.add_result(run, result)
+                results = test(model, predictor, data, split_edge, evaluator,
+                               args.batch_size, cluster_label=cluster_label)
+                for key, result in results.items():
+                    loggers[key].add_result(run, result)
 
                 if epoch % args.log_steps == 0:
-                    train_mrr, valid_mrr, test_mrr = result
-                    print(f'Run: {run + 1:02d}, '
-                          f'Epoch: {epoch:02d}, '
-                          f'Loss: {loss:.4f}, '
-                          f'Train: {train_mrr:.4f}, '
-                          f'Valid: {valid_mrr:.4f}, '
-                          f'Test: {test_mrr:.4f}')
+                    for key, result in results.items():
+                        train_hits, valid_hits, test_hits = result
+                        print(key)
+                        print(f'Run: {run + 1:02d}, '
+                              f'Epoch: {epoch:02d}, '
+                              f'Loss: {loss:.4f}, '
+                              f'Train: {100 * train_hits:.2f}%, '
+                              f'Valid: {100 * valid_hits:.2f}%, '
+                              f'Test: {100 * test_hits:.2f}%')
+
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])
 
-        print('GraphSAGE' if args.use_sage else 'GCN')
-        logger.print_statistics(run)
-    print('GraphSAGE' if args.use_sage else 'GCN')
-    logger.print_statistics()
+        for key in loggers.keys():
+            print(key)
+            loggers[key].print_statistics(run, key=key)
+
+    for key in loggers.keys():
+        print(key)
+        loggers[key].print_statistics(key=key)
 
 
 if __name__ == "__main__":

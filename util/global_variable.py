@@ -1,5 +1,7 @@
 import argparse
 import time
+
+from models import QW, QG, C
 from util import recorder
 import os
 
@@ -56,3 +58,7 @@ if not os.path.exists('./result'):
 result_file_path = f'./result/{create_time}.txt'
 with open(result_file_path, 'w') as f:
     f.write(f'{str(args)}\n')
+
+weight_quantification = lambda x, scale: QW(x, args.bl_weight, scale)
+grad_quantiication = lambda x: QG(x, args.bl_grad, args.bl_rand, args.lr)
+grad_clip = lambda x: C(x, args.bl_weight)
