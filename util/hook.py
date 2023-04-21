@@ -36,6 +36,15 @@ def hook_forward_set_grad_zero(module, input_data, output_data):
     return output_data
 
 
+def hook_forward_set_grad_zero1(module, input_data, output_data):
+    assert updated_vertex_map is not None
+    output_data_updated = output_data.clone()
+    if input_data[0].shape[1] == output_data.shape[1]:
+        mask = vertex_map[updated_vertex_map == 0] if vertex_map is not None else updated_vertex_map == 0
+        output_data_updated[mask, :] = input_data[0][mask, :]
+    return output_data_updated
+
+
 def hook_Layer_output(self: NamedGCNConv, input_data, output_data):
     weight_updated_a = run_recorder.record(f'layer_run/epoch{current_epoch}', f'{self.name}.output.csv',
                                            output_data.data.to('cpu').data.numpy(),
