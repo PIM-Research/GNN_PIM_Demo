@@ -91,7 +91,7 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_dec: 
         loss.backward()
 
         # 量化梯度
-        train_dec.quantify_activation(model)
+        train_dec.quantify_grad(model)
 
         optimizer.step()
 

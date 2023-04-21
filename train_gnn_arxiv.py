@@ -21,7 +21,8 @@ def train(model, data, train_idx, optimizer, train_decorator: TrainDecorator, cu
         train_decorator.create_bash_command(cur_epoch, model.bits_W, model.bits_A)
     model.train()
     # 量化权重
-    train_decorator.quantify_weight(model, 1, cur_epoch)
+    if args.bl_weight != -1:
+        train_decorator.quantify_weight(model, 1, cur_epoch)
 
     # 绑定钩子函数，记录各层的输入
     if args.call_neurosim:
@@ -34,7 +35,8 @@ def train(model, data, train_idx, optimizer, train_decorator: TrainDecorator, cu
     loss.backward()
 
     # 量化梯度
-    train_decorator.quantify_activation(model)
+    if args.bl_grad != -1:
+        train_decorator.quantify_grad(model)
 
     optimizer.step()
     # 清除钩子

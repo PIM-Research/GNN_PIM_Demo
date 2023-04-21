@@ -38,7 +38,7 @@ class TrainDecorator:
                     self.hook_handle_list.append(layer_c.register_forward_hook(hook_combination_input_output))
                 # self.hook_handle_list.append(layer.register_forward_hook(hook_Layer_output))
 
-    def quantify_activation(self, model):
+    def quantify_grad(self, model):
         for name, param in list(model.named_parameters())[::-1]:
             if 'weight' in name:
                 param.grad.data = self.grad_quantification(param.grad.data).data

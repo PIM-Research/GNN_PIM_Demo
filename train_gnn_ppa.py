@@ -65,7 +65,7 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_dec: 
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         torch.nn.utils.clip_grad_norm_(predictor.parameters(), 1.0)
         # 量化梯度
-        train_dec.quantify_activation(model)
+        train_dec.quantify_grad(model)
         optimizer.step()
 
         num_examples = pos_out.size(0)

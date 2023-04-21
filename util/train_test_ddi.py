@@ -85,7 +85,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
 
         # gradient quantization
         # 量化梯度
-        train_decorator.quantify_activation(model)
+        train_decorator.quantify_grad(model)
 
         optimizer.step()
 
