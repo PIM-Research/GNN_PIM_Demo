@@ -62,18 +62,6 @@ def map_data(data: np.ndarray, array_size, vertex_num):
     for i in range(0, region_num):
         data_mapped[i * array_size:(i + 1) * array_size] = data[i:region_num * array_size:region_num]
     data_mapped[region_num * array_size:] = data[region_num * array_size:]
-    # index = 0
-    # for i in range(0, array_num):
-    #     if (array_size - 1) * array_num + i < vertex_num:
-    #         data_mapped[i * array_size:(i + 1) * array_size] = data[i::array_num]
-    #     elif (i + 1) * array_size < vertex_num:
-    #         data_mapped[i * array_size:(i + 1) * array_size - 1] = data[i::array_num]
-    #         data_mapped[(i + 1) * array_size - 1] = data[
-    #             (vertex_num % array_size + index + 1) * array_num - 1]
-    #         index += 1
-    #     else:
-    #         data_mapped[i * array_size:vertex_num] = data[
-    #                                                  i:(vertex_num % array_size * array_num):array_num]
     return data_mapped
 
 
