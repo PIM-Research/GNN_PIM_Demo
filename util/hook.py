@@ -24,7 +24,7 @@ def hook_set_epoch(self: NamedGCNConv, input_data):
 
 def hook_forward_set_grad_zero(module, input_data, output_data):
     assert updated_vertex_map is not None
-    print(input_data.shape[0], input_data.shape[1])
+    print(input_data[0].shape[0], input_data[0].shape[1])
     print(output_data.shape[0], output_data.shape[1])
     if vertex_map is not None:
         for i, vertex_index in enumerate(vertex_map):
