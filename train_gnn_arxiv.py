@@ -48,7 +48,7 @@ class GCN(torch.nn.Module):
         self.weight_scale = {}
         self.weight_acc = {}
         if self.bits_W != -1:
-            for name, param in self.named_parameters():
+            for name, param in self.convs.named_parameters():
                 if 'weight' in name:
                     data_before = param.data.T
                     wage_init_(param, bl_weight, name, self.weight_scale, factor=1.0)
