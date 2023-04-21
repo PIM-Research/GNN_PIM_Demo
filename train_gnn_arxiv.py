@@ -50,19 +50,21 @@ def test(model, data, split_idx, evaluator, cluster_label=None):
 
     out = model(data.x, data.adj_t)
     y_pred = out.argmax(dim=-1, keepdim=True)
-    pred_idx = cluster_label[split_idx['train']] if cluster_label is not None else split_idx['train']
+    train_idx = cluster_label[split_idx['train']] if cluster_label is not None else split_idx['train']
+    valid_idx = cluster_label[split_idx['valid']] if cluster_label is not None else split_idx['valid']
+    test_idx = cluster_label[split_idx['test']] if cluster_label is not None else split_idx['test']
 
     train_acc = evaluator.eval({
         'y_true': data.y[split_idx['train']],
-        'y_pred': y_pred[pred_idx],
+        'y_pred': y_pred[train_idx],
     })['acc']
     valid_acc = evaluator.eval({
         'y_true': data.y[split_idx['valid']],
-        'y_pred': y_pred[pred_idx],
+        'y_pred': y_pred[valid_idx],
     })['acc']
     test_acc = evaluator.eval({
         'y_true': data.y[split_idx['test']],
-        'y_pred': y_pred[pred_idx],
+        'y_pred': y_pred[test_idx],
     })['acc']
 
     return train_acc, valid_acc, test_acc
