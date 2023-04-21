@@ -7,13 +7,57 @@ import torch_geometric.transforms as T
 
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
-from models import SAGE, GCN
+from models import SAGE
 from util import train_decorator
 from util.global_variable import args, run_recorder, weight_quantification, grad_clip, grad_quantiication
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from util.other import transform_adj_matrix, transform_matrix_2_binary, store_updated_list_and_adj_matrix, norm_adj
 from util.train_decorator import TrainDecorator
+from torch_geometric.nn import GCNConv
+
+
+class GCN(torch.nn.Module):
+    def __init__(self, in_channels, hidden_channels, out_channels, num_layers,
+                 dropout):
+        super(GCN, self).__init__()
+
+        self.convs = torch.nn.ModuleList()
+        self.convs.append(GCNConv(in_channels, hidden_channels, cached=True))
+        self.bns = torch.nn.ModuleList()
+        self.bns.append(torch.nn.BatchNorm1d(hidden_channels))
+        for _ in range(num_layers - 2):
+            self.convs.append(
+                GCNConv(hidden_channels, hidden_channels, cached=True))
+            self.bns.append(torch.nn.BatchNorm1d(hidden_channels))
+        self.convs.append(GCNConv(hidden_channels, out_channels, cached=True))
+
+        self.dropout = dropout
+
+    def reset_parameters(self):
+        for conv in self.convs:
+            conv.reset_parameters()
+        for bn in self.bns:
+            bn.reset_parameters()
+
+    def forward(self, x, adj_t):
+        for i, conv in enumerate(self.convs[:-1]):
+            x = conv(x, adj_t)
+            x = self.bns[i](x)
+            x = F.relu(x)
+            x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.convs[-1](x, adj_t)
+        return x.log_softmax(dim=-1)
+
+    def record_cost(self):
+        message_cost = round(self.convs[0].message_cost_record, 2)
+        aggregate_cost = round(self.convs[0].aggregate_cost_record, 2)
+        message_proportion = round(message_cost / (message_cost + aggregate_cost), 2)
+        aggregate_proportion = round(aggregate_cost / (message_cost + aggregate_cost), 2)
+
+        with open('record/gcn.txt', 'a') as gcn:
+            gcn.write(
+                f'gcn record: message_cost {message_cost} {message_proportion} aggregate_cost {aggregate_cost} {aggregate_proportion}\n')
 
 
 def train(model, data, train_idx, optimizer, train_decorator: TrainDecorator, cur_epoch=0, cluster_label=None):
@@ -108,10 +152,13 @@ def main():
                      dataset.num_classes, args.num_layers,
                      args.dropout).to(device)
     else:
-        model = GCN(data.num_features, args.hidden_channels,
-                    dataset.num_classes, args.num_layers,
-                    args.dropout, bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
-                    recorder=run_recorder, adj_activity=activity).to(device)
+        # model = GCN(data.num_features, args.hidden_channels,
+        #             dataset.num_classes, args.num_layers,
+        #             args.dropout, bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
+        #             recorder=run_recorder, adj_activity=activity).to(device)
+        model = GCN(args.hidden_channels, args.hidden_channels,
+                    args.hidden_channels, args.num_layers,
+                    args.dropout).to(device)
 
     evaluator = Evaluator(name='ogbn-arxiv')
     logger = Logger(args.runs, args)
