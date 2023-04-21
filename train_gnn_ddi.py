@@ -28,7 +28,7 @@ def main():
 
     data = dataset[0]
     # 将邻接矩阵正则化
-    adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
+    adj_matrix = norm_adj(data.adj_t).to_dense().numpy() if args.call_neurosim else None
     # 获取ddi数据集的邻接矩阵，格式为SparseTensor
     adj_t = data.adj_t
     adj_origin = data.adj_t.to(device)
@@ -36,10 +36,11 @@ def main():
     # run_recorder.record('', 'adj_dense.csv', data.adj_t.to_dense().numpy(), delimiter=',', fmt='%s')
 
     # 获取词嵌入数量
-    embedding_num = data.adj_t.size(0)
-    cluster_label = None
     if args.use_cluster:
         cluster_label, embedding_num, adj_matrix, adj_t = transform_adj_matrix(data, device)
+    else:
+        embedding_num = data.adj_t.size(0)
+        cluster_label = None
 
     # 转换为2进制
     adj_binary, activity = transform_matrix_2_binary(adj_matrix)
