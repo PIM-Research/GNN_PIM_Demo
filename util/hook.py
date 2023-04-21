@@ -22,27 +22,26 @@ def hook_set_epoch(self: NamedGCNConv, input_data):
         matrix_activity = self.adj_activity
 
 
+# def hook_forward_set_grad_zero(module, input_data, output_data):
+#     assert updated_vertex_map is not None
+#     if input_data[0].shape[1] == output_data.shape[1]:
+#         if vertex_map is not None:
+#             for i, vertex_index in enumerate(vertex_map):
+#                 if updated_vertex_map[i] == 0:
+#                     output_data[vertex_index, :] = input_data[0][vertex_index, :]
+#         else:
+#             for i, is_updated in enumerate(updated_vertex_map):
+#                 if is_updated == 0:
+#                     output_data[i, :] = input_data[0][i, :]
+#     return output_data
+
+
 def hook_forward_set_grad_zero(module, input_data, output_data):
     assert updated_vertex_map is not None
     if input_data[0].shape[1] == output_data.shape[1]:
-        if vertex_map is not None:
-            for i, vertex_index in enumerate(vertex_map):
-                if updated_vertex_map[i] == 0:
-                    output_data[vertex_index, :] = input_data[0][vertex_index, :]
-        else:
-            for i, is_updated in enumerate(updated_vertex_map):
-                if is_updated == 0:
-                    output_data[i, :] = input_data[0][i, :]
-    return output_data
-
-
-def hook_forward_set_grad_zero1(module, input_data, output_data):
-    assert updated_vertex_map is not None
-    output_data_updated = output_data.clone()
-    if input_data[0].shape[1] == output_data.shape[1]:
         mask = vertex_map[updated_vertex_map == 0] if vertex_map is not None else updated_vertex_map == 0
-        output_data_updated[mask, :] = input_data[0][mask, :]
-    return output_data_updated
+        output_data[mask, :] = input_data[0][mask, :]
+    return output_data
 
 
 def hook_Layer_output(self: NamedGCNConv, input_data, output_data):
