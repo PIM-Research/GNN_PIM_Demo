@@ -34,14 +34,15 @@ class GCN(torch.nn.Module):
         # 初始化神经网络权重，并对其进行量化
         self.weight_scale = {}
         self.weight_acc = {}
-        for name, param in self.named_parameters():
-            if 'weight' in name:
-                data_before = param.data.T
-                wage_init_(param, bl_weight, name, self.weight_scale, factor=1.0)
-                self.weight_acc[name] = Q(param.data, bl_weight)
-                if recorder is not None:
-                    recorder.record_change('layer_init', name, data_before, self.weight_acc[name].T,
-                                           delimiter=',', fmt='%10f')
+        if self.bits_W != -1:
+            for name, param in self.named_parameters():
+                if 'weight' in name:
+                    data_before = param.data.T
+                    wage_init_(param, bl_weight, name, self.weight_scale, factor=1.0)
+                    self.weight_acc[name] = Q(param.data, bl_weight)
+                    if recorder is not None:
+                        recorder.record_change('layer_init', name, data_before, self.weight_acc[name].T,
+                                               delimiter=',', fmt='%10f')
 
         self.dropout = dropout
 
