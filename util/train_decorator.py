@@ -21,7 +21,7 @@ class TrainDecorator:
     def quantify_weight(self, model, batch_index, cur_epoch):
         for name, param in model.named_parameters():
             print(name)
-            if 'weight' in name:
+            if 'weight' in name and 'convs' in name:
                 param.data = self.weight_quantification(model.weight_acc[name], model.weight_scale[name]).to(
                     next(model.parameters()).device)
                 if self.recorder is not None and batch_index == 0:
@@ -41,7 +41,7 @@ class TrainDecorator:
 
     def quantify_grad(self, model):
         for name, param in list(model.named_parameters())[::-1]:
-            if 'weight' in name:
+            if 'weight' in name and 'convs' in name:
                 param.grad.data = self.grad_quantification(param.grad.data).data
                 # 裁剪，限制权重范围
                 w_acc = self.wage_grad_clip(model.weight_acc[name]).to(next(model.parameters()).device)
