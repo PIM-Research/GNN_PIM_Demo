@@ -28,7 +28,8 @@ def train(model, data, train_idx, optimizer, train_decorator: TrainDecorator, cu
         train_decorator.bind_hooks(model, 1, cur_epoch)
 
     optimizer.zero_grad()
-    out = model(data.x, data.adj_t)[cluster_label[train_idx]]
+    out = model(data.x, data.adj_t)[cluster_label[train_idx]] if cluster_label is not None else \
+        model(data.x, data.adj_t)[train_idx]
     loss = F.nll_loss(out, data.y.squeeze(1)[train_idx])
     loss.backward()
 
@@ -49,18 +50,19 @@ def test(model, data, split_idx, evaluator, cluster_label=None):
 
     out = model(data.x, data.adj_t)
     y_pred = out.argmax(dim=-1, keepdim=True)
+    pred_idx = cluster_label[split_idx['train']] if cluster_label is not None else split_idx['train']
 
     train_acc = evaluator.eval({
         'y_true': data.y[split_idx['train']],
-        'y_pred': y_pred[cluster_label[split_idx['train']]],
+        'y_pred': y_pred[pred_idx],
     })['acc']
     valid_acc = evaluator.eval({
         'y_true': data.y[split_idx['valid']],
-        'y_pred': y_pred[cluster_label[split_idx['valid']]],
+        'y_pred': y_pred[pred_idx],
     })['acc']
     test_acc = evaluator.eval({
         'y_true': data.y[split_idx['test']],
-        'y_pred': y_pred[cluster_label[split_idx['test']]],
+        'y_pred': y_pred[pred_idx],
     })['acc']
 
     return train_acc, valid_acc, test_acc
