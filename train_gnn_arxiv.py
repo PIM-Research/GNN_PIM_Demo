@@ -79,7 +79,7 @@ def main():
     data.adj_t = data.adj_t.to_symmetric()
     data = data.to(device)
 
-    adj_matrix = norm_adj(data.adj_t).to_dense().numpy()
+    adj_matrix = norm_adj(data.adj_t).to_dense().numpy() if args.call_neurosim else None
     # 获取词嵌入数量
     cluster_label = None
     if args.use_cluster:
