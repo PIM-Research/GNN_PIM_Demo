@@ -14,7 +14,6 @@ from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from util.other import transform_adj_matrix, transform_matrix_2_binary, store_updated_list_and_adj_matrix, norm_adj
 from util.train_decorator import TrainDecorator
-from torch_geometric.nn import GCNConv
 
 
 class GCN(torch.nn.Module):
@@ -186,13 +185,9 @@ def main():
                      dataset.num_classes, args.num_layers,
                      args.dropout).to(device)
     else:
-        # model = GCN(data.num_features, args.hidden_channels,
-        #             dataset.num_classes, args.num_layers,
-        #             args.dropout, bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
-        #             recorder=run_recorder, adj_activity=activity).to(device)
-        model = GCN(data.num_features, args.hidden_channels,
-                    dataset.num_classes, args.num_layers,
-                    args.dropout).to(device)
+        model = GCN(data.num_features, args.hidden_channels, dataset.num_classes, args.num_layers, args.dropout,
+                    bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
+                    recorder=run_recorder, adj_activity=activity).to(device)
 
     evaluator = Evaluator(name='ogbn-arxiv')
     logger = Logger(args.runs, args)
