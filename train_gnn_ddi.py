@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import torch
 import torch_geometric.transforms as T
+
+from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 from models import GAT, GCN, SAGE, LinkPredictor
@@ -43,7 +45,10 @@ def main():
     adj_binary, activity = transform_matrix_2_binary(adj_matrix)
 
     # 获取顶点特征更新列表
-    store_updated_list_and_adj_matrix(adj_t=adj_t, adj_binary=adj_binary)
+    updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=adj_t, adj_binary=adj_binary)
+    if vertex_pointer is not None:
+        set_vertex_map(vertex_pointer)
+    set_updated_vertex_map(updated_vertex)
 
     # 将边数据集拆分为训练集，验证集，测试集，其中验证集和测试集有两个属性，edge代表图中存在的边（正边），edge_neg代表图中不存在的边（负边）
     split_edge = dataset.get_edge_split()

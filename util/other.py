@@ -6,8 +6,6 @@ from sklearn import cluster
 from .global_variable import args, run_recorder
 import torch
 
-from .hook import set_vertex_map, set_updated_vertex_map
-
 
 def norm_adj(adj_t, add_self_loops=True):
     if not adj_t.has_value():
@@ -244,11 +242,10 @@ def transform_matrix_2_binary(adj_matrix):
 
 def store_updated_list_and_adj_matrix(adj_t, adj_binary):
     drop_mode = DropMode(args.drop_mode)
+    vertex_pointer = None
     if args.percentile != 0:
         if drop_mode == DropMode.GLOBAL:
-            updated_vertex, vertex_pointer = get_updated_list(adj_t, args.percentile, args.array_size,
-                                                              drop_mode)
-            set_vertex_map(vertex_pointer)
+            updated_vertex, vertex_pointer = get_updated_list(adj_t, args.percentile, args.array_size, drop_mode)
             if args.call_neurosim:
                 run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_pointer, delimiter=',',
                                                    fmt='%s')
@@ -262,4 +259,4 @@ def store_updated_list_and_adj_matrix(adj_t, adj_binary):
             run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
     if args.call_neurosim:
         run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
-    set_updated_vertex_map(updated_vertex)
+    return updated_vertex, vertex_pointer

@@ -10,6 +10,7 @@ from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 from models import SAGE, GCN
 from util import train_decorator
 from util.global_variable import args, run_recorder, weight_quantification, grad_clip, grad_quantiication
+from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from util.other import transform_adj_matrix, transform_matrix_2_binary, store_updated_list_and_adj_matrix, norm_adj
 from util.train_decorator import TrainDecorator
@@ -88,7 +89,10 @@ def main():
     adj_binary, activity = transform_matrix_2_binary(adj_matrix)
 
     # 获取顶点特征更新列表
-    store_updated_list_and_adj_matrix(adj_t=data.adj_t, adj_binary=adj_binary)
+    updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=data.adj_t, adj_binary=adj_binary)
+    if vertex_pointer is not None:
+        set_vertex_map(vertex_pointer)
+    set_updated_vertex_map(updated_vertex)
 
     split_idx = dataset.get_idx_split()
     train_idx = split_idx['train'].to(device)
