@@ -7,7 +7,7 @@ import torch_geometric.transforms as T
 
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
-from models import SAGE
+from models import SAGE, NamedGCNConv, wage_init_, Q, WAGERounding, C
 from util import train_decorator
 from util.global_variable import args, run_recorder, weight_quantification, grad_clip, grad_quantiication
 from util.hook import set_vertex_map, set_updated_vertex_map
@@ -19,18 +19,46 @@ from torch_geometric.nn import GCNConv
 
 class GCN(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, num_layers,
-                 dropout):
+                 dropout, bl_weight=-1, bl_activate=-1, bl_error=-1, writer=None, recorder=None, adj_activity=0):
         super(GCN, self).__init__()
+        print(bl_weight, bl_activate, bl_error)
+        self.bits_W = bl_weight
+        self.bits_A = bl_activate
+        self.bits_E = bl_error
+        self.writer = writer
+        self.adj_activity = adj_activity
 
+        count = 0
+        self.convs = torch.nn.ModuleList()
+        self.convs.append(
+            NamedGCNConv(in_channels, hidden_channels, cached=True, name='convs.' + str(count) + '.gcn_conv',
+                         adj_activity=adj_activity))
         self.convs = torch.nn.ModuleList()
         self.convs.append(GCNConv(in_channels, hidden_channels, cached=True))
         self.bns = torch.nn.ModuleList()
         self.bns.append(torch.nn.BatchNorm1d(hidden_channels))
         for _ in range(num_layers - 2):
+            count += 1
             self.convs.append(
-                GCNConv(hidden_channels, hidden_channels, cached=True))
+                NamedGCNConv(hidden_channels, hidden_channels, cached=True, name='convs.' + str(count) + '.gcn_conv',
+                             adj_activity=adj_activity))
             self.bns.append(torch.nn.BatchNorm1d(hidden_channels))
-        self.convs.append(GCNConv(hidden_channels, out_channels, cached=True))
+        count += 1
+        self.convs.append(
+            NamedGCNConv(hidden_channels, out_channels, cached=True, name='convs.' + str(count) + '.gcn_conv',
+                         adj_activity=adj_activity))
+        # 初始化神经网络权重，并对其进行量化
+        self.weight_scale = {}
+        self.weight_acc = {}
+        if self.bits_W != -1:
+            for name, param in self.named_parameters():
+                if 'weight' in name:
+                    data_before = param.data.T
+                    wage_init_(param, bl_weight, name, self.weight_scale, factor=1.0)
+                    self.weight_acc[name] = Q(param.data, bl_weight)
+                    if recorder is not None:
+                        recorder.record_change('layer_init', name, data_before, self.weight_acc[name].T,
+                                               delimiter=',', fmt='%10f')
 
         self.dropout = dropout
 
@@ -45,8 +73,16 @@ class GCN(torch.nn.Module):
             x = conv(x, adj_t)
             x = self.bns[i](x)
             x = F.relu(x)
+            # 对激活值输出进行量化
+            if self.bits_A != -1:
+                x = C(x, self.bits_A)  # keeps the gradients
+            x = WAGERounding.apply(x, self.bits_A, self.bits_E, None)
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.convs[-1](x, adj_t)
+        # 对激活值输出进行量化
+        if self.bits_A != -1:
+            x = C(x, self.bits_A)  # keeps the gradients
+        x = WAGERounding.apply(x, self.bits_A, self.bits_E, None)
         return x.log_softmax(dim=-1)
 
     def record_cost(self):
