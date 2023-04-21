@@ -20,6 +20,7 @@ class TrainDecorator:
 
     def quantify_weight(self, model, batch_index, cur_epoch):
         for name, param in model.named_parameters():
+            print(name)
             if 'weight' in name:
                 param.data = self.weight_quantification(model.weight_acc[name], model.weight_scale[name]).to(
                     next(model.parameters()).device)
