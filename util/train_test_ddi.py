@@ -31,7 +31,8 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
     for i, perm in enumerate(DataLoader(range(pos_train_edge.size(0)), batch_size,
                                         shuffle=True)):
         # 量化权重
-        train_decorator.quantify_weight(model, i, cur_epoch)
+        if args.bl_weight != -1:
+            train_decorator.quantify_weight(model, i, cur_epoch)
 
         # 绑定钩子函数，记录各层的输入
         if args.call_neurosim:
@@ -85,7 +86,8 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
 
         # gradient quantization
         # 量化梯度
-        train_decorator.quantify_grad(model)
+        if args.bl_weight != -1:
+            train_decorator.quantify_grad(model)
 
         optimizer.step()
 

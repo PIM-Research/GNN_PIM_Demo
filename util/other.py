@@ -161,56 +161,33 @@ def get_cluster_avg_deg(cluster_label: np.ndarray, vertex_deg: np.ndarray):
     return cluster_avg_deg, cluster_num
 
 
-def map_adj_to_cluster_adj(adj_dense: np.ndarray, cluster_label: np.ndarray) -> torch.Tensor:
-    mapping_alg = MappingAlg(args.mapping_alg)
+def map_adj_to_cluster_adj(adj_sparse: SparseTensor, cluster_label: np.ndarray) -> SparseTensor:
     # 获取簇的数量
     cluster_num = np.max(cluster_label) + 1
-    # 创建稠密矩阵
-    cluster_adj = torch.zeros((cluster_num, cluster_num))
-    # 根据不同的映射方式将顶点的邻接矩阵转换为类的邻接矩阵
-    if mapping_alg is MappingAlg.UNION:
-        # 获取行和列所属的簇
-        rows_cluster = cluster_label[np.nonzero(adj_dense)[0]]
-        cols_cluster = cluster_label[np.nonzero(adj_dense)[1]]
-        # 获取行和列不在同一簇中的元素
-        if args.add_self_loop is False:
-            mask = rows_cluster != cols_cluster
-            rows_cluster, cols_cluster = rows_cluster[mask], cols_cluster[mask]
-        # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
-        cluster_adj[rows_cluster, cols_cluster] = 1
-    elif mapping_alg is MappingAlg.MEAN:
-        vertex_deg = np.sum(adj_dense, axis=0)
-        cluster_avg_deg = get_cluster_avg_deg(cluster_label, vertex_deg)[0]
-        cluster_vertex_num = np.bincount(cluster_label, minlength=cluster_num)
-        for label in range(cluster_num):
-            if cluster_vertex_num[label] > 1:
-                cluster_vertex_index = np.where(cluster_label == label)[0]
-                cluster_vertex_deg = vertex_deg[cluster_vertex_index]
-                min_index = np.argmin(np.abs(cluster_vertex_deg - cluster_avg_deg[label]))
-                represent_vertex = cluster_vertex_index[min_index]
-            else:
-                represent_vertex = np.where(cluster_label == label)[0]
-            rows_cluster = label
-            cols_cluster = cluster_label[np.nonzero(adj_dense[represent_vertex])]
-            # 获取行和列不在同一簇中的元素
-            if args.add_self_loop is False:
-                mask = cols_cluster != rows_cluster
-                cols_cluster = cols_cluster[mask]
-            # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
-            cluster_adj[rows_cluster, cols_cluster] = 1
+    # 获取行和列所属的簇
+    rows_cluster = cluster_label[adj_sparse.row()]
+    cols_cluster = cluster_label[adj_sparse.col()]
+    # 获取行和列不在同一簇中的元素
+    if args.add_self_loop is False:
+        mask = rows_cluster != cols_cluster
+        rows_cluster, cols_cluster = rows_cluster[mask], cols_cluster[mask]
+    # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
+    values = torch.ones(rows_cluster.size(0))
+    cluster_adj = SparseTensor(row=rows_cluster, col=cols_cluster, value=values,
+                               sparse_sizes=(cluster_num, cluster_num))
+    # 将稀疏张量转换成COO格式
+    cluster_adj = cluster_adj.coalesce()
     return cluster_adj
 
 
 def transform_adj_matrix(data, device):
     cluster_label = get_vertex_cluster(data.adj_t.to_dense().numpy(), ClusterAlg(args.cluster_alg))
-    adj_dense = map_adj_to_cluster_adj(data.adj_t.to_dense().numpy(), cluster_label)
-    run_recorder.record('', 'cluster_adj_dense.csv', adj_dense, delimiter=',', fmt='%s')
+    adj_t = map_adj_to_cluster_adj(data.adj_t.to_dense().numpy(), cluster_label)
+    run_recorder.record('', 'cluster_adj_dense.csv', adj_t, delimiter=',', fmt='%s')
     run_recorder.record('', 'cluster_label.csv', cluster_label, delimiter=',', fmt='%s')
-    adj_t = SparseTensor.from_dense(adj_dense)
     adj_t.value = None  # 将value属性置为None
-    adj_t = adj_t.coalesce()
-    adj_matrix = norm_adj(adj_t).to_dense().numpy()
-    embedding_num = adj_matrix.shape[0]
+    adj_matrix = norm_adj(adj_t)
+    embedding_num = max(adj_matrix.size(dim=0), adj_matrix.size(dim=1))
     cluster_label = torch.from_numpy(cluster_label).long().to(device)
     print(embedding_num)
     return cluster_label, embedding_num, adj_matrix, adj_t
