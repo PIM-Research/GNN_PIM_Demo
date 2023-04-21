@@ -3,26 +3,18 @@ import torch
 import torch_geometric.transforms as T
 from util.logger import Logger
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
-from models import GAT, GCN, SAGE, LinkPredictor, QW, QG, C
+from models import GAT, GCN, SAGE, LinkPredictor
 from util import train_test_ddi, train_decorator
 from util.global_variable import *
-from util.other import norm_adj, dec2bin, get_updated_list, get_vertex_cluster, map_adj_to_cluster_adj
-from util.definition import DropMode, ClusterAlg
-from util.hook import set_vertex_map, set_updated_vertex_map, hook_forward_set_grad_zero
-import numpy as np
+from util.other import norm_adj, transform_adj_matrix, transform_matrix_2_binary, \
+    store_updated_list_and_adj_matrix
 from subprocess import call
 from tensorboardX import SummaryWriter
-from torch_sparse import SparseTensor
 
 
 def main():
     print(args)
     writer = SummaryWriter()
-
-    # 定义量化权重和梯度的lambda函数以及权重clip函数
-    weight_quantification = lambda x, scale: QW(x, args.bl_weight, scale)
-    grad_quantiication = lambda x: QG(x, args.bl_grad, args.bl_rand, args.lr)
-    grad_clip = lambda x: C(x, args.bl_weight)
 
     train_dec = train_decorator.TrainDecorator(weight_quantification, grad_quantiication, grad_clip, run_recorder)
 
@@ -39,55 +31,19 @@ def main():
     adj_t = data.adj_t
     adj_origin = data.adj_t.to(device)
 
-    run_recorder.record('', 'adj_dense.csv', data.adj_t.to_dense().numpy(), delimiter=',', fmt='%s')
+    # run_recorder.record('', 'adj_dense.csv', data.adj_t.to_dense().numpy(), delimiter=',', fmt='%s')
 
     # 获取词嵌入数量
     embedding_num = data.adj_t.size(0)
     cluster_label = None
     if args.use_cluster:
-        cluster_label = get_vertex_cluster(data.adj_t.to_dense().numpy(), ClusterAlg(args.cluster_alg))
-        adj_dense = map_adj_to_cluster_adj(data.adj_t.to_dense().numpy(), cluster_label)
-        run_recorder.record('', 'cluster_adj_dense.csv', adj_dense, delimiter=',', fmt='%s')
-        run_recorder.record('', 'cluster_label.csv', cluster_label, delimiter=',', fmt='%s')
-        adj_t = SparseTensor.from_dense(adj_dense)
-        adj_t.value = None  # 将value属性置为None
-        adj_t = adj_t.coalesce()
-        adj_matrix = norm_adj(adj_t).to_dense().numpy()
-        embedding_num = adj_matrix.shape[0]
-        cluster_label = torch.from_numpy(cluster_label).long().to(device)
-        print(embedding_num)
+        cluster_label, embedding_num, adj_matrix, adj_t = transform_adj_matrix(data, device)
 
     # 转换为2进制
-    adj_binary = None
-    activity = 0
-    if args.call_neurosim:
-        adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
-        adj_binary_col, scale = dec2bin(adj_matrix, args.bl_activate)
-        for i, b in enumerate(adj_binary_col):
-            adj_binary[:, i::args.bl_activate] = b
-        activity = np.sum(adj_binary.astype(np.float64), axis=None) / np.size(adj_binary)
+    adj_binary, activity = transform_matrix_2_binary(adj_matrix)
 
     # 获取顶点特征更新列表
-    drop_mode = DropMode(args.drop_mode)
-    if args.percentile != 0:
-        if drop_mode == DropMode.GLOBAL:
-            updated_vertex, vertex_pointer = get_updated_list(adj_t, args.percentile, args.array_size,
-                                                              drop_mode)
-            set_vertex_map(vertex_pointer)
-            if args.call_neurosim:
-                run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_pointer, delimiter=',',
-                                                   fmt='%s')
-        else:
-            updated_vertex = get_updated_list(adj_t, args.percentile, args.array_size, drop_mode)
-            if args.call_neurosim:
-                run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
-    else:
-        updated_vertex = np.ones(max(adj_t.size(dim=0), adj_t.size(dim=1)))
-        if args.call_neurosim:
-            run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
-    if args.call_neurosim:
-        run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
-    set_updated_vertex_map(updated_vertex)
+    store_updated_list_and_adj_matrix(adj_t=adj_t, adj_binary=adj_binary)
 
     # 将边数据集拆分为训练集，验证集，测试集，其中验证集和测试集有两个属性，edge代表图中存在的边（正边），edge_neg代表图中不存在的边（负边）
     split_edge = dataset.get_edge_split()
@@ -130,11 +86,8 @@ def main():
     # 将邻接矩阵放到设备上
     adj_t = adj_t.to(device)
 
-    # 添加钩子使得drop掉的顶点特征不更新
     if args.percentile != 0:
-        for index, (name, layer) in enumerate(model.convs.named_children()):
-            for index_c, (name_c, layer_c) in enumerate(layer.gcn_conv.named_children()):
-                layer_c.register_forward_hook(hook_forward_set_grad_zero)
+        train_dec.bind_update_hook(model)
 
     for run in range(args.runs):
         torch.nn.init.xavier_uniform_(emb.weight)

@@ -1,4 +1,4 @@
-from util.hook import hook_Layer_output, hook_combination_input_output, hook_set_epoch
+from util.hook import hook_combination_input_output, hook_set_epoch, hook_forward_set_grad_zero
 import os
 
 
@@ -58,3 +58,10 @@ class TrainDecorator:
                     self.recorder.record(f'layer_run/epoch{cur_epoch}', f'{name}_after.csv',
                                          model.weight_acc[name].T.to('cpu').data.numpy(),
                                          delimiter=',', fmt='%10.5f')
+
+    @staticmethod
+    def bind_update_hook(model):
+        # 添加钩子使得drop掉的顶点特征不更新
+        for index, (name, layer) in enumerate(model.convs.named_children()):
+            for index_c, (name_c, layer_c) in enumerate(layer.gcn_conv.named_children()):
+                layer_c.register_forward_hook(hook_forward_set_grad_zero)

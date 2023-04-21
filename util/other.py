@@ -3,8 +3,10 @@ from torch_sparse import sum as sparse_sum, fill_diag, mul, SparseTensor
 from .definition import DropMode, ClusterAlg, MappingAlg, ClusterBasis
 from math import ceil, floor
 from sklearn import cluster
-from .global_variable import args
+from .global_variable import args, run_recorder
 import torch
+
+from .hook import set_vertex_map, set_updated_vertex_map
 
 
 def norm_adj(adj_t, add_self_loops=True):
@@ -211,3 +213,53 @@ def map_adj_to_cluster_adj(adj_dense: np.ndarray, cluster_label: np.ndarray) -> 
             # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
             cluster_adj[rows_cluster, cols_cluster] = 1
     return cluster_adj
+
+
+def transform_adj_matrix(data, device):
+    cluster_label = get_vertex_cluster(data.adj_t.to_dense().numpy(), ClusterAlg(args.cluster_alg))
+    adj_dense = map_adj_to_cluster_adj(data.adj_t.to_dense().numpy(), cluster_label)
+    run_recorder.record('', 'cluster_adj_dense.csv', adj_dense, delimiter=',', fmt='%s')
+    run_recorder.record('', 'cluster_label.csv', cluster_label, delimiter=',', fmt='%s')
+    adj_t = SparseTensor.from_dense(adj_dense)
+    adj_t.value = None  # 将value属性置为None
+    adj_t = adj_t.coalesce()
+    adj_matrix = norm_adj(adj_t).to_dense().numpy()
+    embedding_num = adj_matrix.shape[0]
+    cluster_label = torch.from_numpy(cluster_label).long().to(device)
+    print(embedding_num)
+    return cluster_label, embedding_num, adj_matrix, adj_t
+
+
+def transform_matrix_2_binary(adj_matrix):
+    adj_binary = None
+    activity = 0
+    if args.call_neurosim:
+        adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
+        adj_binary_col, scale = dec2bin(adj_matrix, args.bl_activate)
+        for i, b in enumerate(adj_binary_col):
+            adj_binary[:, i::args.bl_activate] = b
+        activity = np.sum(adj_binary.astype(np.float64), axis=None) / np.size(adj_binary)
+    return adj_binary, activity
+
+
+def store_updated_list_and_adj_matrix(adj_t, adj_binary):
+    drop_mode = DropMode(args.drop_mode)
+    if args.percentile != 0:
+        if drop_mode == DropMode.GLOBAL:
+            updated_vertex, vertex_pointer = get_updated_list(adj_t, args.percentile, args.array_size,
+                                                              drop_mode)
+            set_vertex_map(vertex_pointer)
+            if args.call_neurosim:
+                run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_pointer, delimiter=',',
+                                                   fmt='%s')
+        else:
+            updated_vertex = get_updated_list(adj_t, args.percentile, args.array_size, drop_mode)
+            if args.call_neurosim:
+                run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
+    else:
+        updated_vertex = np.ones(max(adj_t.size(dim=0), adj_t.size(dim=1)))
+        if args.call_neurosim:
+            run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
+    if args.call_neurosim:
+        run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
+    set_updated_vertex_map(updated_vertex)
