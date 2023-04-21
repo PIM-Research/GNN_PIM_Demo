@@ -33,8 +33,6 @@ class GCN(torch.nn.Module):
         self.convs.append(
             NamedGCNConv(in_channels, hidden_channels, cached=True, name='convs.' + str(count) + '.gcn_conv',
                          adj_activity=adj_activity))
-        self.convs = torch.nn.ModuleList()
-        self.convs.append(GCNConv(in_channels, hidden_channels, cached=True))
         self.bns = torch.nn.ModuleList()
         self.bns.append(torch.nn.BatchNorm1d(hidden_channels))
         for _ in range(num_layers - 2):
@@ -64,7 +62,7 @@ class GCN(torch.nn.Module):
 
     def reset_parameters(self):
         for conv in self.convs:
-            conv.reset_parameters()
+            conv.gcn_conv.reset_parameters()
         for bn in self.bns:
             bn.reset_parameters()
 
