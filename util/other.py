@@ -51,8 +51,8 @@ def get_vertex_deg(adj: SparseTensor):
     source_max = adj.size(dim=0)
     des_max = adj.size(dim=1)
     # 获取原始的顶点度列表
-    vertex_deg = torch.from_numpy(np.zeros(max(source_max, des_max), dtype=np.int_)).to(adj.device())
-    np.add.at(vertex_deg, des_vertex, 1)
+    vertex_deg = np.zeros(max(source_max, des_max), dtype=np.int_)
+    np.add.at(vertex_deg, des_vertex.cpu().numpy(), 1)
     return vertex_deg
 
 
