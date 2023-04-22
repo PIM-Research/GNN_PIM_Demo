@@ -1,5 +1,9 @@
 import os
+from typing import Union
+
 import numpy as np
+import torch
+from torch_sparse import SparseTensor
 
 
 class Recorder:
@@ -22,10 +26,14 @@ class Recorder:
         file_path_ab_after = self.record(label, f'{file_name}_after.csv', data_after, delimiter, fmt)
         return file_path_ab_before, file_path_ab_after
 
-    def record_acc_vertex_map(self, label, file_name, data: np.ndarray, vertex_map: np.ndarray, delimiter=',',
-                              fmt='%10f'):
-        assert data.shape[0] == vertex_map.shape[0]
-        data_mapped = np.zeros(shape=data.shape)
-        for i, pointer in enumerate(vertex_map):
-            data_mapped[i] = data[pointer]
+    def record_acc_vertex_map(self, label, file_name, data: Union[np.ndarray, SparseTensor], vertex_map: np.ndarray,
+                              delimiter=',', fmt='%10f'):
+        if type(data) != SparseTensor:
+            assert data.shape[0] == vertex_map.shape[0]
+            data_mapped = data[vertex_map]
+        else:
+            data_coo = data.coo()
+            data_mapped = torch.stack(
+                [torch.from_numpy(vertex_map[data_coo[0]]), data_coo[1], data_coo[2]])
+
         return self.record(label, file_name, data_mapped, delimiter, fmt)

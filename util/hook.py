@@ -6,6 +6,7 @@ import numpy as np
 import torch.nn as nn
 import os
 import torch
+from torch_sparse import SparseTensor
 
 current_layer = -1
 current_epoch = 1
@@ -57,18 +58,14 @@ def hook_Layer_output(self: NamedGCNConv, input_data, output_data):
 
 def hook_combination_input_output(self: nn.Linear, input_data, output_data):
     layer = get_current_layer()
-    input_binary = np.zeros([input_data[0].shape[1], input_data[0].shape[0] * args.bl_activate], dtype=np.str)
-    input_binary_col, scale = dec2bin(input_data[0].data.cpu().data.numpy(), args.bl_activate)
-    for i, b in enumerate(input_binary_col):
-        input_binary[:, i::args.bl_activate] = b.transpose()
-    activity = np.sum(input_binary.astype(np.float), axis=None) / np.size(input_binary)
+    input_coo = SparseTensor.from_dense(output_data).coo()
+    input_stack = torch.stack([input_coo[0], input_coo[1], input_coo[2]])
     input_c = run_recorder.record(f'layer_run/epoch{current_epoch}', f'convs.{layer}.gcn_conv.lin.input_C.csv',
-                                  input_binary,
-                                  delimiter=',', fmt='%s')
+                                  input_stack, delimiter=',', fmt='%s')
     f = open(run_recorder.bootstrap_path, 'a')
     weight_c = input_c.replace('input_C', 'weight_before')
     weight_updated_c = weight_c.replace('before', 'after')
-    f.write(weight_updated_c + ' ' + weight_c + ' ' + input_c + ' ' + str(activity) + ' ')
+    f.write(weight_updated_c + ' ' + weight_c + ' ' + input_c + ' ')
     # f.close()
     # 这里对Combination的输出进行量化
     if args.bl_activate != -1:
@@ -95,7 +92,7 @@ def hook_combination_input_output(self: nn.Linear, input_data, output_data):
                             torch.zeros([row_num, col_num]).data.numpy(),
                             delimiter=',', fmt='%10.5f')
     input_a = os.path.join(run_recorder.dir_name, 'adj_matrix.csv')
-    f.write(weight_updated_a + ' ' + weight_a + ' ' + input_a + ' ' + str(matrix_activity) + ' ')
+    f.write(weight_updated_a + ' ' + weight_a + ' ' + input_a + ' ')
     f.close()
 
 

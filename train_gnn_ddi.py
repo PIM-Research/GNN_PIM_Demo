@@ -28,7 +28,7 @@ def main():
 
     data = dataset[0]
     # 将邻接矩阵正则化
-    adj_matrix = norm_adj(data.adj_t).to_dense().numpy() if args.call_neurosim else None
+    adj_matrix = norm_adj(data.adj_t) if args.call_neurosim else None
     # 获取ddi数据集的邻接矩阵，格式为SparseTensor
     adj_t = data.adj_t
     adj_origin = data.adj_t.to(device)
@@ -42,11 +42,14 @@ def main():
         embedding_num = data.adj_t.size(0)
         cluster_label = None
 
-    # 转换为2进制
-    adj_binary, activity = transform_matrix_2_binary(adj_matrix)
+    if args.call_neurosim:
+        adj_coo = adj_matrix.coo()
+        adj_stack = torch.stack([adj_coo[0], adj_coo[1], adj_coo[2]])
+    else:
+        adj_stack = None
 
     # 获取顶点特征更新列表
-    updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=adj_t, adj_binary=adj_binary)
+    updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=adj_t, adj_binary=adj_stack)
     if vertex_pointer is not None:
         set_vertex_map(vertex_pointer)
     set_updated_vertex_map(updated_vertex)
@@ -69,7 +72,7 @@ def main():
         model = GCN(args.hidden_channels, args.hidden_channels,
                     args.hidden_channels, args.num_layers,
                     args.dropout, bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
-                    recorder=run_recorder, adj_activity=activity).to(device)
+                    recorder=run_recorder).to(device)
     else:
         model = GAT(args.hidden_channels, args.hidden_channels,
                     args.hidden_channels, args.num_layers,

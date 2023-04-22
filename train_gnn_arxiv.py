@@ -162,17 +162,20 @@ def main():
     data.adj_t = data.adj_t.to_symmetric()
     data = data.to(device)
 
-    adj_matrix = norm_adj(data.adj_t).to_dense().numpy() if args.call_neurosim else None
+    adj_matrix = norm_adj(data.adj_t) if args.call_neurosim else None
     # 获取词嵌入数量
     cluster_label = None
     if args.use_cluster:
         cluster_label, data.num_nodes, adj_matrix, data.adj_t = transform_adj_matrix(data, device)
 
-    # 转换为2进制
-    adj_binary, activity = transform_matrix_2_binary(adj_matrix)
+    if args.call_neurosim:
+        adj_coo = adj_matrix.coo()
+        adj_stack = torch.stack([adj_coo[0], adj_coo[1], adj_coo[2]])
+    else:
+        adj_stack = None
 
     # 获取顶点特征更新列表
-    updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=data.adj_t, adj_binary=adj_binary)
+    updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=data.adj_t, adj_binary=adj_stack)
     if vertex_pointer is not None:
         set_vertex_map(vertex_pointer)
     set_updated_vertex_map(updated_vertex)
@@ -187,7 +190,7 @@ def main():
     else:
         model = GCN(data.num_features, args.hidden_channels, dataset.num_classes, args.num_layers, args.dropout,
                     bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
-                    recorder=run_recorder, adj_activity=activity).to(device)
+                    recorder=run_recorder).to(device)
 
     evaluator = Evaluator(name='ogbn-arxiv')
     logger = Logger(args.runs, args)
