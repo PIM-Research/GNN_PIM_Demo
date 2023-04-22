@@ -29,6 +29,7 @@ def main():
     data = dataset[0]
     # 将邻接矩阵正则化
     adj_matrix = norm_adj(data.adj_t) if args.call_neurosim else None
+    print(type(adj_matrix))
     # 获取ddi数据集的邻接矩阵，格式为SparseTensor
     adj_t = data.adj_t
     adj_origin = data.adj_t.to(device)
