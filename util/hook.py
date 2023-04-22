@@ -58,7 +58,7 @@ def hook_Layer_output(self: NamedGCNConv, input_data, output_data):
 
 def hook_combination_input_output(self: nn.Linear, input_data, output_data):
     layer = get_current_layer()
-    input_coo = SparseTensor.from_dense(output_data).coo()
+    input_coo = SparseTensor.from_dense(output_data.detach()).coo()
     input_stack = torch.stack([input_coo[0], input_coo[1], input_coo[2]]).to('cpu').numpy()
     input_c = run_recorder.record(f'layer_run/epoch{current_epoch}', f'convs.{layer}.gcn_conv.lin.input_C.csv',
                                   input_stack, delimiter=',', fmt='%s')
