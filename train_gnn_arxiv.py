@@ -168,14 +168,8 @@ def main():
     if args.use_cluster:
         cluster_label, data.num_nodes, adj_matrix, data.adj_t = transform_adj_matrix(data, device)
 
-    if args.call_neurosim:
-        adj_coo = adj_matrix.coo()
-        adj_stack = torch.stack([adj_coo[0], adj_coo[1], adj_coo[2]])
-    else:
-        adj_stack = None
-
     # 获取顶点特征更新列表
-    updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=data.adj_t, adj_binary=adj_stack)
+    updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=data.adj_t, adj_binary=adj_matrix)
     if vertex_pointer is not None:
         set_vertex_map(vertex_pointer)
     set_updated_vertex_map(updated_vertex)

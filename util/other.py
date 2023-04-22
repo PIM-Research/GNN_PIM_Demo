@@ -206,6 +206,11 @@ def transform_matrix_2_binary(adj_matrix):
 
 
 def store_updated_list_and_adj_matrix(adj_t, adj_binary):
+    if args.call_neurosim:
+        adj_coo = adj_binary.coo()
+        adj_binary = torch.stack([adj_coo[0], adj_coo[1], adj_coo[2]])
+    else:
+        adj_binary = None
     drop_mode = DropMode(args.drop_mode)
     vertex_pointer = None
     if args.percentile != 0:
