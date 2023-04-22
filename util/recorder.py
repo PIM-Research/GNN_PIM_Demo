@@ -33,7 +33,6 @@ class Recorder:
             assert data.shape[0] == vertex_map.shape[0]
             data_mapped = data[vertex_map]
         else:
-            print(data[0], data[1], data[2])
             data_mapped = torch.stack(
                 [torch.from_numpy(vertex_map[data[0].to(torch.int)]), data[1], data[2]])
 
