@@ -35,6 +35,6 @@ class Recorder:
         else:
             print(data[0], data[1], data[2])
             data_mapped = torch.stack(
-                [torch.from_numpy(vertex_map[data[0]]), data[1], data[2]])
+                [torch.from_numpy(vertex_map[data[0].to(torch.int)]), data[1], data[2]])
 
         return self.record(label, file_name, data_mapped, delimiter, fmt)
