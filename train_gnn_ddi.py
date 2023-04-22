@@ -45,7 +45,7 @@ def main():
 
     if args.call_neurosim:
         adj_coo = adj_matrix.coo()
-        adj_stack = torch.stack([adj_coo[0], adj_coo[1], adj_coo[2]])
+        adj_stack = torch.stack([adj_coo[0].to(torch.int), adj_coo[1].to(torch.int), adj_coo[2]])
     else:
         adj_stack = None
 
