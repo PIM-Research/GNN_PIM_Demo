@@ -163,9 +163,14 @@ def main():
     data.adj_t = data.adj_t.to_symmetric()
     data = data.to(device)
 
-    adj_matrix = norm_adj(data.adj_t) if args.call_neurosim else None
-    if args.bl_activate != -1:
-        adj_matrix = quantify_adj(adj_matrix, args.bl_activate)
+    # 将邻接矩阵正则化
+    if args.call_neurosim:
+        adj_matrix = norm_adj(data.adj_t)
+        if args.bl_activate != -1:
+            adj_matrix = quantify_adj(adj_matrix, args.bl_activate)
+    else:
+        adj_matrix = None
+
     # 获取词嵌入数量
     cluster_label = None
     if args.use_cluster:
