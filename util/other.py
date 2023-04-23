@@ -192,6 +192,9 @@ def transform_adj_matrix(data, device):
     run_recorder.record('', 'cluster_label.csv', cluster_label, delimiter=',', fmt='%s')
     adj_t.value = None  # 将value属性置为None
     adj_matrix = norm_adj(adj_t)
+    # 量化邻接矩阵
+    if args.bl_activate != -1:
+        adj_matrix = quantify_adj(adj_matrix, args.bl_activate)
     embedding_num = max(adj_matrix.size(dim=0), adj_matrix.size(dim=1))
     cluster_label = torch.from_numpy(cluster_label).long().to(device)
     print(embedding_num)

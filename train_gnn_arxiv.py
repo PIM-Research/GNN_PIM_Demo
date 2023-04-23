@@ -164,6 +164,8 @@ def main():
     data = data.to(device)
 
     adj_matrix = norm_adj(data.adj_t) if args.call_neurosim else None
+    if args.bl_activate != -1:
+        adj_matrix = quantify_adj(adj_matrix, args.bl_activate)
     # 获取词嵌入数量
     cluster_label = None
     if args.use_cluster:
@@ -193,9 +195,6 @@ def main():
 
     evaluator = Evaluator(name='ogbn-arxiv')
     logger = Logger(args.runs, args)
-    # 量化邻接矩阵
-    if args.bl_activate != -1:
-        data.adj_t = quantify_adj(data.adj_t, args.bl_activate).to_device()
 
     if args.percentile != 0:
         train_dec.bind_update_hook(model)

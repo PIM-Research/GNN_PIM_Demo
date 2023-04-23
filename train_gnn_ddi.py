@@ -29,7 +29,9 @@ def main():
     data = dataset[0]
     # 将邻接矩阵正则化
     adj_matrix = norm_adj(data.adj_t) if args.call_neurosim else None
-    print(type(adj_matrix))
+    if args.bl_activate != -1:
+        adj_matrix = quantify_adj(adj_matrix, args.bl_activate)
+
     # 获取ddi数据集的邻接矩阵，格式为SparseTensor
     adj_t = data.adj_t
     adj_origin = data.adj_t.to(device)
@@ -92,8 +94,6 @@ def main():
         'Hits@30': Logger(args.runs, args),
     }
 
-    # 量化邻接矩阵
-    adj_t = quantify_adj(adj_t, args.bl_activate).to_device()
     # 将邻接矩阵放到设备上
     adj_t = adj_t.to(device)
 
