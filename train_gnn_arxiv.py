@@ -100,11 +100,11 @@ def train(model, data, train_idx, optimizer, train_decorator: TrainDecorator, cu
     model.train()
     # 量化权重
     if args.bl_weight != -1:
-        train_decorator.quantify_weight(model, 1, cur_epoch)
+        train_decorator.quantify_weight(model, 0, cur_epoch)
 
     # 绑定钩子函数，记录各层的输入
     if args.call_neurosim:
-        train_decorator.bind_hooks(model, 1, cur_epoch)
+        train_decorator.bind_hooks(model, 0, cur_epoch)
 
     optimizer.zero_grad()
     out = model(data.x, data.adj_t)[cluster_label[train_idx]] if cluster_label is not None else \
@@ -119,7 +119,7 @@ def train(model, data, train_idx, optimizer, train_decorator: TrainDecorator, cu
     optimizer.step()
     # 清除钩子
     if args.call_neurosim:
-        train_decorator.clear_hooks(model, 1, cur_epoch)
+        train_decorator.clear_hooks(model, 0, cur_epoch)
 
     return loss.item()
 
