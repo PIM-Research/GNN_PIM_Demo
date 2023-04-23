@@ -186,8 +186,8 @@ def map_adj_to_cluster_adj(adj_sparse: SparseTensor, cluster_label: np.ndarray) 
 
 
 def transform_adj_matrix(data, device):
-    cluster_label = get_vertex_cluster(data.adj_t.to_dense().numpy(), ClusterAlg(args.cluster_alg))
-    adj_t = map_adj_to_cluster_adj(data.adj_t.to_dense().numpy(), cluster_label)
+    cluster_label = get_vertex_cluster(get_dense(data.adj_t), ClusterAlg(args.cluster_alg))
+    adj_t = map_adj_to_cluster_adj(data.adj_t, cluster_label)
     run_recorder.record('', 'cluster_adj_dense.csv', adj_t, delimiter=',', fmt='%s')
     run_recorder.record('', 'cluster_label.csv', cluster_label, delimiter=',', fmt='%s')
     adj_t.value = None  # 将value属性置为None
@@ -258,3 +258,11 @@ def quantify_adj(adj: SparseTensor, n):
     row, col, value = adj.coo()
     value = Q(value, n)
     return SparseTensor(row=row, col=col, value=value)
+
+
+def get_dense(adj: SparseTensor):
+    row, col, value = adj.coo()
+    node_num = max(adj.size(dim=0), adj.size(dim=1))
+    adj_dense = np.zeros((node_num, node_num))
+    adj_dense[row, col] = value if value is not None else 1
+    return adj_dense

@@ -161,7 +161,6 @@ def main():
 
     data = dataset[0]
     data.adj_t = data.adj_t.to_symmetric()
-    data = data.to(device)
 
     # 将邻接矩阵正则化
     if args.call_neurosim:
@@ -188,6 +187,7 @@ def main():
 
     split_idx = dataset.get_idx_split()
     train_idx = split_idx['train'].to(device)
+    data = data.to(device)
 
     if args.use_sage:
         model = SAGE(data.num_features, args.hidden_channels,
