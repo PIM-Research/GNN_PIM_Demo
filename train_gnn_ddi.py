@@ -9,7 +9,7 @@ from models import GAT, GCN, SAGE, LinkPredictor, Q
 from util import train_test_ddi, train_decorator
 from util.global_variable import *
 from util.other import norm_adj, transform_adj_matrix, transform_matrix_2_binary, \
-    store_updated_list_and_adj_matrix, record_net_structure
+    store_updated_list_and_adj_matrix, record_net_structure, quantify_adj
 from subprocess import call
 from tensorboardX import SummaryWriter
 
@@ -91,10 +91,10 @@ def main():
         'Hits@30': Logger(args.runs, args),
     }
 
+    # 量化邻接矩阵
+    adj_t = quantify_adj(adj_t, args.bl_activate).to_device()
     # 将邻接矩阵放到设备上
     adj_t = adj_t.to(device)
-    # 量化邻接矩阵
-    adj_t = Q(adj_t, args.bl_activate)
 
     if args.percentile != 0:
         train_dec.bind_update_hook(model)

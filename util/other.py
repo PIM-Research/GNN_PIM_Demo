@@ -2,6 +2,8 @@ import os
 
 import numpy as np
 from torch_sparse import sum as sparse_sum, fill_diag, mul, SparseTensor
+
+from models import Q
 from .definition import DropMode, ClusterAlg, MappingAlg, ClusterBasis
 from math import ceil, floor
 from sklearn import cluster
@@ -246,3 +248,9 @@ def record_net_structure(embedding_num, input_channels, hidden_channels, output_
             f.write(f'1,1,{embedding_num},1,1,{hidden_channels},0,1')
         f.write(f'1,1,{hidden_channels},1,1,{output_channels},0,1')
         f.write(f'1,1,{embedding_num},1,1,{output_channels},0,1')
+
+
+def quantify_adj(adj: SparseTensor, n):
+    row, col, value = adj.coo()
+    value = Q(value, n)
+    return SparseTensor(row=row, col=col, value=value)

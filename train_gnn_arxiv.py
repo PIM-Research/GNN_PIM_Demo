@@ -12,7 +12,8 @@ from util import train_decorator
 from util.global_variable import args, run_recorder, weight_quantification, grad_clip, grad_quantiication
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
-from util.other import transform_adj_matrix, transform_matrix_2_binary, store_updated_list_and_adj_matrix, norm_adj
+from util.other import transform_adj_matrix, transform_matrix_2_binary, store_updated_list_and_adj_matrix, norm_adj, \
+    quantify_adj
 from util.train_decorator import TrainDecorator
 
 
@@ -189,7 +190,7 @@ def main():
     evaluator = Evaluator(name='ogbn-arxiv')
     logger = Logger(args.runs, args)
     # 量化邻接矩阵
-    data.adj_t = Q(data.adj_t, args.bl_activate).to(device)
+    data.adj_t = quantify_adj(data.adj_t, args.bl_activate).to_device()
 
     if args.percentile != 0:
         train_dec.bind_update_hook(model)
