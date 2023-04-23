@@ -179,6 +179,8 @@ def map_adj_to_cluster_adj(adj_sparse: SparseTensor, cluster_label: np.ndarray) 
     if args.add_self_loop is False:
         mask = rows_cluster != cols_cluster
         rows_cluster, cols_cluster = rows_cluster[mask], cols_cluster[mask]
+    print('rows_cluster:', rows_cluster, type(rows_cluster))
+    print('cols_cluster:', cols_cluster, type(cols_cluster))
     # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
     values = torch.ones(rows_cluster.size())
     cluster_adj = SparseTensor(row=rows_cluster, col=cols_cluster, value=values,
