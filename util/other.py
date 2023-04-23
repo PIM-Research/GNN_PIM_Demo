@@ -166,23 +166,18 @@ def get_cluster_avg_deg(cluster_label: np.ndarray, vertex_deg: np.ndarray):
 
 
 def map_adj_to_cluster_adj(adj_sparse: SparseTensor, cluster_label: np.ndarray) -> SparseTensor:
-    print('cluster_label:', cluster_label)
     adj_sparse = adj_sparse.coo()
     # 获取簇的数量
     cluster_num = np.max(cluster_label) + 1
     # 获取行和列所属的簇
     rows_cluster = cluster_label[adj_sparse[0]]
     cols_cluster = cluster_label[adj_sparse[1]]
-    print('rows_cluster:', rows_cluster)
-    print('cols_cluster:', cols_cluster)
     # 获取行和列不在同一簇中的元素
     if args.add_self_loop is False:
         mask = rows_cluster != cols_cluster
         rows_cluster, cols_cluster = rows_cluster[mask], cols_cluster[mask]
-    print('rows_cluster:', rows_cluster, type(rows_cluster))
-    print('cols_cluster:', cols_cluster, type(cols_cluster))
     # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
-    values = torch.ones(rows_cluster.size())
+    values = torch.ones(rows_cluster.shape[0])
     cluster_adj = SparseTensor(row=rows_cluster, col=cols_cluster, value=values,
                                sparse_sizes=(cluster_num, cluster_num))
     # 将稀疏张量转换成COO格式
