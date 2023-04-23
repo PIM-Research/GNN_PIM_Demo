@@ -182,7 +182,6 @@ def map_adj_to_cluster_adj(adj_sparse: SparseTensor, cluster_label: np.ndarray) 
     values = torch.ones(rows_cluster.shape[0])
     cluster_adj = SparseTensor(row=rows_cluster, col=cols_cluster, value=values,
                                sparse_sizes=(cluster_num, cluster_num))
-    print(cluster_adj)
     # 将稀疏张量转换成COO格式
     cluster_adj = cluster_adj.coalesce()
     return cluster_adj
@@ -190,8 +189,8 @@ def map_adj_to_cluster_adj(adj_sparse: SparseTensor, cluster_label: np.ndarray) 
 
 def transform_adj_matrix(data, device):
     cluster_label = get_vertex_cluster(get_dense(data.adj_t), ClusterAlg(args.cluster_alg))
-    adj_t = map_adj_to_cluster_adj(data.adj_t, cluster_label)
-    print(adj_t)
+    adj_t_coo = map_adj_to_cluster_adj(data.adj_t, cluster_label).coo()
+    adj_t = torch.stack([adj_t_coo[0], adj_t_coo[1], adj_t_coo[2]])
     run_recorder.record('', 'cluster_adj_dense.csv', adj_t, delimiter=',', fmt='%s')
     run_recorder.record('', 'cluster_label.csv', cluster_label, delimiter=',', fmt='%s')
     adj_t.value = None  # 将value属性置为None
