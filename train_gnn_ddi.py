@@ -5,11 +5,11 @@ import torch_geometric.transforms as T
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
-from models import GAT, GCN, SAGE, LinkPredictor
+from models import GAT, GCN, SAGE, LinkPredictor, Q
 from util import train_test_ddi, train_decorator
 from util.global_variable import *
 from util.other import norm_adj, transform_adj_matrix, transform_matrix_2_binary, \
-    store_updated_list_and_adj_matrix
+    store_updated_list_and_adj_matrix, record_net_structure
 from subprocess import call
 from tensorboardX import SummaryWriter
 
@@ -40,7 +40,7 @@ def main():
     if args.use_cluster:
         cluster_label, embedding_num, adj_matrix, adj_t = transform_adj_matrix(data, device)
     else:
-        embedding_num = data.adj_t.size(0)
+        embedding_num = data.num_nodes
         cluster_label = None
 
     # 获取顶点特征更新列表
@@ -48,6 +48,10 @@ def main():
     if vertex_pointer is not None:
         set_vertex_map(vertex_pointer)
     set_updated_vertex_map(updated_vertex)
+
+    # 记录网络结构
+    record_net_structure(embedding_num, args.hidden_channels, args.hidden_channels, args.hidden_channels,
+                         args.num_layers)
 
     # 将边数据集拆分为训练集，验证集，测试集，其中验证集和测试集有两个属性，edge代表图中存在的边（正边），edge_neg代表图中不存在的边（负边）
     split_edge = dataset.get_edge_split()
@@ -89,6 +93,8 @@ def main():
 
     # 将邻接矩阵放到设备上
     adj_t = adj_t.to(device)
+    # 量化邻接矩阵
+    adj_t = Q(adj_t, args.bl_activate)
 
     if args.percentile != 0:
         train_dec.bind_update_hook(model)

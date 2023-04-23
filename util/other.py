@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 from torch_sparse import sum as sparse_sum, fill_diag, mul, SparseTensor
 from .definition import DropMode, ClusterAlg, MappingAlg, ClusterBasis
@@ -230,3 +232,17 @@ def store_updated_list_and_adj_matrix(adj_t, adj_binary):
     if args.call_neurosim:
         run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
     return updated_vertex, vertex_pointer
+
+
+def record_net_structure(embedding_num, input_channels, hidden_channels, output_channels, num_layers):
+    net_dir = './NeuroSIM/NetWork.csv'
+    if not os.path.exists(net_dir):
+        os.makedirs(net_dir)
+    with open(net_dir, 'w') as f:
+        f.write(f'1,1,{input_channels},1,1,{hidden_channels},0,1')
+        f.write(f'1,1,{embedding_num},1,1,{hidden_channels},0,1')
+        for i in range(num_layers - 2):
+            f.write(f'1,1,{hidden_channels},1,1,{hidden_channels},0,1')
+            f.write(f'1,1,{embedding_num},1,1,{hidden_channels},0,1')
+        f.write(f'1,1,{hidden_channels},1,1,{output_channels},0,1')
+        f.write(f'1,1,{embedding_num},1,1,{output_channels},0,1')

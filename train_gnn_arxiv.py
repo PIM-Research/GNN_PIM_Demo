@@ -188,6 +188,8 @@ def main():
 
     evaluator = Evaluator(name='ogbn-arxiv')
     logger = Logger(args.runs, args)
+    # 量化邻接矩阵
+    data.adj_t = Q(data.adj_t, args.bl_activate).to(device)
 
     if args.percentile != 0:
         train_dec.bind_update_hook(model)

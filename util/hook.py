@@ -58,14 +58,14 @@ def hook_Layer_output(self: NamedGCNConv, input_data, output_data):
 
 def hook_combination_input_output(self: nn.Linear, input_data, output_data):
     layer = get_current_layer()
-    input_coo = SparseTensor.from_dense(output_data.detach()).coo()
+    input_coo = SparseTensor.from_dense(output_data.detach().t()).coo()
     input_stack = torch.stack([input_coo[0], input_coo[1], input_coo[2]]).to('cpu').numpy()
     input_c = run_recorder.record(f'layer_run/epoch{current_epoch}', f'convs.{layer}.gcn_conv.lin.input_C.csv',
                                   input_stack, delimiter=',', fmt='%s')
     f = open(run_recorder.bootstrap_path, 'a')
     weight_c = input_c.replace('input_C', 'weight_before')
     weight_updated_c = weight_c.replace('before', 'after')
-    f.write(weight_updated_c + ' ' + weight_c + ' ' + input_c + ' ')
+    f.write(weight_updated_c + ' ' + weight_c + ' ' + input_c + ' 0 ')
     # f.close()
     # 这里对Combination的输出进行量化
     if args.bl_activate != -1:
@@ -92,7 +92,7 @@ def hook_combination_input_output(self: nn.Linear, input_data, output_data):
                             torch.zeros([row_num, col_num]).data.numpy(),
                             delimiter=',', fmt='%10.5f')
     input_a = os.path.join(run_recorder.dir_name, 'adj_matrix.csv')
-    f.write(weight_updated_a + ' ' + weight_a + ' ' + input_a + ' ')
+    f.write(weight_updated_a + ' ' + weight_a + ' ' + input_a + ' 0 ')
     f.close()
 
 
