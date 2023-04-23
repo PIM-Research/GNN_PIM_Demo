@@ -50,8 +50,9 @@ def main():
     set_updated_vertex_map(updated_vertex)
 
     # 记录网络结构
-    record_net_structure(embedding_num, args.hidden_channels, args.hidden_channels, args.hidden_channels,
-                         args.num_layers)
+    if args.call_neurosim:
+        record_net_structure(embedding_num, args.hidden_channels, args.hidden_channels, args.hidden_channels,
+                             args.num_layers)
 
     # 将边数据集拆分为训练集，验证集，测试集，其中验证集和测试集有两个属性，edge代表图中存在的边（正边），edge_neg代表图中不存在的边（负边）
     split_edge = dataset.get_edge_split()

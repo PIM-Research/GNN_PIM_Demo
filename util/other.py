@@ -166,11 +166,12 @@ def get_cluster_avg_deg(cluster_label: np.ndarray, vertex_deg: np.ndarray):
 
 
 def map_adj_to_cluster_adj(adj_sparse: SparseTensor, cluster_label: np.ndarray) -> SparseTensor:
+    adj_sparse = adj_sparse.coo()
     # 获取簇的数量
     cluster_num = np.max(cluster_label) + 1
     # 获取行和列所属的簇
-    rows_cluster = cluster_label[adj_sparse.row()]
-    cols_cluster = cluster_label[adj_sparse.col()]
+    rows_cluster = cluster_label[adj_sparse[0]]
+    cols_cluster = cluster_label[adj_sparse[1]]
     # 获取行和列不在同一簇中的元素
     if args.add_self_loop is False:
         mask = rows_cluster != cols_cluster
@@ -238,8 +239,8 @@ def store_updated_list_and_adj_matrix(adj_t, adj_binary):
 
 def record_net_structure(embedding_num, input_channels, hidden_channels, output_channels, num_layers):
     net_dir = './NeuroSIM/NetWork.csv'
-    if not os.path.exists(net_dir):
-        os.makedirs(net_dir)
+    if os.path.exists(net_dir):
+        os.remove(net_dir)
     with open(net_dir, 'w') as f:
         f.write(f'1,1,{input_channels},1,1,{hidden_channels},0,1')
         f.write(f'1,1,{embedding_num},1,1,{hidden_channels},0,1')

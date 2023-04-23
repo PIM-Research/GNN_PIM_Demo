@@ -13,7 +13,7 @@ from util.global_variable import args, run_recorder, weight_quantification, grad
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from util.other import transform_adj_matrix, transform_matrix_2_binary, store_updated_list_and_adj_matrix, norm_adj, \
-    quantify_adj
+    quantify_adj, record_net_structure
 from util.train_decorator import TrainDecorator
 
 
@@ -175,6 +175,10 @@ def main():
         set_vertex_map(vertex_pointer)
     set_updated_vertex_map(updated_vertex)
 
+    if args.call_neurosim:
+        record_net_structure(data.num_nodes, args.hidden_channels, args.hidden_channels, args.hidden_channels,
+                             args.num_layers)
+
     split_idx = dataset.get_idx_split()
     train_idx = split_idx['train'].to(device)
 
@@ -190,7 +194,8 @@ def main():
     evaluator = Evaluator(name='ogbn-arxiv')
     logger = Logger(args.runs, args)
     # 量化邻接矩阵
-    data.adj_t = quantify_adj(data.adj_t, args.bl_activate).to_device()
+    if args.bl_activate != -1:
+        data.adj_t = quantify_adj(data.adj_t, args.bl_activate).to_device()
 
     if args.percentile != 0:
         train_dec.bind_update_hook(model)
