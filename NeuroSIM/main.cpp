@@ -335,8 +335,8 @@ int main(int argc, char * argv[]) {
 			cout << "-------------------- Estimation of Layer " << i+1 << " ----------------------" << endl;
 			
 			param->activityRowReadWG = atof(argv[4*i+8]);
-                        param->activityRowWriteWG = atof(argv[4*i+8]);
-                        param->activityColWriteWG = atof(argv[4*i+8]);
+            param->activityRowWriteWG = atof(argv[4*i+8]);
+            param->activityColWriteWG = atof(argv[4*i+8]);
 			
 			ChipCalculatePerformance(inputParameter, tech, cell, i, argv[4*i+5], argv[4*i+6], argv[4*i+7], netStructure[i][6],
 						netStructure, markNM, numTileEachLayer, utilizationEachLayer, speedUpEachLayer, tileLocaEachLayer,

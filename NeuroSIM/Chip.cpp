@@ -662,8 +662,13 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	int weightMatrixCol = netStructure[l][5]*numColPerSynapse;
 	
 	// load in whole file 
+	double activity = 0;
 	vector<vector<double> > inputVector;
-	inputVector = LoadInInputData(inputfile); 
+	// inputVector = LoadInInputData(inputfile); 
+	inputVector = getInuptArray(inputfile, param->numBitInput, activity);
+	param->activityRowReadWG = activity;
+	param->activityRowWriteWG = activity;
+	param->activityColWriteWG = activity;
 	vector<vector<double> > newMemory;
 	newMemory = LoadInWeightData(newweightfile, numRowPerSynapse, numColPerSynapse, param->maxConductance, param->minConductance);
 	vector<vector<double> > oldMemory;
@@ -1682,3 +1687,134 @@ vector<vector<double> > ReshapeInput(const vector<vector<double> > &orginal, int
 	return copy;
 	copy.clear();
 } 
+vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, int& col_max) {
+	vector<vector<double>> data;
+	ifstream input_file(filename);
+
+	if (!input_file.is_open()) {
+		cerr << "Error: Failed to open the input file!" << endl;
+		exit(1);
+	}
+
+	string line;
+	int num = 0;
+	while (getline(input_file, line)) {
+		vector<double> row;
+		stringstream ss(line);
+		string value;
+		double temp_max = 0;
+
+		while (getline(ss, value, ',')) {
+			temp_max = max(temp_max, stod(value));
+			row.push_back(stod(value));
+		}
+		if (num == 0) row_max = temp_max + 1;
+		else if (num == 1) col_max = temp_max + 1;
+
+		data.push_back(row);
+		num++;
+	}
+
+	input_file.close();
+	return data;
+}
+vector<std::vector<double>> coo2dense(const std::vector<std::vector<double>>& coo, int rows, int cols) {
+	// Initialize the dense matrix with all zeros
+	std::vector<std::vector<double>> dense(rows, std::vector<double>(cols, 0));
+
+	// Iterate over the COO matrix and insert the non-zero elements into the dense matrix
+	for (int i = 0; i < coo[0].size(); i++) {
+		int row = coo[0][i];
+		int col = coo[1][i];
+		double value = coo[2][i];
+		dense[row][col] = value;
+	}
+
+	return dense;
+}
+pair<std::vector<std::vector<double>>, std::vector<double>> dec2bin(const std::vector<std::vector<double>>& x, int n) {
+	std::vector<std::vector<double>> out;
+	std::vector<double> scale_list;
+	double delta = 1.0 / std::pow(2.0, n - 1);
+	std::vector<std::vector<double>> y = x;
+	std::vector<std::vector<double>> x_int = x;
+	for (int i = 0; i < x.size(); ++i) {
+		for (int j = 0; j < x[0].size(); ++j) {
+			x_int[i][j] = x[i][j] / delta;
+		}
+	}
+	double base = std::pow(2.0, n - 1);
+	for (int i = 0; i < x.size(); ++i) {
+		for (int j = 0; j < x[0].size(); ++j) {
+			if (x_int[i][j] >= 0) {
+				y[i][j] = 0;
+			}
+			else {
+				y[i][j] = 1;
+			}
+		}
+	}
+	std::vector<std::vector<double>> rest = x_int;
+	for (int i = 0; i < x.size(); ++i) {
+		for (int j = 0; j < x[0].size(); ++j) {
+			rest[i][j] += base * y[i][j];
+		}
+	}
+	std::vector<double> temp(x[0].size());
+	for (int i = 0; i < x.size(); ++i) {
+		for (int j = 0; j < x[0].size(); ++j) {
+			temp[j] = y[i][j];
+		}
+		out.push_back(temp);
+		scale_list.push_back(-base * delta);
+	}
+	for (int k = 1; k < n; ++k) {
+		base /= 2;
+		for (int i = 0; i < x.size(); ++i) {
+			for (int j = 0; j < x[0].size(); ++j) {
+				if (rest[i][j] >= base) {
+					y[i][j] = 1;
+				}
+				else {
+					y[i][j] = 0;
+				}
+			}
+		}
+		for (int i = 0; i < x.size(); ++i) {
+			for (int j = 0; j < x[0].size(); ++j) {
+				rest[i][j] -= base * y[i][j];
+			}
+		}
+		std::vector<double> temp(x[0].size());
+		for (int i = 0; i < x.size(); ++i) {
+			for (int j = 0; j < x[0].size(); ++j) {
+				temp[j] = y[i][j];
+			}
+			out.push_back(temp);
+			scale_list.push_back(base * delta);
+		}
+	}
+	return std::make_pair(out, scale_list);
+}
+std::vector < std::vector<double>> getInuptArray(const string& filename, int n, double& activity) {
+	int row_max = -1;
+	int col_max = -1;
+	double activityTemp = 0;
+	vector<vector<double>> matrix = LoadDataFromFile(filename, row_max, col_max);
+	vector<vector<double>> matrix_dense = coo2dense(matrix, row_max, col_max);
+	vector<vector<double>> adj_binary_col = dec2bin(matrix_dense, n).first;
+	vector<vector<double>> adj_binary((matrix_dense[0].size() * n), vector<double>(matrix_dense.size()));
+
+	for (int i = 0; i < adj_binary_col.size(); i++) {
+		vector<double> b = adj_binary_col[i];
+		int start = i / matrix_dense.size();
+		int k = i % matrix_dense.size();
+		for (int j = 0; j < b.size(); j++) {
+			activityTemp += b[j];
+			adj_binary[start][k] = b[j];
+			start += n;
+		}
+	}
+	activity = activityTemp / (adj_binary.size() * adj_binary[0].size());
+	return adj_binary;
+}
