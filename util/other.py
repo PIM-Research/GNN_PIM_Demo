@@ -245,13 +245,13 @@ def record_net_structure(embedding_num, input_channels, hidden_channels, output_
     if os.path.exists(net_dir):
         os.remove(net_dir)
     with open(net_dir, 'w') as f:
-        f.write(f'1,1,{input_channels},1,1,{hidden_channels},0,1')
-        f.write(f'1,1,{embedding_num},1,1,{hidden_channels},0,1')
+        f.write(f'1,1,{input_channels},1,1,{hidden_channels},0,1\n')
+        f.write(f'1,1,{embedding_num},1,1,{hidden_channels},0,1\n')
         for i in range(num_layers - 2):
-            f.write(f'1,1,{hidden_channels},1,1,{hidden_channels},0,1')
-            f.write(f'1,1,{embedding_num},1,1,{hidden_channels},0,1')
-        f.write(f'1,1,{hidden_channels},1,1,{output_channels},0,1')
-        f.write(f'1,1,{embedding_num},1,1,{output_channels},0,1')
+            f.write(f'1,1,{hidden_channels},1,1,{hidden_channels},0,1\n')
+            f.write(f'1,1,{embedding_num},1,1,{hidden_channels},0,1\n')
+        f.write(f'1,1,{hidden_channels},1,1,{output_channels},0,1\n')
+        f.write(f'1,1,{embedding_num},1,1,{output_channels},0,1\n')
 
 
 def quantify_adj(adj: SparseTensor, n):
