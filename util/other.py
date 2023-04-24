@@ -290,7 +290,7 @@ def filter_edges(adj: SparseTensor, vertex_filter):
 
 def store_adj_matrix(adj: SparseTensor):
     if args.call_neurosim:
-        adj_coo = adj.coo()
+        adj_coo = adj.cpu().coo()
         drop_mode = DropMode(args.drop_mode)
         if drop_mode == DropMode.GLOBAL:
             assert vertex_pointer is not None
