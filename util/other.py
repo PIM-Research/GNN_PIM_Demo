@@ -270,3 +270,15 @@ def get_dense(adj: SparseTensor):
     adj_dense = np.zeros((node_num, node_num))
     adj_dense[row, col] = value if value is not None else 1
     return adj_dense
+
+
+def filter_edges(adj: SparseTensor, vertex_filter):
+    # 找到目的顶点存在于A中的边的索引
+    adj = adj.coo()
+    mask = torch.isin(adj[1], vertex_filter)
+    # 过滤出符合条件的边的索引
+    row = adj[0][mask]
+    col = adj[1][mask]
+    value = adj[2][mask]
+    # 返回结果
+    return SparseTensor(row=row, col=col, value=value)

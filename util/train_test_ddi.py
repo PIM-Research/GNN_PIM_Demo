@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch_geometric.utils import negative_sampling
 from models import GCN
+from .other import filter_edges
 from .train_decorator import TrainDecorator
 from .global_variable import args
 from .definition import NEGS
@@ -39,12 +40,14 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
             train_decorator.bind_hooks(model, i, cur_epoch)
 
         optimizer.zero_grad()
+        # 根据perm这个索引获得本次预测需要的边
+        edge = pos_train_edge[perm].t()
+        vertex_filter = torch.unique(torch.cat((edge[0], edge[1]), dim=-1))
+        adj_t = filter_edges(adj_t, vertex_filter).to_device(adj_t.device())
 
         # 进行图卷积计算
         h = model(x, adj_t)
 
-        # 根据perm这个索引获得本次预测需要的边
-        edge = pos_train_edge[perm].t()
         # print('edge[0]:', edge[0], ' edge[1]:', edge[1])
         if args.use_cluster:
             src = cluster_label[edge[0]]
