@@ -293,6 +293,7 @@ def store_adj_matrix(adj):
         adj_coo = adj.coo()
         adj_matrix = torch.stack([adj_coo[0], adj_coo[1], adj_coo[2]]) if adj_coo[2] is not None else torch.stack(
             [adj_coo[0], adj_coo[1]])
+        adj_matrix = adj_matrix.cpu()
         drop_mode = DropMode(args.drop_mode)
         if drop_mode == DropMode.GLOBAL:
             assert vertex_pointer is not None
