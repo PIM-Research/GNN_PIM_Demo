@@ -5,11 +5,10 @@ import torch_geometric.transforms as T
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
-from models import GAT, GCN, SAGE, LinkPredictor, Q
+from models import GAT, GCN, SAGE, LinkPredictor
 from util import train_test_ddi, train_decorator
 from util.global_variable import *
-from util.other import norm_adj, transform_adj_matrix, transform_matrix_2_binary, \
-    store_updated_list_and_adj_matrix, record_net_structure, quantify_adj
+from util.other import norm_adj, transform_adj_matrix, record_net_structure, quantify_adj, store_updated_list
 from subprocess import call
 from tensorboardX import SummaryWriter
 
@@ -49,7 +48,7 @@ def main():
         cluster_label = None
 
     # 获取顶点特征更新列表
-    updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=adj_t, adj_binary=adj_matrix)
+    updated_vertex, vertex_pointer = store_updated_list(adj_t=adj_t)
     if vertex_pointer is not None:
         set_vertex_map(vertex_pointer)
     set_updated_vertex_map(updated_vertex)

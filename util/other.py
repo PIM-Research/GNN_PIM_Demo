@@ -10,6 +10,8 @@ from sklearn import cluster
 from .global_variable import args, run_recorder
 import torch
 
+vertex_pointer = None
+
 
 def norm_adj(adj_t, add_self_loops=True):
     if not adj_t.has_value():
@@ -224,12 +226,12 @@ def store_updated_list_and_adj_matrix(adj_t, adj_binary):
     else:
         adj_binary = None
     drop_mode = DropMode(args.drop_mode)
-    vertex_pointer = None
+    vertex_map = None
     if args.percentile != 0:
         if drop_mode == DropMode.GLOBAL:
-            updated_vertex, vertex_pointer = get_updated_list(adj_t, args.percentile, args.array_size, drop_mode)
+            updated_vertex, vertex_map = get_updated_list(adj_t, args.percentile, args.array_size, drop_mode)
             if args.call_neurosim:
-                run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_pointer, delimiter=',',
+                run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_map, delimiter=',',
                                                    fmt='%s')
         else:
             updated_vertex = get_updated_list(adj_t, args.percentile, args.array_size, drop_mode)
@@ -241,7 +243,7 @@ def store_updated_list_and_adj_matrix(adj_t, adj_binary):
             run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
     if args.call_neurosim:
         run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
-    return updated_vertex, vertex_pointer
+    return updated_vertex, vertex_map
 
 
 def record_net_structure(embedding_num, input_channels, hidden_channels, output_channels, num_layers):
@@ -284,3 +286,37 @@ def filter_edges(adj: SparseTensor, vertex_filter):
     size = (vertex_num, vertex_num)
     # 返回结果
     return SparseTensor(row=row, col=col, value=value, sparse_sizes=size)
+
+
+def store_adj_matrix(adj):
+    if args.call_neurosim:
+        adj_coo = adj.coo()
+        adj_matrix = torch.stack([adj_coo[0], adj_coo[1], adj_coo[2]])
+        drop_mode = DropMode(args.drop_mode)
+        if drop_mode == DropMode.GLOBAL:
+            assert vertex_pointer is not None
+            run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_matrix, vertex_pointer, delimiter=',',
+                                               fmt='%s')
+        else:
+            run_recorder.record('', 'adj_matrix.csv', adj_matrix, delimiter=',', fmt='%s')
+
+
+def store_updated_list(adj_t):
+    drop_mode = DropMode(args.drop_mode)
+    vertex_map = None
+    if args.percentile != 0:
+        if drop_mode == DropMode.GLOBAL:
+            updated_vertex, vertex_map = get_updated_list(adj_t, args.percentile, args.array_size, drop_mode)
+            set_vertex_pointer(vertex_map)
+        else:
+            updated_vertex = get_updated_list(adj_t, args.percentile, args.array_size, drop_mode)
+    else:
+        updated_vertex = np.ones(max(adj_t.size(dim=0), adj_t.size(dim=1)))
+    if args.call_neurosim:
+        run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
+    return updated_vertex, vertex_map
+
+
+def set_vertex_pointer(vertex_map):
+    global vertex_pointer
+    vertex_pointer = vertex_map
