@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <sstream>
+#include <unordered_map>
 #include "MaxPooling.h"
 #include "Sigmoid.h"
 #include "BitShifter.h"
@@ -1689,7 +1690,7 @@ vector<vector<double> > ReshapeInput(const vector<vector<double> > &orginal, int
 	return copy;
 	copy.clear();
 } 
-vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, int& col_max) {
+vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, int& col_max, unordered_map<int, int>& map) {
 	vector<vector<double>> data;
 	ifstream input_file(filename);
 
@@ -1700,15 +1701,22 @@ vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, in
 
 	string line;
 	int num = 0;
+	int count = 0;
 	while (getline(input_file, line)) {
 		vector<double> row;
 		stringstream ss(line);
 		string value;
 		double temp_max = 0;
+		
 
 		while (getline(ss, value, ',')) {
-			temp_max = max(temp_max, stod(value));
-			row.push_back(stod(value));
+			double vD = stod(value);
+			if (num == 1 && (map.find(vD) == map.end())) {
+				map[vD] = count;
+				count++;
+			}
+			temp_max = max(temp_max, vD);
+			row.push_back(vD);
 		}
 		if (num == 0) row_max = temp_max + 1;
 		else if (num == 1) col_max = temp_max + 1;
@@ -1720,14 +1728,14 @@ vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, in
 	input_file.close();
 	return data;
 }
-vector<std::vector<double>> coo2dense(const std::vector<std::vector<double>>& coo, int rows, int cols) {
+vector<std::vector<double>> coo2dense(const std::vector<std::vector<double>>& coo, int rows, int cols,unordered_map<int,int> map) {
 	// Initialize the dense matrix with all zeros
-	std::vector<std::vector<double>> dense(rows, std::vector<double>(cols, 0));
+	std::vector<std::vector<double>> dense(rows, std::vector<double>(map.size(), 0));
 
 	// Iterate over the COO matrix and insert the non-zero elements into the dense matrix
 	for (int i = 0; i < coo[0].size(); i++) {
 		int row = coo[0][i];
-		int col = coo[1][i];
+		int col = map[coo[1][i]];
 		if (coo.size() > 2) dense[row][col] = coo[2][i];
 		else dense[row][col] = 1;
 	}
@@ -1802,8 +1810,9 @@ std::vector < std::vector<double>> getInuptArray(const string& filename, int n, 
 	int row_max = -1;
 	int col_max = -1;
 	double activityTemp = 0;
-	vector<vector<double>> matrix = LoadDataFromFile(filename, row_max, col_max);
-	vector<vector<double>> matrix_dense = coo2dense(matrix, row_max, col_max);
+	unordered_map<int, int> map;
+	vector<vector<double>> matrix = LoadDataFromFile(filename, row_max, col_max, map);
+	vector<vector<double>> matrix_dense = coo2dense(matrix, row_max, col_max, map);
 	vector<vector<double>> adj_binary_col = dec2bin(matrix_dense, n).first;
 	vector<vector<double>> adj_binary((matrix_dense[0].size() * n), vector<double>(matrix_dense.size()));
 
