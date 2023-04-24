@@ -44,6 +44,9 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         edge = pos_train_edge[perm].t()
         adj_t = train_decorator.filter_adj_by_batch(adj_t=adj_t, source_vertexes=edge[0], dst_vertexes=edge[1],
                                                     batch_index=i)
+        adj_temp = adj_t.coo()
+        print(torch.max(adj_temp[0]))
+        print(torch.max(adj_temp[1]))
 
         # 进行图卷积计算
         h = model(x, adj_t)
