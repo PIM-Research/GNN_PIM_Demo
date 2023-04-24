@@ -1814,8 +1814,9 @@ std::vector < std::vector<double>> getInuptArray(const string& filename, int n, 
 	vector<vector<double>> matrix = LoadDataFromFile(filename, row_max, col_max, colMap);
 	vector<vector<double>> matrix_dense = coo2dense(matrix, row_max, col_max, colMap);
 	cout << "map size:" << colMap.size() << endl;
+	cout << "matrix_dense[0] size:" << matrix_dense[0].size() << endl;
 	vector<vector<double>> adj_binary_col = dec2bin(matrix_dense, n).first;
-	vector<vector<double>> adj_binary((matrix_dense[0].size() * n), vector<double>(matrix_dense.size()));
+	vector<vector<double>> adj_binary((matrix_dense.size() * n), vector<double>(matrix_dense[0].size()));
 
 	for (int i = 0; i < adj_binary_col.size(); i++) {
 		vector<double> b = adj_binary_col[i];
