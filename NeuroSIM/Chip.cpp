@@ -1815,17 +1815,18 @@ std::vector < std::vector<double>> getInuptArray(const string& filename, int n, 
 	vector<vector<double>> matrix_dense = coo2dense(matrix, row_max, col_max, colMap);
 	cout << "map size:" << colMap.size() << endl;
 	cout << "matrix_dense[0] size:" << matrix_dense[0].size() << endl;
+	int rowSize = matrix_dense.size();
+	int colSize = matrix_dense[0].size();
 	vector<vector<double>> adj_binary_col = dec2bin(matrix_dense, n).first;
-	vector<vector<double>> adj_binary((matrix_dense.size() * n), vector<double>(matrix_dense[0].size()));
+	vector<vector<double>> adj_binary(rowSize, vector<double>(colSize * n));
 
 	for (int i = 0; i < adj_binary_col.size(); i++) {
 		vector<double> b = adj_binary_col[i];
-		int start = i / matrix_dense.size();
-		int k = i % matrix_dense.size();
-		for (int j = 0; j < b.size(); j++) {
+		int rowStart = i % rowSize;
+		int colStart = (i / rowSize) * colSize;
+		for (int j = 0; j < colSize; j++) {
+			adj_binary[rowStart][j + colStart] = b[j];
 			activityTemp += b[j];
-			adj_binary[start][k] = b[j];
-			start += n;
 		}
 	}
 	activity = activityTemp / (adj_binary.size() * adj_binary[0].size());
