@@ -73,6 +73,7 @@ class TrainDecorator:
     @staticmethod
     def filter_adj_by_batch(adj_t, source_vertexes, dst_vertexes, batch_index):
         vertex_filter = torch.unique(torch.cat((source_vertexes, dst_vertexes), dim=-1))
+        print('vertex_filter:', vertex_filter)
         adj_t = filter_edges(adj_t, vertex_filter)
         if batch_index == 0:
             store_adj_matrix(adj=adj_t)

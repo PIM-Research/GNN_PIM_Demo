@@ -667,6 +667,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	vector<vector<double> > inputVector;
 	// inputVector = LoadInInputData(inputfile); 
 	inputVector = getInuptArray(inputfile, param->numBitInput, activity);
+	cout << "input size:" << inputVector[0].size() << endl;
 	param->activityRowReadWG = activity;
 	param->activityRowWriteWG = activity;
 	param->activityColWriteWG = activity;
