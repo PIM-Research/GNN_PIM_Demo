@@ -279,6 +279,6 @@ def filter_edges(adj: SparseTensor, vertex_filter):
     # 过滤出符合条件的边的索引
     row = adj[0][mask]
     col = adj[1][mask]
-    value = adj[2][mask]
+    value = adj[2][mask] if adj[2] is not None else None
     # 返回结果
     return SparseTensor(row=row, col=col, value=value)
