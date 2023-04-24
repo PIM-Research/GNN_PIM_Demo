@@ -274,11 +274,13 @@ def get_dense(adj: SparseTensor):
 
 def filter_edges(adj: SparseTensor, vertex_filter):
     # 找到目的顶点存在于A中的边的索引
+    vertex_num = max(adj.size(dim=0), adj.size(dim=1))
     adj = adj.coo()
     mask = torch.isin(adj[1], vertex_filter)
     # 过滤出符合条件的边的索引
     row = adj[0][mask]
     col = adj[1][mask]
     value = adj[2][mask] if adj[2] is not None else None
+    size = (vertex_num, vertex_num)
     # 返回结果
-    return SparseTensor(row=row, col=col, value=value)
+    return SparseTensor(row=row, col=col, value=value, sparse_sizes=size)
