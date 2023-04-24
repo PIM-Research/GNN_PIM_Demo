@@ -38,7 +38,7 @@
 
 #ifndef CHIP_H_
 #define CHIP_H_
-
+#include <map>
 /*** Functions ***/
 vector<int> ChipDesignInitialize(InputParameter& inputParameter, Technology& tech, MemCell& cell, bool pip, const vector<vector<double> > &netStructure,
 					double *maxPESizeNM, double *maxTileSizeCM, double *numPENM);
