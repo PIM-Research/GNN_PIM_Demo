@@ -41,9 +41,11 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
 
         optimizer.zero_grad()
         # 根据perm这个索引获得本次预测需要的边
+        print(adj_t.size(0), adj_t.size(1))
         edge = pos_train_edge[perm].t()
         vertex_filter = torch.unique(torch.cat((edge[0], edge[1]), dim=-1))
         adj_t = filter_edges(adj_t, vertex_filter).to_device(adj_t.device())
+        print(adj_t.size(0), adj_t.size(1))
 
         # 进行图卷积计算
         h = model(x, adj_t)
