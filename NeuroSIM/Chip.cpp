@@ -1727,8 +1727,8 @@ vector<std::vector<double>> coo2dense(const std::vector<std::vector<double>>& co
 	for (int i = 0; i < coo[0].size(); i++) {
 		int row = coo[0][i];
 		int col = coo[1][i];
-		double value = coo[2][i];
-		dense[row][col] = value;
+		if (coo.size() > 2) dense[row][col] = coo[2][i];
+		else dense[row][col] = 1;
 	}
 
 	return dense;

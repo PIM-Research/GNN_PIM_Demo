@@ -291,7 +291,8 @@ def filter_edges(adj: SparseTensor, vertex_filter):
 def store_adj_matrix(adj):
     if args.call_neurosim:
         adj_coo = adj.coo()
-        adj_matrix = torch.stack([adj_coo[0], adj_coo[1], adj_coo[2]])
+        adj_matrix = torch.stack([adj_coo[0], adj_coo[1], adj_coo[2]]) if len(adj_coo) > 2 else torch.stack(
+            [adj_coo[0], adj_coo[1]])
         drop_mode = DropMode(args.drop_mode)
         if drop_mode == DropMode.GLOBAL:
             assert vertex_pointer is not None
