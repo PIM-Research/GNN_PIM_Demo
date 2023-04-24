@@ -78,6 +78,6 @@ vector<vector<double> > CopyInput(const vector<vector<double> > &orginal, int po
 vector<vector<double> > ReshapeInput(const vector<vector<double> > &orginal, int positionRow, int numInputVector, int numRow, int numPE, int weightMatrixRow);
 vector < std::vector<double>> getInuptArray(const string& filename, int n, double& activity);
 pair<std::vector<std::vector<double>>, std::vector<double>> dec2bin(const std::vector<std::vector<double>>& x, int n);
-vector<std::vector<double>> coo2dense(const std::vector<std::vector<double>>& coo, int rows, int cols, std::unordered_map< int, int> map);
-vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, int& col_max, std::unordered_map< int, int>& map);
+vector<std::vector<double>> coo2dense(const std::vector<std::vector<double>>& coo, int rows, int cols, hash_map< int, int> map);
+vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, int& col_max, std::hash_map< int, int>& map);
 #endif /* CHIP_H_ */
