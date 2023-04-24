@@ -1690,7 +1690,7 @@ vector<vector<double> > ReshapeInput(const vector<vector<double> > &orginal, int
 	return copy;
 	copy.clear();
 } 
-vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, int& col_max, unordered_map<int, int>& map) {
+vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, int& col_max, std::unordered_map< int, int>& map) {
 	vector<vector<double>> data;
 	ifstream input_file(filename);
 
@@ -1728,7 +1728,7 @@ vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, in
 	input_file.close();
 	return data;
 }
-vector<std::vector<double>> coo2dense(const std::vector<std::vector<double>>& coo, int rows, int cols,unordered_map<int,int> map) {
+vector<std::vector<double>> coo2dense(const std::vector<std::vector<double>>& coo, int rows, int cols,std::unordered_map< int,int> map) {
 	// Initialize the dense matrix with all zeros
 	std::vector<std::vector<double>> dense(rows, std::vector<double>(map.size(), 0));
 
@@ -1810,7 +1810,7 @@ std::vector < std::vector<double>> getInuptArray(const string& filename, int n, 
 	int row_max = -1;
 	int col_max = -1;
 	double activityTemp = 0;
-	unordered_map<int, int> map;
+	std::unordered_map< int, int> map;
 	vector<vector<double>> matrix = LoadDataFromFile(filename, row_max, col_max, map);
 	vector<vector<double>> matrix_dense = coo2dense(matrix, row_max, col_max, map);
 	vector<vector<double>> adj_binary_col = dec2bin(matrix_dense, n).first;
