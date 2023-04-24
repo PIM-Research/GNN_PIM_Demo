@@ -288,19 +288,16 @@ def filter_edges(adj: SparseTensor, vertex_filter):
     return SparseTensor(row=row, col=col, value=value, sparse_sizes=size)
 
 
-def store_adj_matrix(adj):
+def store_adj_matrix(adj: SparseTensor):
     if args.call_neurosim:
         adj_coo = adj.coo()
-        adj_matrix = torch.stack([adj_coo[0], adj_coo[1], adj_coo[2]]) if adj_coo[2] is not None else torch.stack(
-            [adj_coo[0], adj_coo[1]])
-        adj_matrix = adj_matrix.cpu()
         drop_mode = DropMode(args.drop_mode)
         if drop_mode == DropMode.GLOBAL:
             assert vertex_pointer is not None
-            run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_matrix, vertex_pointer, delimiter=',',
+            run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_coo, vertex_pointer, delimiter=',',
                                                fmt='%s')
         else:
-            run_recorder.record('', 'adj_matrix.csv', adj_matrix, delimiter=',', fmt='%s')
+            run_recorder.record('', 'adj_matrix.csv', adj_coo, delimiter=',', fmt='%s')
 
 
 def store_updated_list(adj_t):
