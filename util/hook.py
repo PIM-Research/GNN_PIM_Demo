@@ -58,7 +58,7 @@ def hook_Layer_output(self: NamedGCNConv, input_data, output_data):
 def hook_combination_input_output(self: nn.Linear, input_data, output_data):
     layer = get_current_layer()
     # input_coo = SparseTensor.from_dense(output_data.detach()[min_dis_vertex].t()).coo()
-    input_vertex = output_data.detach()[min_dis_vertex].cpu()
+    input_vertex = input_data.detach()[min_dis_vertex].cpu()
     row, col = torch.arange(0, input_vertex.shape[0], dtype=torch.long), torch.zeros(size=input_vertex.shape,
                                                                                      dtype=torch.long)
     input_stack = torch.stack([row, col, input_vertex]).to('cpu').numpy()
