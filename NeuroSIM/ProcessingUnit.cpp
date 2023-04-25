@@ -612,7 +612,6 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 						
 						subArray->CalculateLatency(1e20, columnResistance, rowResistance,layerNumber);
 						subArray->CalculatePower(columnResistance, rowResistance);
-						cout << "Subarray end" << endl;
 						subArrayReadLatency += subArray->readLatency;
 						*readDynamicEnergy += subArray->readDynamicEnergy;
 						subArrayLeakage = subArray->leakage;

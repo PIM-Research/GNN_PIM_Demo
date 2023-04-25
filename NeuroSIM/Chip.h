@@ -76,7 +76,7 @@ vector<vector<double> > ReshapeArray(const vector<vector<double> > &orginal, int
 vector<vector<double> > LoadInInputData(const string &inputfile);
 vector<vector<double> > CopyInput(const vector<vector<double> > &orginal, int positionRow, int numInputVector, int numRow);
 vector<vector<double> > ReshapeInput(const vector<vector<double> > &orginal, int positionRow, int numInputVector, int numRow, int numPE, int weightMatrixRow);
-vector < std::vector<double>> getInuptArray(const string& filename, int n, double& activity);
+vector < std::vector<double>> getInuptArray(const string& filename, int n, double& activity, int netRow);
 pair<std::vector<std::vector<double>>, std::vector<double>> dec2bin(const std::vector<std::vector<double>>& x, int n);
 vector<std::vector<double>> coo2dense(const std::vector<std::vector<double>>& coo, int rows, int cols, map< int, int> colMap);
 vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, int& col_max,map< int, int>& colMap);

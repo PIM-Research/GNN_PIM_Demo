@@ -543,7 +543,6 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 												&peLatencyADC, &peLatencyAccum, &peLatencyOther, &peEnergyADC, &peEnergyAccum, &peEnergyOther,
 												&peReadLatencyPeakFW, &peReadDynamicEnergyPeakFW, &peReadLatencyPeakAG, &peReadDynamicEnergyPeakAG,
 												&peWriteLatencyPeakWU, &peWriteDynamicEnergyPeakWU);
-						cout << "PE End" << endl;
 					}
 					*readLatency = MAX(PEreadLatency, (*readLatency));
 					*readDynamicEnergy += PEreadDynamicEnergy;

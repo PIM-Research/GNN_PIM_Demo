@@ -667,8 +667,8 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	double activity = 0;
 	vector<vector<double> > inputVector;
 	// inputVector = LoadInInputData(inputfile); 
-	inputVector = getInuptArray(inputfile, param->numBitInput, activity);
-	cout << "input size:" << inputVector.size() << inputVector[0].size() << endl;
+	inputVector = getInuptArray(inputfile, param->numBitInput, activity, netStructure[l][2]);
+	cout << "input size:" << inputVector.size() << " " << inputVector[0].size() << endl;
 	param->activityRowReadWG = activity;
 	param->activityRowWriteWG = activity;
 	param->activityColWriteWG = activity;
@@ -718,7 +718,6 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	double tileLatencyADC,tileLatencyAccum,tileLatencyOther,tileEnergyADC,tileEnergyAccum,tileEnergyOther;
 	
 	int numInVector = (netStructure[l][0]-netStructure[l][3]+1)/netStructure[l][7]*(netStructure[l][1]-netStructure[l][4]+1)/netStructure[l][7];
-	cout << "numInVector:" << numInVector << endl;
 	int totalNumTile = 0;
 	for (int i=0; i<netStructure.size(); i++) {
 		totalNumTile += numTileEachLayer[0][i] * numTileEachLayer[1][i];
@@ -1807,13 +1806,13 @@ pair<std::vector<std::vector<double>>, std::vector<double>> dec2bin(const std::v
 	}
 	return std::make_pair(out, scale_list);
 }
-std::vector < std::vector<double>> getInuptArray(const string& filename, int n, double& activity) {
+std::vector < std::vector<double>> getInuptArray(const string& filename, int n, double& activity, int netRow) {
 	int row_max = -1;
 	int col_max = -1;
 	double activityTemp = 0;
 	map< int, int> colMap;
 	vector<vector<double>> matrix = LoadDataFromFile(filename, row_max, col_max, colMap);
-	vector<vector<double>> matrix_dense = coo2dense(matrix, row_max, col_max, colMap);
+	vector<vector<double>> matrix_dense = coo2dense(matrix, netRow, col_max, colMap);
 	cout << "map size:" << colMap.size() << endl;
 	cout << "matrix_dense[0] size:" << matrix_dense[0].size() << endl;
 	int rowSize = matrix_dense.size();
