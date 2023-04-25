@@ -439,7 +439,7 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 		// consider limited buffer to store gradient of weight: only part of the weight matrix is processed at a specific cycle
 		// we could set a bufferOverheadConstraint to limit the overhead and speed of computation and weight-update
 		// start: at least can support gradient of one weight matrix = subArray size * weightPrecision/cellPrecision
-		cout << "bufferOverHead:" << bufferOverHead << " bufferOverHeadConstraint:" << param->bufferOverHeadConstraint << endl;
+		// cout << "bufferOverHead:" << bufferOverHead << " bufferOverHeadConstraint:" << param->bufferOverHeadConstraint << endl;
 		while((bufferSize+bufferOverHead) < bufferSize*(param->bufferOverHeadConstraint+1)) {
 			bufferOverHead *= 2;
 			*numArrayWriteParallel *= 2;
@@ -667,14 +667,14 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	double activity = 0;
 	vector<vector<double> > inputVector;
 	// inputVector = LoadInInputData(inputfile); 
-	cout << "getInuptArray start" << endl;
+	// cout << "getInuptArray start" << endl;
 	inputVector = getInuptArray(inputfile, param->numBitInput, activity, netStructure[l][2]);
 	param->activityRowReadWG = activity;
 	param->activityRowWriteWG = activity;
 	param->activityColWriteWG = activity;
 	vector<vector<double> > newMemory;
 	newMemory = LoadInWeightData(newweightfile, numRowPerSynapse, numColPerSynapse, param->maxConductance, param->minConductance);
-	cout << "getInuptArray end" << "inputVector.size()" << inputVector.size() << "inputVector[0].size()" << inputVector[0].size() << endl;
+	// cout << "getInuptArray end" << "inputVector.size()" << inputVector.size() << "inputVector[0].size()" << inputVector[0].size() << endl;
 	vector<vector<double> > oldMemory;
 	oldMemory = LoadInWeightData(oldweightfile, numRowPerSynapse, numColPerSynapse, param->maxConductance, param->minConductance);
 	
@@ -748,7 +748,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 									&tileLatencyADC, &tileLatencyAccum, &tileLatencyOther, &tileEnergyADC, &tileEnergyAccum, &tileEnergyOther, 
 									&tileReadLatencyPeakFW, &tileReadDynamicEnergyPeakFW, &tileReadLatencyPeakAG, &tileReadDynamicEnergyPeakAG,
 									&tileWriteLatencyPeakWU, &tileWriteDynamicEnergyPeakWU);
-				cout << "Tile end" << endl;
+				// cout << "Tile end" << endl;
 				*readLatency = MAX(tileReadLatency, (*readLatency));
 				*readDynamicEnergy += tileReadDynamicEnergy;
 				*readLatencyPeakFW = MAX(tileReadLatencyPeakFW, (*readLatencyPeakFW));
@@ -1731,14 +1731,14 @@ vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, in
 }
 vector<std::vector<double>> coo2dense(const std::vector<std::vector<double>>& coo, int rows, int cols,map< int,int> colMap) {
 	// Initialize the dense matrix with all zeros
-	cout << "rows:" << rows << " cols:" << cols << endl;
+	// cout << "rows:" << rows << " cols:" << cols << endl;
 	std::vector<std::vector<double>> dense(rows, std::vector<double>(colMap.size(), 0));
 
 	// Iterate over the COO matrix and insert the non-zero elements into the dense matrix
 	for (int i = 0; i < coo[0].size(); i++) {
 		int row = coo[0][i];
 		int col = colMap[coo[1][i]];
-		cout << "row:" << row << " col:" << col << endl;
+		// cout << "row:" << row << " col:" << col << endl;
 		if (coo.size() > 2) dense[row][col] = coo[2][i];
 		else dense[row][col] = 1;
 	}
@@ -1815,13 +1815,13 @@ std::vector < std::vector<double>> getInuptArray(const string& filename, int n, 
 	double activityTemp = 0;
 	map< int, int> colMap;
 	vector<vector<double>> matrix = LoadDataFromFile(filename, row_max, col_max, colMap);
-	cout << "matrix.size()" << matrix.size() << "matrix[0].size()" << matrix[0].size() << endl;
+	// cout << "matrix.size()" << matrix.size() << "matrix[0].size()" << matrix[0].size() << endl;
 	vector<vector<double>> matrix_dense = coo2dense(matrix, netRow, col_max, colMap);
-	cout << "matrix_dense.size()" << matrix_dense.size() << "matrix_dense[0].size()" << matrix_dense[0].size() << endl;
+	// cout << "matrix_dense.size()" << matrix_dense.size() << "matrix_dense[0].size()" << matrix_dense[0].size() << endl;
 	int rowSize = matrix_dense.size();
 	int colSize = matrix_dense[0].size();
 	vector<vector<double>> adj_binary_col = dec2bin(matrix_dense, n).first;
-	cout << "adj_binary_col.size()" << adj_binary_col.size() << "adj_binary_col[0].size()" << adj_binary_col[0].size() << endl;
+	// cout << "adj_binary_col.size()" << adj_binary_col.size() << "adj_binary_col[0].size()" << adj_binary_col[0].size() << endl;
 	vector<vector<double>> adj_binary(rowSize, vector<double>(colSize * n));
 
 	for (int i = 0; i < adj_binary_col.size(); i++) {
