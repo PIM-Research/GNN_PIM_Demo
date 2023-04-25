@@ -667,6 +667,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	double activity = 0;
 	vector<vector<double> > inputVector;
 	// inputVector = LoadInInputData(inputfile); 
+	cout << "getInuptArray start" << endl;
 	inputVector = getInuptArray(inputfile, param->numBitInput, activity, netStructure[l][2]);
 	param->activityRowReadWG = activity;
 	param->activityRowWriteWG = activity;
@@ -1812,10 +1813,13 @@ std::vector < std::vector<double>> getInuptArray(const string& filename, int n, 
 	double activityTemp = 0;
 	map< int, int> colMap;
 	vector<vector<double>> matrix = LoadDataFromFile(filename, row_max, col_max, colMap);
+	cout << "matrix.size()" << matrix.size() << "matrix[0].size()" << matrix[0].size() << endl;
 	vector<vector<double>> matrix_dense = coo2dense(matrix, netRow, col_max, colMap);
+	cout << "matrix_dense.size()" << matrix_dense.size() << "matrix_dense[0].size()" << matrix_dense[0].size() << endl;
 	int rowSize = matrix_dense.size();
 	int colSize = matrix_dense[0].size();
 	vector<vector<double>> adj_binary_col = dec2bin(matrix_dense, n).first;
+	cout << "adj_binary_col.size()" << adj_binary_col.size() << "adj_binary_col[0].size()" << adj_binary_col[0].size() << endl;
 	vector<vector<double>> adj_binary(rowSize, vector<double>(colSize * n));
 
 	for (int i = 0; i < adj_binary_col.size(); i++) {
