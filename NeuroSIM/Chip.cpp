@@ -1731,12 +1731,14 @@ vector<vector<double>> LoadDataFromFile(const string& filename, int& row_max, in
 }
 vector<std::vector<double>> coo2dense(const std::vector<std::vector<double>>& coo, int rows, int cols,map< int,int> colMap) {
 	// Initialize the dense matrix with all zeros
+	cout << "rows:" << rows << " cols:" << cols << endl;
 	std::vector<std::vector<double>> dense(rows, std::vector<double>(colMap.size(), 0));
 
 	// Iterate over the COO matrix and insert the non-zero elements into the dense matrix
 	for (int i = 0; i < coo[0].size(); i++) {
 		int row = coo[0][i];
 		int col = colMap[coo[1][i]];
+		cout << "row:" << row << " col:" << col << endl;
 		if (coo.size() > 2) dense[row][col] = coo[2][i];
 		else dense[row][col] = 1;
 	}
