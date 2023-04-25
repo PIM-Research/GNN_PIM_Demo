@@ -1,8 +1,6 @@
 from .global_variable import run_recorder, args
-from .other import dec2bin
 from models import NamedGCNConv
 from models import WAGERounding, C
-import numpy as np
 import torch.nn as nn
 import os
 import torch
@@ -13,6 +11,7 @@ current_epoch = 1
 matrix_activity = 0
 vertex_map = None
 updated_vertex_map = None
+min_dis_vertex = 0
 
 
 def hook_set_epoch(self: NamedGCNConv, input_data):
@@ -58,7 +57,7 @@ def hook_Layer_output(self: NamedGCNConv, input_data, output_data):
 
 def hook_combination_input_output(self: nn.Linear, input_data, output_data):
     layer = get_current_layer()
-    input_coo = SparseTensor.from_dense(output_data.detach().t()).coo()
+    input_coo = SparseTensor.from_dense(output_data.detach().t()[min_dis_vertex]).coo()
     input_stack = torch.stack([input_coo[0], input_coo[1], input_coo[2]]).to('cpu').numpy()
     input_c = run_recorder.record(f'layer_run/epoch{current_epoch}', f'convs.{layer}.gcn_conv.lin.input_C.csv',
                                   input_stack, delimiter=',', fmt='%s')
@@ -112,3 +111,8 @@ def set_vertex_map(vertex_pointer):
 def set_updated_vertex_map(updated_vertex):
     global updated_vertex_map
     updated_vertex_map = updated_vertex
+
+
+def set_min_dis_vertex(index):
+    global min_dis_vertex
+    min_dis_vertex = index

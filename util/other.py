@@ -3,7 +3,7 @@ from typing import Union, Tuple
 
 import numpy as np
 from torch_sparse import sum as sparse_sum, fill_diag, mul, SparseTensor
-
+from .hook import set_min_dis_vertex
 from models import Q
 from .definition import DropMode, ClusterAlg, MappingAlg, ClusterBasis
 from math import ceil, floor
@@ -331,6 +331,7 @@ def filter_edges_by_avg(adj: SparseTensor):
     vertex_deg = get_vertex_deg(adj)
     deg_avg = np.sum(vertex_deg) / vertex_deg.shape[0]
     min_dis_index = np.argmin(np.abs(vertex_deg - deg_avg))
+    set_min_dis_vertex(min_dis_index)
     mask = adj_coo[1] == min_dis_index
     row, col = adj_coo[0][mask], adj_coo[1][mask]
     value = adj_coo[2][mask] if adj_coo[2] is not None else None
