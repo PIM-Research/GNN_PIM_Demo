@@ -1,4 +1,5 @@
 import os
+from typing import Union, Tuple
 
 import numpy as np
 from torch_sparse import sum as sparse_sum, fill_diag, mul, SparseTensor
@@ -48,9 +49,9 @@ def dec2bin(x, n):
     return out, scale_list
 
 
-def get_vertex_deg(adj: SparseTensor):
+def get_vertex_deg(adj: Union[SparseTensor, Tuple[torch.Tensor, ...]]):
     # 获取COO格式的邻接矩阵
-    adj_coo = adj.coo()
+    adj_coo = adj.coo() if type(adj) is SparseTensor else adj
     # 获取目的节点列表
     des_vertex = adj_coo[1]
     # 获取源节点和目的节点最大下标
@@ -82,8 +83,8 @@ def get_vertex_deg_global(vertex_deg, array_size):
     vertex_num = vertex_deg.shape[0]
     # 将vertex_deg_dec分成array_size个区间，每个区间最多有array_num个顶点，每个crossbar按行顺序依次从每一个区间取出一个顶点进行映射
     vertex_deg_global = map_data(vertex_deg_dec, array_size, vertex_num)
-    vertex_pointer = map_data(vertex_list, array_size, vertex_num)
-    return vertex_deg_global, vertex_pointer
+    vertex_map = map_data(vertex_list, array_size, vertex_num)
+    return vertex_deg_global, vertex_map
 
 
 def get_updated_list(adj: SparseTensor, percentage, array_size, drop_mode: DropMode):
@@ -221,8 +222,8 @@ def transform_matrix_2_binary(adj_matrix):
 
 def store_updated_list_and_adj_matrix(adj_t, adj_binary):
     if args.call_neurosim:
-        adj_coo = adj_binary.coo()
-        adj_binary = torch.stack([adj_coo[0], adj_coo[1], adj_coo[2]])
+        adj_binary = adj_binary.cpu().coo()
+        adj_binary = filter_edges_by_avg(adj_binary)
     else:
         adj_binary = None
     drop_mode = DropMode(args.drop_mode)
@@ -236,10 +237,14 @@ def store_updated_list_and_adj_matrix(adj_t, adj_binary):
         else:
             updated_vertex = get_updated_list(adj_t, args.percentile, args.array_size, drop_mode)
             if args.call_neurosim:
+                adj_binary = torch.stack([adj_binary[0], adj_binary[1], adj_binary[2]]) \
+                    if adj_binary[2] is not None else torch.stack([adj_binary[0], adj_binary[1]])
                 run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
     else:
         updated_vertex = np.ones(max(adj_t.size(dim=0), adj_t.size(dim=1)))
         if args.call_neurosim:
+            adj_binary = torch.stack([adj_binary[0], adj_binary[1], adj_binary[2]]) \
+                if adj_binary[2] is not None else torch.stack([adj_binary[0], adj_binary[1]])
             run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
     if args.call_neurosim:
         run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
@@ -319,3 +324,14 @@ def store_updated_list(adj_t):
 def set_vertex_pointer(vertex_map):
     global vertex_pointer
     vertex_pointer = vertex_map
+
+
+def filter_edges_by_avg(adj: Union[SparseTensor, Tuple[torch.Tensor, ...]]):
+    adj_coo = adj.coo() if type(adj) is SparseTensor else adj
+    vertex_deg = get_vertex_deg(adj)
+    deg_avg = np.sum(vertex_deg) / vertex_deg.shape[0]
+    min_dis_index = np.argmin(np.abs(vertex_deg - deg_avg))
+    mask = adj_coo[1] == min_dis_index
+    row, col = adj_coo[0][mask], adj_coo[1][mask]
+    value = adj_coo[2][mask] if adj_coo[2] is not None else None
+    return SparseTensor(row=row, col=col, value=value)

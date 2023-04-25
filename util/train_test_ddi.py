@@ -40,14 +40,12 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
             train_decorator.bind_hooks(model, i, cur_epoch)
 
         optimizer.zero_grad()
-        # 根据perm这个索引获得本次预测需要的边
-        edge = pos_train_edge[perm].t()
-        adj_t = train_decorator.filter_adj_by_batch(adj_t=adj_t, source_vertexes=edge[0], dst_vertexes=edge[1],
-                                                    batch_index=i)
-        adj_temp = adj_t.coo()
 
         # 进行图卷积计算
         h = model(x, adj_t)
+
+        # 根据perm这个索引获得本次预测需要的边
+        edge = pos_train_edge[perm].t()
 
         # print('edge[0]:', edge[0], ' edge[1]:', edge[1])
         if args.use_cluster:
