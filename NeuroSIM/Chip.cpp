@@ -668,7 +668,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	vector<vector<double> > inputVector;
 	// inputVector = LoadInInputData(inputfile); 
 	inputVector = getInuptArray(inputfile, param->numBitInput, activity);
-	cout << "input size:" << inputVector[0].size() << endl;
+	cout << "input size:" << inputVector.size() << inputVector[0].size() << endl;
 	param->activityRowReadWG = activity;
 	param->activityRowWriteWG = activity;
 	param->activityColWriteWG = activity;
@@ -718,6 +718,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	double tileLatencyADC,tileLatencyAccum,tileLatencyOther,tileEnergyADC,tileEnergyAccum,tileEnergyOther;
 	
 	int numInVector = (netStructure[l][0]-netStructure[l][3]+1)/netStructure[l][7]*(netStructure[l][1]-netStructure[l][4]+1)/netStructure[l][7];
+	cout << "numInVector:" << numInVector << endl;
 	int totalNumTile = 0;
 	for (int i=0; i<netStructure.size(); i++) {
 		totalNumTile += numTileEachLayer[0][i] * numTileEachLayer[1][i];
@@ -747,7 +748,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 									&tileLatencyADC, &tileLatencyAccum, &tileLatencyOther, &tileEnergyADC, &tileEnergyAccum, &tileEnergyOther, 
 									&tileReadLatencyPeakFW, &tileReadDynamicEnergyPeakFW, &tileReadLatencyPeakAG, &tileReadDynamicEnergyPeakAG,
 									&tileWriteLatencyPeakWU, &tileWriteDynamicEnergyPeakWU);
-				
+				cout << "Tile end" << endl;
 				*readLatency = MAX(tileReadLatency, (*readLatency));
 				*readDynamicEnergy += tileReadDynamicEnergy;
 				*readLatencyPeakFW = MAX(tileReadLatencyPeakFW, (*readLatencyPeakFW));
