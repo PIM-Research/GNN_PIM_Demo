@@ -1,25 +1,71 @@
 import argparse
+
 import torch
 from torch.nn import Parameter
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+
 import torch_geometric.transforms as T
-from models import GCN, SAGE, QG, QW, C
+from torch_geometric.nn import GCNConv, SAGEConv
+
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 
-from util import train_decorator
-from util.definition import DropMode, ClusterAlg
-from util.global_variable import run_recorder, weight_quantification, grad_clip, grad_quantiication
-from util.hook import set_vertex_map, set_updated_vertex_map, hook_forward_set_grad_zero
 from util.logger import Logger
-import numpy as np
-from util.global_variable import args
-from util.other import get_vertex_cluster, map_adj_to_cluster_adj, norm_adj, dec2bin, get_updated_list
-from subprocess import call
-from tensorboardX import SummaryWriter
-from torch_sparse import SparseTensor
 
-from util.train_decorator import TrainDecorator
+
+class GCN(torch.nn.Module):
+    def __init__(self, in_channels, hidden_channels, out_channels, num_layers,
+                 dropout):
+        super(GCN, self).__init__()
+
+        self.convs = torch.nn.ModuleList()
+        self.convs.append(
+            GCNConv(in_channels, hidden_channels, normalize=False))
+        for _ in range(num_layers - 2):
+            self.convs.append(
+                GCNConv(hidden_channels, hidden_channels, normalize=False))
+        self.convs.append(
+            GCNConv(hidden_channels, out_channels, normalize=False))
+
+        self.dropout = dropout
+
+    def reset_parameters(self):
+        for conv in self.convs:
+            conv.reset_parameters()
+
+    def forward(self, x, adj_t):
+        for conv in self.convs[:-1]:
+            x = conv(x, adj_t)
+            x = F.relu(x)
+            x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.convs[-1](x, adj_t)
+        return x
+
+
+class SAGE(torch.nn.Module):
+    def __init__(self, in_channels, hidden_channels, out_channels, num_layers,
+                 dropout):
+        super(SAGE, self).__init__()
+
+        self.convs = torch.nn.ModuleList()
+        self.convs.append(SAGEConv(in_channels, hidden_channels))
+        for _ in range(num_layers - 2):
+            self.convs.append(SAGEConv(hidden_channels, hidden_channels))
+        self.convs.append(SAGEConv(hidden_channels, out_channels))
+
+        self.dropout = dropout
+
+    def reset_parameters(self):
+        for conv in self.convs:
+            conv.reset_parameters()
+
+    def forward(self, x, adj_t):
+        for conv in self.convs[:-1]:
+            x = conv(x, adj_t)
+            x = F.relu(x)
+            x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.convs[-1](x, adj_t)
+        return x
 
 
 class LinkPredictor(torch.nn.Module):
@@ -49,10 +95,7 @@ class LinkPredictor(torch.nn.Module):
         return torch.sigmoid(x)
 
 
-def train(model, predictor, data, split_edge, optimizer, batch_size, train_dec: TrainDecorator,
-          cur_epoch=0, cluster_label=None):
-    if args.call_neurosim:
-        train_dec.create_bash_command(cur_epoch, model.bits_W, model.bits_A)
+def train(model, predictor, data, split_edge, optimizer, batch_size):
     model.train()
     predictor.train()
 
@@ -60,22 +103,13 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_dec: 
     target_edge = split_edge['train']['target_node'].to(data.x.device)
 
     total_loss = total_examples = 0
-    for i, perm in enumerate(DataLoader(range(source_edge.size(0)), batch_size, shuffle=True)):
-        # 量化权重
-        train_dec.quantify_weight(model, i, cur_epoch)
-
-        # 绑定钩子函数，记录各层的输入
-        if args.call_neurosim:
-            train_dec.bind_hooks(model, i, cur_epoch)
+    for perm in DataLoader(range(source_edge.size(0)), batch_size,
+                           shuffle=True):
         optimizer.zero_grad()
 
         h = model(data.x, data.adj_t)
 
         src, dst = source_edge[perm], target_edge[perm]
-        # 将原图上的边转换为聚类后图上的边
-        if args.use_cluster:
-            src = cluster_label[src]
-            dst = cluster_label[dst]
 
         pos_out = predictor(h[src], h[dst])
         pos_loss = -torch.log(pos_out + 1e-15).mean()
@@ -83,31 +117,22 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_dec: 
         # Just do some trivial random sampling.
         dst_neg = torch.randint(0, data.num_nodes, src.size(),
                                 dtype=torch.long, device=h.device)
-
         neg_out = predictor(h[src], h[dst_neg])
         neg_loss = -torch.log(1 - neg_out + 1e-15).mean()
 
         loss = pos_loss + neg_loss
         loss.backward()
-
-        # 量化梯度
-        train_dec.quantify_grad(model)
-
         optimizer.step()
 
         num_examples = pos_out.size(0)
         total_loss += loss.item() * num_examples
         total_examples += num_examples
 
-        # 清楚钩子
-        if args.call_neurosim:
-            train_dec.clear_hooks(model, i, cur_epoch)
-
     return total_loss / total_examples
 
 
 @torch.no_grad()
-def test(model, predictor, data, split_edge, evaluator, batch_size, cluster_label=None):
+def test(model, predictor, data, split_edge, evaluator, batch_size):
     predictor.eval()
 
     h = model(data.x, data.adj_t)
@@ -120,9 +145,6 @@ def test(model, predictor, data, split_edge, evaluator, batch_size, cluster_labe
         pos_preds = []
         for perm in DataLoader(range(source.size(0)), batch_size):
             src, dst = source[perm], target[perm]
-            if args.use_cluster:
-                src = cluster_label[src]
-                dst = cluster_label[dst]
             pos_preds += [predictor(h[src], h[dst]).squeeze().cpu()]
         pos_pred = torch.cat(pos_preds, dim=0)
 
@@ -131,9 +153,6 @@ def test(model, predictor, data, split_edge, evaluator, batch_size, cluster_labe
         target_neg = target_neg.view(-1)
         for perm in DataLoader(range(source.size(0)), batch_size):
             src, dst_neg = source[perm], target_neg[perm]
-            if args.use_cluster:
-                src = cluster_label[src]
-                dst_neg = cluster_label[dst_neg]
             neg_preds += [predictor(h[src], h[dst_neg]).squeeze().cpu()]
         neg_pred = torch.cat(neg_preds, dim=0).view(-1, 1000)
 
@@ -150,6 +169,21 @@ def test(model, predictor, data, split_edge, evaluator, batch_size, cluster_labe
 
 
 def main():
+    parser = argparse.ArgumentParser(description='OGBL-Citation2 (GNN)')
+    parser.add_argument('--device', type=int, default=0)
+    parser.add_argument('--log_steps', type=int, default=1)
+    parser.add_argument('--use_sage', action='store_true')
+    parser.add_argument('--num_layers', type=int, default=3)
+    parser.add_argument('--hidden_channels', type=int, default=256)
+    parser.add_argument('--dropout', type=float, default=0)
+    parser.add_argument('--batch_size', type=int, default=64 * 1024)
+    parser.add_argument('--lr', type=float, default=0.0005)
+    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--eval_steps', type=int, default=1)
+    parser.add_argument('--runs', type=int, default=10)
+    args = parser.parse_args()
+    print(args)
+
     device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     device = torch.device(device)
 
@@ -158,21 +192,6 @@ def main():
     data = dataset[0]
     data.adj_t = data.adj_t.to_symmetric()
     data = data.to(device)
-
-    train_dec = train_decorator.TrainDecorator(weight_quantification, grad_quantiication, grad_clip, run_recorder)
-    adj_origin = data.adj_t
-    # 获取词嵌入数量
-    cluster_label = None
-    if args.use_cluster:
-        cluster_label = get_vertex_cluster(data.adj_t.to_dense().numpy(), ClusterAlg(args.cluster_alg))
-        adj_dense = map_adj_to_cluster_adj(data.adj_t.to_dense().numpy(), cluster_label)
-        adj_origin = SparseTensor.from_dense(adj_dense)
-        data.adj_t = adj_origin.to(device)
-        embedding_num = np.max(cluster_label) + 1
-        cluster_label = torch.from_numpy(cluster_label)
-        data.x = torch.nn.Embedding(embedding_num, data.num_features).to(device).weight
-        data.num_nodes = embedding_num
-        data.num_edges = torch.sum(adj_dense)
 
     split_edge = dataset.get_edge_split()
 
@@ -186,11 +205,14 @@ def main():
     }
 
     if args.use_sage:
-        adj_binary = np.zeros([data.adj_t.shape[0], data.adj_t.shape[1] * args.bl_activate], dtype=np.str_)
         model = SAGE(data.num_features, args.hidden_channels,
                      args.hidden_channels, args.num_layers,
                      args.dropout).to(device)
     else:
+        model = GCN(data.num_features, args.hidden_channels,
+                    args.hidden_channels, args.num_layers,
+                    args.dropout).to(device)
+
         # Pre-compute GCN normalization.
         adj_t = data.adj_t.set_diag()
         deg = adj_t.sum(dim=1).to(torch.float)
@@ -198,53 +220,12 @@ def main():
         deg_inv_sqrt[deg_inv_sqrt == float('inf')] = 0
         adj_t = deg_inv_sqrt.view(-1, 1) * adj_t * deg_inv_sqrt.view(1, -1)
         data.adj_t = adj_t
-        adj_matrix = data.adj_t.to_dense().numpy()
-
-        # 转换为2进制
-        adj_binary = np.zeros([adj_matrix.shape[0], adj_matrix.shape[1] * args.bl_activate], dtype=np.str_)
-        adj_binary_col, scale = dec2bin(adj_matrix, args.bl_activate)
-        for i, b in enumerate(adj_binary_col):
-            adj_binary[:, i::args.bl_activate] = b
-        activity = np.sum(adj_binary.astype(np.float64), axis=None) / np.size(adj_binary)
-
-        model = GCN(data.num_features, args.hidden_channels,
-                    args.hidden_channels, args.num_layers,
-                    args.dropout, bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
-                    recorder=run_recorder, adj_activity=activity).to(device)
-
-    # 获取顶点特征更新列表
-    drop_mode = DropMode(args.drop_mode)
-    if args.percentile != 0:
-        if drop_mode == DropMode.GLOBAL:
-            updated_vertex, vertex_pointer = get_updated_list(adj_origin, args.percentile, args.array_size,
-                                                              drop_mode)
-            set_vertex_map(vertex_pointer)
-            if args.call_neurosim:
-                run_recorder.record_acc_vertex_map('', 'adj_matrix.csv', adj_binary, vertex_pointer, delimiter=',',
-                                                   fmt='%s')
-        else:
-            updated_vertex = get_updated_list(adj_origin, args.percentile, args.array_size, drop_mode)
-            if args.call_neurosim:
-                run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
-    else:
-        updated_vertex = np.ones(max(adj_origin.size(dim=0), adj_origin.size(dim=1)))
-        if args.call_neurosim:
-            run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
-    if args.call_neurosim:
-        run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
-    set_updated_vertex_map(updated_vertex)
 
     predictor = LinkPredictor(args.hidden_channels, args.hidden_channels, 1,
                               args.num_layers, args.dropout).to(device)
 
     evaluator = Evaluator(name='ogbl-citation2')
     logger = Logger(args.runs, args)
-
-    # 添加钩子使得drop掉的顶点特征不更新
-    if args.percentile != 0:
-        for index, (name, layer) in enumerate(model.convs.named_children()):
-            for index_c, (name_c, layer_c) in enumerate(layer.gcn_conv.named_children()):
-                layer_c.register_forward_hook(hook_forward_set_grad_zero)
 
     for run in range(args.runs):
         model.reset_parameters()
@@ -255,13 +236,12 @@ def main():
 
         for epoch in range(1, 1 + args.epochs):
             loss = train(model, predictor, data, split_edge, optimizer,
-                         args.batch_size, train_dec=train_dec, cur_epoch=epoch,
-                         cluster_label=cluster_label)
+                         args.batch_size)
             print(f'Run: {run + 1:02d}, Epoch: {epoch:02d}, Loss: {loss:.4f}')
 
             if epoch % args.eval_steps == 0:
                 result = test(model, predictor, data, split_edge, evaluator,
-                              args.batch_size, cluster_label=cluster_label)
+                              args.batch_size)
                 logger.add_result(run, result)
 
                 if epoch % args.log_steps == 0:
@@ -272,9 +252,6 @@ def main():
                           f'Train: {train_mrr:.4f}, '
                           f'Valid: {valid_mrr:.4f}, '
                           f'Test: {test_mrr:.4f}')
-            if args.call_neurosim:
-                call(["chmod", "o+x", run_recorder.bootstrap_path])
-                call(["/bin/bash", run_recorder.bootstrap_path])
 
         print('GraphSAGE' if args.use_sage else 'GCN')
         logger.print_statistics(run)

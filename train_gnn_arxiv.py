@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import torch_geometric.transforms as T
 
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
+from tensorboardX import SummaryWriter
 
 from models import SAGE, NamedGCNConv, wage_init_, Q, WAGERounding, C
 from util import train_decorator
@@ -151,6 +152,7 @@ def test(model, data, split_idx, evaluator, cluster_label=None):
 
 
 def main():
+    writer = SummaryWriter()
     train_dec = train_decorator.TrainDecorator(weight_quantification, grad_quantiication, grad_clip, run_recorder)
 
     device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
@@ -210,6 +212,7 @@ def main():
         for epoch in range(1, 1 + args.epochs):
             loss = train(model, data, train_idx, optimizer, train_decorator=train_dec, cur_epoch=epoch,
                          cluster_label=cluster_label)
+            writer.add_scalar('arxiv/Loss', loss, epoch)
             result = test(model, data, split_idx, evaluator, cluster_label=cluster_label)
             logger.add_result(run, result)
 
@@ -221,6 +224,9 @@ def main():
                       f'Train: {100 * train_acc:.2f}%, '
                       f'Valid: {100 * valid_acc:.2f}% '
                       f'Test: {100 * test_acc:.2f}%')
+                writer.add_scalar(f'arxiv/Train accuracy', 100 * train_acc, epoch)
+                writer.add_scalar(f'arxiv/Valid accuracy', 100 * valid_acc, epoch)
+                writer.add_scalar(f'arxiv/Test accuracy', 100 * test_acc, epoch)
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])
