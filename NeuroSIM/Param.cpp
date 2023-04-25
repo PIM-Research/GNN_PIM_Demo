@@ -185,7 +185,7 @@ Param::Param() {
 	parallelBP = true;          		// false: conventionalSequential (Use several multi-bit RRAM as one synapse)
 										// true: conventionalParallel (Use several multi-bit RRAM as one synapse)
 	
-	batchSize = 1;                    // batchSize in training
+	batchSize = 4267;                    // batchSize in training
 	numIteration = 17;                 // num of iteration for one epoch
 	
 	bufferOverHeadConstraint = 1;       // N times of overhead of the original buffer designed for inference only
