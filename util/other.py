@@ -49,9 +49,9 @@ def dec2bin(x, n):
     return out, scale_list
 
 
-def get_vertex_deg(adj: Union[SparseTensor, Tuple[torch.Tensor, ...]]):
+def get_vertex_deg(adj: SparseTensor):
     # 获取COO格式的邻接矩阵
-    adj_coo = adj.coo() if type(adj) is SparseTensor else adj
+    adj_coo = adj.coo()
     # 获取目的节点列表
     des_vertex = adj_coo[1]
     # 获取源节点和目的节点最大下标
@@ -222,8 +222,8 @@ def transform_matrix_2_binary(adj_matrix):
 
 def store_updated_list_and_adj_matrix(adj_t, adj_binary):
     if args.call_neurosim:
-        adj_binary = adj_binary.cpu().coo()
         adj_binary = filter_edges_by_avg(adj_binary)
+        adj_binary = adj_binary.cpu().coo()
     else:
         adj_binary = None
     drop_mode = DropMode(args.drop_mode)
@@ -326,8 +326,8 @@ def set_vertex_pointer(vertex_map):
     vertex_pointer = vertex_map
 
 
-def filter_edges_by_avg(adj: Union[SparseTensor, Tuple[torch.Tensor, ...]]):
-    adj_coo = adj.coo() if type(adj) is SparseTensor else adj
+def filter_edges_by_avg(adj: SparseTensor):
+    adj_coo = adj.coo()
     vertex_deg = get_vertex_deg(adj)
     deg_avg = np.sum(vertex_deg) / vertex_deg.shape[0]
     min_dis_index = np.argmin(np.abs(vertex_deg - deg_avg))
