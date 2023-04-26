@@ -230,7 +230,7 @@ def main():
                      args.hidden_channels, args.num_layers,
                      args.dropout).to(device)
     else:
-        model = GCN(data.num_features, args.hidden_channels, dataset.num_classes, args.num_layers, args.dropout,
+        model = GCN(data.num_features, args.hidden_channels, args.hidden_channels, args.num_layers, args.dropout,
                     bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
                     recorder=run_recorder).to(device)
 
