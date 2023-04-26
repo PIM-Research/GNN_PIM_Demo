@@ -229,28 +229,28 @@ def main():
     if args.use_node_embedding:
         data.x = torch.cat([data.x, torch.load('embedding.pt')], dim=-1)
 
-        # 将邻接矩阵正则化
-        if args.call_neurosim:
-            adj_matrix = norm_adj(data.adj_t)
-            if args.bl_activate != -1:
-                adj_matrix = quantify_adj(adj_matrix, args.bl_activate)
-        else:
-            adj_matrix = None
+    # 将邻接矩阵正则化
+    if args.call_neurosim:
+        adj_matrix = norm_adj(data.adj_t)
+        if args.bl_activate != -1:
+            adj_matrix = quantify_adj(adj_matrix, args.bl_activate)
+    else:
+        adj_matrix = None
 
-        # 获取词嵌入数量
-        cluster_label = None
-        if args.use_cluster:
-            cluster_label, data.num_nodes, adj_matrix, data.adj_t = transform_adj_matrix(data, device)
+    # 获取词嵌入数量
+    cluster_label = None
+    if args.use_cluster:
+        cluster_label, data.num_nodes, adj_matrix, data.adj_t = transform_adj_matrix(data, device)
 
-        # 获取顶点特征更新列表
-        updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=data.adj_t, adj_binary=adj_matrix)
-        if vertex_pointer is not None:
-            set_vertex_map(vertex_pointer)
-        set_updated_vertex_map(updated_vertex)
+    # 获取顶点特征更新列表
+    updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=data.adj_t, adj_binary=adj_matrix)
+    if vertex_pointer is not None:
+        set_vertex_map(vertex_pointer)
+    set_updated_vertex_map(updated_vertex)
 
-        if args.call_neurosim:
-            record_net_structure(data.num_nodes, data.num_features, args.hidden_channels, args.hidden_channels,
-                                 args.num_layers)
+    if args.call_neurosim:
+        record_net_structure(data.num_nodes, data.num_features, args.hidden_channels, args.hidden_channels,
+                             args.num_layers)
 
     split_edge = dataset.get_edge_split()
 
