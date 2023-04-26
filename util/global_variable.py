@@ -34,9 +34,9 @@ parser.add_argument('--lr', type=float, default=0.01)
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--runs', type=int, default=10)
 parser.add_argument('--record-dir', type=str, default='ddi')
-parser.add_argument('--bl-weight', type=int, default=5, metavar='N',
+parser.add_argument('--bl-weight', type=int, default=8, metavar='N',
                     help='word length in bits for weight output; -1 if full precision.')
-parser.add_argument('--bl-grad', type=int, default=5, metavar='N',
+parser.add_argument('--bl-grad', type=int, default=8, metavar='N',
                     help='word length in bits for gradient; -1 if full precision.')
 parser.add_argument('--bl-activate', type=int, default=8, metavar='N',
                     help='word length in bits for layer activations; -1 if full precision.')
