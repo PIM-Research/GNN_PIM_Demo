@@ -792,7 +792,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 				//cout << "tileWriteLatencyWU:" << tileWriteLatencyWU << endl;
 			}
 		}
-		cout << "readLatency:" << readLatency << endl;
+		cout << "readLatency:" << *readLatency << endl;
 		if (param->chipActivation) {
 			if (param->reLu) {
 				GreLu->CalculateLatency(ceil(numInVector*netStructure[l][5]/(double) GreLu->numUnit));
@@ -863,8 +863,10 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		// cout << "numBufferCore:" << numBufferCore << endl;
 		// each time, only a part of the ic is used to transfer data to a part of the tiles
 		cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
-		globalBuffer->readLatency *= ceil(totalNumTile/(numTileEachLayer[0][l]*numTileEachLayer[1][l]));
-		globalBuffer->writeLatency *= ceil(totalNumTile/(numTileEachLayer[0][l]*numTileEachLayer[1][l]));
+		// globalBuffer->readLatency *= ceil(totalNumTile/(numTileEachLayer[0][l] * numTileEachLayer[1][l]) );
+		// globalBuffer->writeLatency *= ceil(totalNumTile/(numTileEachLayer[0][l] * numTileEachLayer[1][l]));
+		globalBuffer->readLatency *= ceil((numTileEachLayer[0][l] * numTileEachLayer[1][l]) / totalNumTile);
+		globalBuffer->writeLatency *= ceil((numTileEachLayer[0][l] * numTileEachLayer[1][l]) / totalNumTile);
 		cout << "totalNumTile:" << totalNumTile << endl;
 	
 	} else {   // novel Mapping
