@@ -1005,7 +1005,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	*icDynamicEnergy += GhTree->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 2:1);
 	
 	*readLatency += (globalBuffer->readLatency + globalBuffer->writeLatency)*((param->trainingEstimation) && ((layerNumber + 1) % 2 != 0) ==true? 2:1);
-	cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << "globalBuffer->writeLatency" << endl;
+	cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << "globalBuffer->writeLatency" << globalBuffer->writeLatency << endl;
 	*readDynamicEnergy += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy)*((param->trainingEstimation) && ((layerNumber + 1) % 2 != 0) ==true? 2:1);
 	*readLatency += GhTree->readLatency;
 	*readDynamicEnergy += GhTree->readDynamicEnergy;
