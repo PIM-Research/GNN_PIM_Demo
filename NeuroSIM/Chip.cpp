@@ -448,6 +448,7 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 		// update the buffer size to save weight gradient
 		*numArrayWriteParallel = 2;
 		bufferSize += bufferOverHead;
+		cout << "bufferSize:" << bufferSize << endl;
 		gradientAccum->Initialize(weightGradientUnit->outPrecision+ceil(log2(param->batchSize)), (*numArrayWriteParallel)*param->numRowSubArray*param->numColSubArray);
 	} 
 	

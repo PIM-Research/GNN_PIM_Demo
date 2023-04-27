@@ -188,7 +188,7 @@ Param::Param() {
 	batchSize = 4267;                    // batchSize in training
 	numIteration = 17;                 // num of iteration for one epoch
 	
-	bufferOverHeadConstraint = 19;       // N times of overhead of the original buffer designed for inference only
+	bufferOverHeadConstraint = 1;       // N times of overhead of the original buffer designed for inference only
 										// For example: if N=3, the buffer size will be at most 4*original buffer size
 	
 	numRowSubArrayWG = 128;             // # of rows of single SRAM subArray in "gradient calculation of weight"
