@@ -420,7 +420,7 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 	// start: at least can support gradient of one weight matrix = subArray size * weightPrecision/cellPrecision
 	// int bufferOverHead = param->numRowSubArray*param->numColSubArray*param->numColPerSynapse*(weightGradientUnit->outPrecision+ceil(log2(param->batchSize)));
 	// cout << "weightGradientUnit->outPrecision:" << weightGradientUnit->outPrecision << endl;
-	int bufferOverHead = param->numRowSubArray * param->numColSubArray * param->numColPerSynapse * (weightGradientUnit->outPrecision + ceil(log2(200)));
+	int bufferOverHead = param->numRowSubArray * param->numColSubArray * param->numColPerSynapse * (weightGradientUnit->outPrecision + ceil(log2(param->batchSize)));
 	*numArrayWriteParallel = floor(bufferOverHead/((param->numRowSubArray*param->numColSubArray)*param->synapseBit));
 	
 	dRAM->Initialize(param->dramType);
