@@ -74,8 +74,10 @@ int main(int argc, char * argv[]) {
 	netStructure = getNetStructure(argv[2]);
 	getUpdatedVertexs(argv[5 + netStructure.size() * 4]);
 	// define weight/input/memory precision from wrapper
-	param->synapseBit = atoi(argv[3]);             		 // precision of synapse weight
-	param->numBitInput = atoi(argv[4]);            		 // precision of input neural activation
+	// param->synapseBit = atoi(argv[3]);             		 // precision of synapse weight
+	// param->numBitInput = atoi(argv[4]);            		 // precision of input neural activation
+	param->synapseBit = 8;
+	param->numBitInput = 8;
 	
 	if (param->cellBit > param->synapseBit) {
 		cout << "ERROR!: Memory precision is even higher than synapse precision, please modify 'cellBit' in Param.cpp!" << endl;
