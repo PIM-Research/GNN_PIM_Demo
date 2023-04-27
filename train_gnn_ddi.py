@@ -9,7 +9,7 @@ from models import GAT, GCN, SAGE, LinkPredictor
 from util import train_test_ddi, train_decorator
 from util.global_variable import *
 from util.other import norm_adj, transform_adj_matrix, record_net_structure, quantify_adj, \
-    store_updated_list_and_adj_matrix
+    store_updated_list_and_adj_matrix, store_updated_list
 from subprocess import call
 from tensorboardX import SummaryWriter
 

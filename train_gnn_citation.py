@@ -17,7 +17,7 @@ from util.global_variable import args, run_recorder, grad_quantiication, weight_
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from util.other import norm_adj, transform_adj_matrix, store_updated_list_and_adj_matrix, record_net_structure, \
-    quantify_adj
+    quantify_adj, store_updated_list
 from util.train_decorator import TrainDecorator
 
 
@@ -97,10 +97,13 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
             train_decorator.bind_hooks(model, i, cur_epoch)
 
         optimizer.zero_grad()
+        src, dst = source_edge[perm], target_edge[perm]
+
+        if args.filter_adj:
+            data.adj_t = train_decorator.filter_adj_by_batch(adj_t=data.adj_t, source_vertexes=src, dst_vertexes=dst,
+                                                             batch_index=i)
 
         h = model(data.x, data.adj_t)
-
-        src, dst = source_edge[perm], target_edge[perm]
 
         if args.use_cluster:
             src = cluster_label[src]
@@ -202,9 +205,9 @@ def main():
     cluster_label = None
     if args.use_cluster:
         cluster_label, data.num_nodes, adj_matrix, data.adj_t = transform_adj_matrix(data, device)
-
     # 获取顶点特征更新列表
     updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=data.adj_t, adj_binary=adj_matrix)
+
     if vertex_pointer is not None:
         set_vertex_map(vertex_pointer)
     set_updated_vertex_map(updated_vertex)

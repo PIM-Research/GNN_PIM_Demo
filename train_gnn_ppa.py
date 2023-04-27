@@ -16,7 +16,7 @@ from util.global_variable import args, weight_quantification, grad_clip, run_rec
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from util.other import norm_adj, quantify_adj, store_updated_list_and_adj_matrix, transform_adj_matrix, \
-    record_net_structure
+    record_net_structure, store_updated_list
 from util.train_decorator import TrainDecorator
 
 
@@ -94,10 +94,14 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
         if args.call_neurosim:
             train_decorator.bind_hooks(model, i, cur_epoch)
         optimizer.zero_grad()
+        edge = pos_train_edge[perm].t()
+
+        if args.filter_adj:
+            data.adj_t = train_decorator.filter_adj_by_batch(adj_t=data.adj_t, source_vertexes=edge[0],
+                                                             dst_vertexes=edge[1], batch_index=i)
 
         h = model(data.x, data.adj_t)
 
-        edge = pos_train_edge[perm].t()
         if args.use_cluster:
             src = cluster_label[edge[0]]
             dst = cluster_label[edge[1]]

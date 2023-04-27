@@ -3,7 +3,7 @@ import torch
 from util.hook import hook_combination_input_output, hook_set_epoch, hook_forward_set_grad_zero
 import os
 
-from util.other import store_adj_matrix, filter_edges
+from util.other import filter_edges
 
 
 class TrainDecorator:
@@ -74,6 +74,4 @@ class TrainDecorator:
     def filter_adj_by_batch(adj_t, source_vertexes, dst_vertexes, batch_index):
         vertex_filter = torch.unique(torch.cat((source_vertexes, dst_vertexes), dim=-1))
         adj_t = filter_edges(adj_t, vertex_filter)
-        if batch_index == 0:
-            store_adj_matrix(adj=adj_t)
         return adj_t.to_device(adj_t.device())

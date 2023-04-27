@@ -14,7 +14,7 @@ from util.global_variable import args, run_recorder, weight_quantification, grad
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from util.other import transform_adj_matrix, transform_matrix_2_binary, store_updated_list_and_adj_matrix, norm_adj, \
-    quantify_adj, record_net_structure
+    quantify_adj, record_net_structure, store_updated_list
 from util.train_decorator import TrainDecorator
 
 
@@ -107,6 +107,10 @@ def train(model, data, train_idx, optimizer, train_decorator: TrainDecorator, cu
     if args.call_neurosim:
         train_decorator.bind_hooks(model, 0, cur_epoch)
 
+    if args.filter_adj:
+        data.adj_t = train_decorator.filter_adj_by_batch(adj_t=data.adj_t, source_vertexes=train_idx,
+                                                         dst_vertexes=train_idx, batch_index=0)
+
     optimizer.zero_grad()
     out = model(data.x, data.adj_t)[cluster_label[train_idx]] if cluster_label is not None else \
         model(data.x, data.adj_t)[train_idx]
@@ -179,6 +183,7 @@ def main():
 
     # 获取顶点特征更新列表
     updated_vertex, vertex_pointer = store_updated_list_and_adj_matrix(adj_t=data.adj_t, adj_binary=adj_matrix)
+
     if vertex_pointer is not None:
         set_vertex_map(vertex_pointer)
     set_updated_vertex_map(updated_vertex)

@@ -39,13 +39,17 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         if args.call_neurosim:
             train_decorator.bind_hooks(model, i, cur_epoch)
 
+        # 根据perm这个索引获得本次预测需要的边
+        edge = pos_train_edge[perm].t()
+
+        if args.filter_adj:
+            adj_t = train_decorator.filter_adj_by_batch(adj_t=adj_t, source_vertexes=edge[0], dst_vertexes=edge[1],
+                                                        batch_index=i)
+
         optimizer.zero_grad()
 
         # 进行图卷积计算
         h = model(x, adj_t)
-
-        # 根据perm这个索引获得本次预测需要的边
-        edge = pos_train_edge[perm].t()
 
         # print('edge[0]:', edge[0], ' edge[1]:', edge[1])
         if args.use_cluster:
