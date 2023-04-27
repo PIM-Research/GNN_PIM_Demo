@@ -1362,7 +1362,11 @@ vector<vector<double> > OverallEachLayer(bool utilization, bool speedUp, const v
 				numtileEachLayerCol = ceil((double) netStructure[i][5]*(double) numColPerSynapse/(double) desiredTileSizeCM);
 				utilizationEach = (peDup[0][i]*peDup[1][i]*subArrayDup[0][i]*subArrayDup[1][i]*netStructure[i][2]*netStructure[i][3]*netStructure[i][4]
 											*numRowPerSynapse*netStructure[i][5]*numColPerSynapse)/(numtileEachLayerRow*numtileEachLayerCol*desiredTileSizeCM*desiredTileSizeCM);
-
+				cout << i << endl;
+				cout << "numtileEachLayerRow:" << numtileEachLayerRow << " numtileEachLayerCol:" << numtileEachLayerCol << endl;
+				cout << "numRowPerSynapse:" << numRowPerSynapse << " numColPerSynapse:" << numColPerSynapse << endl;
+				cout << "peDup[0][i]:" << peDup[0][i] << " peDup[1][i]:" << peDup[1][i] << endl;
+				cout << "subArrayDup[0][i]:" << subArrayDup[0][i] << " peDup[1][i]:" << subArrayDup[0][i] << endl;
 				utilization.push_back(utilizationEach);
 			} else {
 				// pipeline system
