@@ -275,35 +275,39 @@ vector<vector<double> > ChipFloorPlan(bool findNumTile, bool findUtilization, bo
 			cout << "ERROR: SubArray Size is too large, which break the chip hierarchey, please decrease the SubArray size! " << endl;
 		} else {
 			/*** Tile Design ***/
-			*desiredTileSizeCM = MAX(maxTileSizeCM, 4*param->numRowSubArray);
-			vector<double> initialDesign;
-			initialDesign = TileDesignCM((*desiredTileSizeCM), markNM, netStructure, numRowPerSynapse, numColPerSynapse);
-			*desiredNumTileCM = initialDesign[0];
-			for (double thisTileSize = MAX(maxTileSizeCM, 4*param->numRowSubArray); thisTileSize > 4*param->numRowSubArray; thisTileSize/=2) {
-				// for layers use conventional mapping
-				double thisUtilization = 0;
-				vector<double> thisDesign;
-				thisDesign = TileDesignCM(thisTileSize, markNM, netStructure, numRowPerSynapse, numColPerSynapse);
-				thisUtilization = thisDesign[2];
-				if (thisUtilization > maxUtilizationCM) {
-					maxUtilizationCM = thisUtilization;
-					*desiredTileSizeCM = thisTileSize;
-					*desiredNumTileCM = thisDesign[0];
-				}
-			}
-			*desiredPESizeCM = (*desiredTileSizeCM)/2;
-			/*** PE Design ***/
-			for (double thisPESize = (*desiredTileSizeCM)/2; thisPESize > 2*param->numRowSubArray; thisPESize/=2) {
-				// define PE Size for layers use conventional mapping
-				double thisUtilization = 0;
-				vector<vector<double> > thisDesign;
-				thisDesign = PEDesign(true, thisPESize, (*desiredTileSizeCM), (*desiredNumTileCM), markNM, netStructure, numRowPerSynapse, numColPerSynapse);
-				thisUtilization = thisDesign[1][0];
-				if (thisUtilization > maxUtilizationCM) {
-					maxUtilizationCM = thisUtilization;
-					*desiredPESizeCM = thisPESize;
-				}
-			}
+			//*desiredTileSizeCM = MAX(maxTileSizeCM, 4*param->numRowSubArray);
+			//vector<double> initialDesign;
+			//initialDesign = TileDesignCM((*desiredTileSizeCM), markNM, netStructure, numRowPerSynapse, numColPerSynapse);
+			//*desiredNumTileCM = initialDesign[0];
+			//for (double thisTileSize = MAX(maxTileSizeCM, 4*param->numRowSubArray); thisTileSize > 4*param->numRowSubArray; thisTileSize/=2) {
+			//	// for layers use conventional mapping
+			//	double thisUtilization = 0;
+			//	vector<double> thisDesign;
+			//	thisDesign = TileDesignCM(thisTileSize, markNM, netStructure, numRowPerSynapse, numColPerSynapse);
+			//	thisUtilization = thisDesign[2];
+			//	if (thisUtilization > maxUtilizationCM) {
+			//		maxUtilizationCM = thisUtilization;
+			//		*desiredTileSizeCM = thisTileSize;
+			//		*desiredNumTileCM = thisDesign[0];
+			//	}
+			//}
+			//*desiredPESizeCM = (*desiredTileSizeCM)/2;
+			///*** PE Design ***/
+			//for (double thisPESize = (*desiredTileSizeCM)/2; thisPESize > 2*param->numRowSubArray; thisPESize/=2) {
+			//	// define PE Size for layers use conventional mapping
+			//	double thisUtilization = 0;
+			//	vector<vector<double> > thisDesign;
+			//	thisDesign = PEDesign(true, thisPESize, (*desiredTileSizeCM), (*desiredNumTileCM), markNM, netStructure, numRowPerSynapse, numColPerSynapse);
+			//	thisUtilization = thisDesign[1][0];
+			//	if (thisUtilization > maxUtilizationCM) {
+			//		maxUtilizationCM = thisUtilization;
+			//		*desiredPESizeCM = thisPESize;
+			//	}
+			//}
+			vector<double> thisDesignTile = TileDesignCM(256, markNM, netStructure, numRowPerSynapse, numColPerSynapse);
+			*desiredTileSizeCM = 256;
+			*desiredNumTileCM = thisDesignTile[0];
+			*desiredPESizeCM = 128;
 			peDup = PEDesign(false, (*desiredPESizeCM), (*desiredTileSizeCM), (*desiredNumTileCM), markNM, netStructure, numRowPerSynapse, numColPerSynapse);
 			/*** SubArray Duplication ***/
 			subArrayDup = SubArrayDup((*desiredPESizeCM), 0, markNM, netStructure, numRowPerSynapse, numColPerSynapse);
