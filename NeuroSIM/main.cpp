@@ -111,6 +111,8 @@ int main(int argc, char * argv[]) {
 		param->numColPerSynapse = 1;
 	} else {
 		param->numColPerSynapse = ceil((double)param->synapseBit/(double)param->cellBit); 
+		cout << "param->synapseBit:" << param->synapseBit << " param->cellBit:" << param->cellBit << endl;
+		cout << "param->numColPerSynapse:" << param->numColPerSynapse << endl;
 	}
 	
 	switch(param->transistortype) {
