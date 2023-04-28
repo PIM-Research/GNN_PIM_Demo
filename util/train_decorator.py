@@ -45,7 +45,9 @@ class TrainDecorator:
     def quantify_grad(self, model):
         for name, param in list(model.named_parameters())[::-1]:
             if 'weight' in name and 'convs' in name:
+                print('before:', param.grad.data)
                 param.grad.data = self.grad_quantification(param.grad.data).data
+                print('after:', param.grad.data)
                 # 裁剪，限制权重范围
                 w_acc = self.wage_grad_clip(model.weight_acc[name]).to(next(model.parameters()).device)
                 w_acc -= param.grad.data
