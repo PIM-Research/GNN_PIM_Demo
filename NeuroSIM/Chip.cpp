@@ -453,7 +453,7 @@ void ChipInitialize(InputParameter& inputParameter, Technology& tech, MemCell& c
 		*numArrayWriteParallel = 2;
 		// bufferSize += bufferOverHead;
 		bufferSize = 87384000;
-		cout << "bufferSize:" << bufferSize << endl;
+		// cout << "bufferSize:" << bufferSize << endl;
 		gradientAccum->Initialize(weightGradientUnit->outPrecision+ceil(log2(param->batchSize)), (*numArrayWriteParallel)*param->numRowSubArray*param->numColSubArray);
 	} 
 	
