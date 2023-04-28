@@ -641,7 +641,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 						else
 							subArrayWriteLatencyParallelMax = max(subArrayWriteLatencyParallelMax, subArray->writeLatency);
 					}
-					// cout << "subArray->writeLatency:" << subArray->writeLatency << " subArrayWriteLatencyParallelMax:" << subArrayWriteLatencyParallelMax << endl;
+					cout << "subArray->writeLatency:" << subArray->writeLatency << " subArrayWriteLatencyParallelMax:" << subArrayWriteLatencyParallelMax << endl;
 					*writeDynamicEnergyWU += subArray->writeDynamicEnergy*((param->trainingEstimation)==true? 1:0);
 					*readLatency = MAX(subArrayReadLatency, (*readLatency));
 					*readLatencyAG = MAX(subArrayReadLatencyAG, (*readLatencyAG));
