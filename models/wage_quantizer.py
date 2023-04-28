@@ -63,9 +63,30 @@ def QG(x, bits_G, bits_R, lr):
     print('shift x:', x)
     norm = lr * x
     print('norm:', norm)
-    norm = SR(norm)
+    norm = torch.sign(norm)*(torch.abs(norm) + SR(norm))
     print('norm:', norm)
     return norm / S(bits_G)
+
+# def QG(origin, bits_W, x, bits_G, lr, paramALTP, paramALTD, maxLevelLTP, maxLevelLTD):
+#     max_entry = x.abs().max()
+#     assert max_entry != 0, "QG blow"
+#     # if max_entry != 0:
+#     x /= shift(max_entry)
+#     gradient = lr * x
+#     # introduce non-linearity here
+#     paramBLTP = GetParamB(paramALTP, maxLevelLTP)
+#     paramBLTD = GetParamB(paramALTD, maxLevelLTD)
+#     numLevel = max(maxLevelLTP, maxLevelLTD)
+#     # apply delta pulse to old conductance
+#     deltaPulse = torch.round((gradient) / 2 * numLevel)
+#     paramA = torch.where(torch.sign(deltaPulse) < 0, paramALTP, paramALTD).float()
+#     paramB = torch.where(torch.sign(deltaPulse) < 0, paramBLTP, paramBLTD).float()
+#     xPulse = InvNonlinearWeight(origin, paramA, paramB)
+#     xNew = NonlinearWeight(xPulse - deltaPulse, paramA, paramB)
+#     gradient = origin - C(xNew, bits_W)
+#     norm = SR(gradient)  # normalize the gradient
+#     gradient = norm / S(bits_G)
+#     return gradient
 
 
 class WAGERounding(Function):
