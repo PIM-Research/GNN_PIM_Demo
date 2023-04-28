@@ -62,7 +62,7 @@ class TrainDecorator:
             for name, param in list(model.named_parameters())[::-1]:
                 if 'weight' in name and self.recorder is not None and 'convs' in name:
                     self.recorder.record(f'layer_run/epoch{cur_epoch}', f'{name}_after.csv',
-                                         param.data.T.to('cpu').data.numpy(),
+                                         model.weight_acc[name].T.to('cpu').data.numpy(),
                                          delimiter=',', fmt='%10.5f')
 
     @staticmethod
