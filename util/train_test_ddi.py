@@ -95,7 +95,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         if args.bl_weight != -1:
             train_decorator.quantify_grad(model)
 
-        optimizer.step()
+        # optimizer.step()
 
         num_examples = pos_out.size(0)
         total_loss += loss.item() * num_examples
