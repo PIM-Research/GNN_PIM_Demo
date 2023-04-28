@@ -551,7 +551,7 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 					// accumulate write latency as array need to be write sequentially (worst case)
 					// limitation by on-chip buffer, write latency will be divided by numArrayWriteParallel (real case)
 					*writeLatencyWU += PEwriteLatencyWU;
-					// cout << "writeLatencyWU Tile:" << *writeLatencyWU << endl;
+					// cout << "PEwriteLatencyWU:" << PEwriteLatencyWU << " writeLatencyWU Tile:" << *writeLatencyWU << endl;
 					*writeDynamicEnergyWU += PEwriteDynamicEnergyWU;
 					
 					*readLatencyPeakFW = MAX(peReadLatencyPeakFW, (*readLatencyPeakFW));

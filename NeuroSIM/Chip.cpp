@@ -788,16 +788,17 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 				*coreEnergyADC += tileEnergyADC;
 				*coreEnergyAccum += tileEnergyAccum;
 				*coreEnergyOther += tileEnergyOther;
-				//cout << "tileReadLatency:" << tileReadLatency << " tileReadLatencyAG:" << tileReadLatencyAG << endl;
-				//cout << "tileWriteLatencyWU:" << tileWriteLatencyWU << endl;
+				cout << "tileWriteLatencyWU:" << tileWriteLatencyWU << " writeLatencyWU:" << *writeLatencyWU << endl;
+				// cout << "tileReadLatency:" << tileReadLatency << " tileReadLatencyAG:" << tileReadLatencyAG << endl;
+				// cout << "tileWriteLatencyWU:" << tileWriteLatencyWU << endl;
 			}
 		}
-		cout << "readLatency:" << *readLatency << endl;
+		// cout << "readLatency:" << *readLatency << endl;
 		if (param->chipActivation) {
 			if (param->reLu) {
 				GreLu->CalculateLatency(ceil(numInVector*netStructure[l][5]/(double) GreLu->numUnit));
 				GreLu->CalculatePower(ceil(numInVector*netStructure[l][5]/(double) GreLu->numUnit));
-				cout << "GreLu->readLatency:" << GreLu->readLatency << endl;
+				// cout << "GreLu->readLatency:" << GreLu->readLatency << endl;
 				*readLatency += GreLu->readLatency;
 				*readDynamicEnergy += GreLu->readDynamicEnergy;
 				*readLatencyPeakFW += GreLu->readLatency;
@@ -815,12 +816,12 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 				*coreEnergyOther += Gsigmoid->readDynamicEnergy;
 			}
 		}
-		cout << "readLatency:" << *readLatency << endl;
+		// cout << "readLatency:" << *readLatency << endl;
 		if (numTileEachLayer[0][l] > 1) {   
 			Gaccumulation->CalculateLatency(numTileEachLayer[1][l]*netStructure[l][5]*(ceil(numInVector/(double) Gaccumulation->numAdderTree)), numTileEachLayer[0][l], 0);
 			Gaccumulation->CalculatePower(numTileEachLayer[1][l]*netStructure[l][5]*(ceil(numInVector/(double) Gaccumulation->numAdderTree)), numTileEachLayer[0][l]);
 			*readLatency += Gaccumulation->readLatency;
-			cout << "Gaccumulation->readLatency:" << Gaccumulation->readLatency << endl;
+			// cout << "Gaccumulation->readLatency:" << Gaccumulation->readLatency << endl;
 			*readDynamicEnergy += Gaccumulation->readDynamicEnergy;
 			*readLatencyPeakFW += Gaccumulation->readLatency;
 			*readDynamicEnergyPeakFW += Gaccumulation->readDynamicEnergy;
@@ -833,7 +834,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 			*coreLatencyAccum += Gaccumulation->readLatency*((param->trainingEstimation)&&(layerNumber!=0)==true? 2:1);
 			*coreEnergyAccum += Gaccumulation->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0)==true? 2:1);
 		}
-		cout << "readLatency:" << *readLatency << endl;
+		// cout << "readLatency:" << *readLatency << endl;
 		// if this layer is followed by Max Pool
 		if (followedByMaxPool) {
 			maxPool->CalculateLatency(1e20, 0, ceil((double) (numInVector/(double) maxPool->window)/(double) desiredTileSizeCM));
@@ -857,17 +858,17 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		globalBuffer->CalculatePower(globalBuffer->interface_width, numBitToLoadOut/globalBuffer->interface_width,
 								globalBuffer->interface_width, numBitToLoadIn/globalBuffer->interface_width);
 		// since multi-core buffer has improve the parallelism
-		cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
+		// cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
 		globalBuffer->readLatency /= MIN(numBufferCore, ceil(globalBusWidth/globalBuffer->interface_width));
 		globalBuffer->writeLatency /= MIN(numBufferCore, ceil(globalBusWidth/globalBuffer->interface_width));
 		// cout << "numBufferCore:" << numBufferCore << endl;
 		// each time, only a part of the ic is used to transfer data to a part of the tiles
-		cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
+		// cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
 		//globalBuffer->readLatency *= ceil(totalNumTile/(numTileEachLayer[0][l] * numTileEachLayer[1][l]) );
 		//globalBuffer->writeLatency *= ceil(totalNumTile/(numTileEachLayer[0][l] * numTileEachLayer[1][l]));
 		globalBuffer->readLatency *= ceil((numTileEachLayer[0][l] * numTileEachLayer[1][l]) / totalNumTile);
 		globalBuffer->writeLatency *= ceil((numTileEachLayer[0][l] * numTileEachLayer[1][l]) / totalNumTile);
-		cout << "totalNumTile:" << totalNumTile << endl;
+		// cout << "totalNumTile:" << totalNumTile << endl;
 	
 	} else {   // novel Mapping
 		for (int i=0; i<ceil((double) netStructure[l][2]*(double) numRowPerSynapse/(double) desiredPESizeNM); i++) {       // # of tiles in row
@@ -1011,12 +1012,12 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	*icDynamicEnergy += GhTree->readDynamicEnergy*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 2:1);
 	
 	*readLatency += (globalBuffer->readLatency + globalBuffer->writeLatency)*((param->trainingEstimation) && ((layerNumber + 1) % 2 != 0) ==true? 2:1);
-	cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
-	cout << "readLatency:" << *readLatency << endl;
+	// cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << " globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
+	// cout << "readLatency:" << *readLatency << endl;
 	*readDynamicEnergy += (globalBuffer->readDynamicEnergy + globalBuffer->writeDynamicEnergy)*((param->trainingEstimation) && ((layerNumber + 1) % 2 != 0) ==true? 2:1);
 	*readLatency += GhTree->readLatency;
-	cout << "GhTree->readLatency:" << GhTree->readLatency << endl;
-	cout << "readLatency:" << *readLatency << endl;
+	// cout << "GhTree->readLatency:" << GhTree->readLatency << endl;
+	// cout << "readLatency:" << *readLatency << endl;
 	*readDynamicEnergy += GhTree->readDynamicEnergy;
 	
 	*readLatencyAG += (globalBuffer->readLatency + globalBuffer->writeLatency)*((param->trainingEstimation)&&(layerNumber!=0) && ((layerNumber + 1) % 2 != 0) ==true? 2:0);
@@ -1032,8 +1033,8 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	dRAM->CalculateLatency(dataLoadIn);
 	dRAM->CalculatePower(dataLoadIn);
 	*readLatency += (dRAM->readLatency)*((param->trainingEstimation)==true? 0:1);
-	cout << "dRAM->readLatency:" << dRAM->readLatency << endl;
-	cout << "readLatency:" << *readLatency << endl;
+	// cout << "dRAM->readLatency:" << dRAM->readLatency << endl;
+	// cout << "readLatency:" << *readLatency << endl;
 	*readDynamicEnergy += (dRAM->readDynamicEnergy)*((param->trainingEstimation)==true? 0:1);
 	*dramLatency = (dRAM->readLatency*((param->trainingEstimation)==true? 0:1)); 
 	*dramDynamicEnergy = (dRAM->readDynamicEnergy*((param->trainingEstimation)==true? 0:1));
