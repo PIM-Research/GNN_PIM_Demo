@@ -933,6 +933,8 @@ double GetWriteUpdateEstimation(SubArray *subArray, Technology& tech, MemCell& c
 		if (subArrayStartRow >= 0 && updatedVertexs[subArrayStartRow + i] == 0) continue;
 		cout << "subArrayStartRow:" << subArrayStartRow << endl;
 		for (int j=0; j<newMemory[0].size(); j++) {   	// sweep column for a row
+			cout << "newMemory[i][j]:" << newMemory[i][j] << " oldMemory[i][j]:" << oldMemory[i][j] << endl;
+			cout << "minDeltaConductance:" << minDeltaConductance << endl;
 			if (param->memcelltype != 1) { // eNVM
 				if (abs(newMemory[i][j]-oldMemory[i][j]) >= minDeltaConductance) {
 					rowSelected = true;
