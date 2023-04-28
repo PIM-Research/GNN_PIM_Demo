@@ -51,6 +51,7 @@ def QE(x, bits):
         print(1)
         return x
     x /= shift(max_entry)
+    print('shift x:', x)
     return Q(C(x, bits), bits)
 
 
