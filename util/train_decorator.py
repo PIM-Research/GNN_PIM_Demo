@@ -45,14 +45,10 @@ class TrainDecorator:
     def quantify_grad(self, model):
         for name, param in list(model.named_parameters())[::-1]:
             if 'weight' in name and 'convs' in name:
-                print('param.grad.data:', param.grad.data)
                 param.grad.data = self.grad_quantification(param.grad.data).data
-                print('param.grad.data:', param.grad.data)
                 # 裁剪，限制权重范围
                 w_acc = self.wage_grad_clip(model.weight_acc[name]).to(next(model.parameters()).device)
-                print('w_acc:', w_acc)
                 w_acc -= param.grad.data
-                print('w_acc:', w_acc)
                 model.weight_acc[name] = w_acc
 
     def clear_hooks(self, model, batch_index, cur_epoch):
