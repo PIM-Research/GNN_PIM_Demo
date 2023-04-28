@@ -189,7 +189,7 @@ def main():
     set_updated_vertex_map(updated_vertex)
 
     if args.call_neurosim:
-        record_net_structure(data.num_nodes, data.num_features, args.hidden_channels, args.hidden_channels,
+        record_net_structure(data.num_nodes, data.num_features, args.hidden_channels, dataset.num_classes,
                              args.num_layers)
 
     split_idx = dataset.get_idx_split()
