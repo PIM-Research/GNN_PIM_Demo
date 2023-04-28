@@ -51,7 +51,6 @@ def QE(x, bits):
         print(1)
         return x
     x /= shift(max_entry)
-    print('shift x:', x)
     return Q(C(x, bits), bits)
 
 
@@ -61,8 +60,11 @@ def QG(x, bits_G, bits_R, lr):
         print(1)
         return x
     x /= shift(max_entry)
+    print('shift x:', x)
     norm = lr * x
+    print('norm:', norm)
     norm = SR(norm)
+    print('norm:', norm)
     return norm / S(bits_G)
 
 
