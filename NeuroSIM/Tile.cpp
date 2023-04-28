@@ -408,7 +408,7 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 				*readDynamicEnergyAG = PEreadDynamicEnergyAG;
 				*writeLatencyWU = PEwriteLatencyWU*(numPE*numPE);
 				*writeDynamicEnergyWU = PEwriteDynamicEnergyWU*(numPE*numPE);
-				cout << "PEwriteLatencyWU:" << PEwriteLatencyWU << " writeLatencyWU Tile:" << *writeLatencyWU << endl;
+				// cout << "PEwriteLatencyWU:" << PEwriteLatencyWU << " writeLatencyWU Tile:" << *writeLatencyWU << endl;
 				*readLatencyPeakFW = peReadLatencyPeakFW/(numPE*numPE);
 				*readDynamicEnergyPeakFW = peReadDynamicEnergyPeakFW;
 				*readLatencyPeakAG = peReadLatencyPeakAG/(numPE*numPE);
@@ -464,7 +464,7 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 							// limitation by on-chip buffer, write latency will be divided by numArrayWriteParallel (real case)
 							*writeLatencyWU += PEwriteLatencyWU;
 							*writeDynamicEnergyWU += PEwriteDynamicEnergyWU;
-							cout << "PEwriteLatencyWU:" << PEwriteLatencyWU << " writeLatencyWU Tile:" << *writeLatencyWU << endl;
+							// cout << "PEwriteLatencyWU:" << PEwriteLatencyWU << " writeLatencyWU Tile:" << *writeLatencyWU << endl;
 							*readLatencyPeakFW = MAX(peReadLatencyPeakFW, (*readLatencyPeakFW));
 							*readDynamicEnergyPeakFW += peReadDynamicEnergyPeakFW;
 							*readLatencyPeakAG = MAX(peReadLatencyPeakAG, (*readLatencyPeakAG));
@@ -551,7 +551,7 @@ void TileCalculatePerformance(const vector<vector<double> > &newMemory, const ve
 					// accumulate write latency as array need to be write sequentially (worst case)
 					// limitation by on-chip buffer, write latency will be divided by numArrayWriteParallel (real case)
 					*writeLatencyWU += PEwriteLatencyWU;
-					cout << "PEwriteLatencyWU:" << PEwriteLatencyWU << " writeLatencyWU Tile:" << *writeLatencyWU << endl;
+					// cout << "PEwriteLatencyWU:" << PEwriteLatencyWU << " writeLatencyWU Tile:" << *writeLatencyWU << endl;
 					*writeDynamicEnergyWU += PEwriteDynamicEnergyWU;
 					
 					*readLatencyPeakFW = MAX(peReadLatencyPeakFW, (*readLatencyPeakFW));

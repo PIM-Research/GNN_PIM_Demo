@@ -788,7 +788,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 				*coreEnergyADC += tileEnergyADC;
 				*coreEnergyAccum += tileEnergyAccum;
 				*coreEnergyOther += tileEnergyOther;
-				cout << "tileWriteLatencyWU:" << tileWriteLatencyWU << " writeLatencyWU:" << *writeLatencyWU << endl;
+				// cout << "tileWriteLatencyWU:" << tileWriteLatencyWU << " writeLatencyWU:" << *writeLatencyWU << endl;
 				// cout << "tileReadLatency:" << tileReadLatency << " tileReadLatencyAG:" << tileReadLatencyAG << endl;
 				// cout << "tileWriteLatencyWU:" << tileWriteLatencyWU << endl;
 			}
