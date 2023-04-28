@@ -588,8 +588,8 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 						subArray->totalNumWritePulse = totalNumWritePulse;
 						subArray->writeDynamicEnergyArray = writeDynamicEnergyArray;
 						subArray->layerNumber = layerNumber;
-						cout << "activityRowWrite:" << activityRowWrite << " activityColWrite:" << activityColWrite << endl;
-						cout << "numWritePulseAVG:" << numWritePulseAVG << " totalNumWritePulse:" << totalNumWritePulse << endl;
+						// cout << "activityRowWrite:" << activityRowWrite << " activityColWrite:" << activityColWrite << endl;
+						// cout << "numWritePulseAVG:" << numWritePulseAVG << " totalNumWritePulse:" << totalNumWritePulse << endl;
 					}
 
 					for (int k=0; k<numInVector; k++) {                 // calculate single subArray through the total input vectors
@@ -642,7 +642,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 						else
 							subArrayWriteLatencyParallelMax = max(subArrayWriteLatencyParallelMax, subArray->writeLatency);
 					}
-					cout << "subArray->writeLatency:" << subArray->writeLatency << " subArrayWriteLatencyParallelMax:" << subArrayWriteLatencyParallelMax << endl;
+					// cout << "subArray->writeLatency:" << subArray->writeLatency << " subArrayWriteLatencyParallelMax:" << subArrayWriteLatencyParallelMax << endl;
 					*writeDynamicEnergyWU += subArray->writeDynamicEnergy*((param->trainingEstimation)==true? 1:0);
 					*readLatency = MAX(subArrayReadLatency, (*readLatency));
 					*readLatencyAG = MAX(subArrayReadLatencyAG, (*readLatencyAG));
@@ -739,7 +739,7 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 	}
 	*writeLatencyPeakWU = (*writeLatencyWU);
 	*writeDynamicEnergyPeakWU = (*writeDynamicEnergyWU);
-	// cout << "subArrayStartRow:" << subArrayStartRow << endl;
+	cout << "subArrayStartRow:" << subArrayStartRow << endl;
 	return 0;
 }
 
