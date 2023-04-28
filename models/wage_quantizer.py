@@ -61,7 +61,7 @@ def QG(x, bits_G, bits_R, lr):
         return x
     x /= shift(max_entry)
     norm = lr * x
-    norm = torch.sign(norm)*(torch.abs(norm) + SR(norm))
+    norm = SR(norm)
     return norm / S(bits_G)
 
 # def QG(origin, bits_W, x, bits_G, lr, paramALTP, paramALTD, maxLevelLTP, maxLevelLTD):
