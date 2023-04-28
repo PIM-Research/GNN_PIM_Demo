@@ -584,11 +584,12 @@ double ProcessingUnitCalculatePerformance(SubArray *subArray, Technology& tech, 
 						
 						subArray->activityColWrite = activityColWrite;
 						subArray->activityRowWrite = activityRowWrite;
-						// cout << "activityRowWrite:" << activityRowWrite << endl;
 						subArray->numWritePulseAVG = numWritePulseAVG;
 						subArray->totalNumWritePulse = totalNumWritePulse;
 						subArray->writeDynamicEnergyArray = writeDynamicEnergyArray;
 						subArray->layerNumber = layerNumber;
+						cout << "activityRowWrite:" << activityRowWrite << " activityColWrite:" << activityColWrite << endl;
+						cout << "numWritePulseAVG:" << numWritePulseAVG << " totalNumWritePulse:" << totalNumWritePulse << endl;
 					}
 
 					for (int k=0; k<numInVector; k++) {                 // calculate single subArray through the total input vectors

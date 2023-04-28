@@ -1508,8 +1508,8 @@ void SubArray::CalculateLatency(double columnRes, const vector<double> &columnRe
 				writeLatencyArray += totalNumWritePulse * cell.writePulseWidth;
 				writeLatency += MAX(wlNewSwitchMatrix.writeLatency + wlSwitchMatrix.writeLatency, slSwitchMatrix.writeLatency);
 				writeLatency += writeLatencyArray;
-				cout << "writeLatencyArray:" << writeLatencyArray << " wlSwitchMatrix.writeLatency:" << wlSwitchMatrix.writeLatency << endl;
-				cout << "wlNewSwitchMatrix.writeLatency:" << wlNewSwitchMatrix.writeLatency << " slSwitchMatrix.writeLatency:" << slSwitchMatrix.writeLatency << endl;
+				// cout << "writeLatencyArray:" << writeLatencyArray << " wlSwitchMatrix.writeLatency:" << wlSwitchMatrix.writeLatency << endl;
+				// cout << "wlNewSwitchMatrix.writeLatency:" << wlNewSwitchMatrix.writeLatency << " slSwitchMatrix.writeLatency:" << slSwitchMatrix.writeLatency << endl;
 				/* Transpose Peripheral for BP */
 				if (trainingEstimation && ((layerNumber + 1) % 2 != 0)) {
 					readLatencyAG = 0;
