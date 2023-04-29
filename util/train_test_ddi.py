@@ -29,6 +29,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
     total_loss = total_examples = 0
     # perm实际上是一个子图，类型是tensor，元素代表本次预测用到的边的编号，这里perm起到索引作用
     # 这个数据集边的数量为1067911，batch_size为65536，所以有17个batch
+    dst_vertex_num = 0
     for i, perm in enumerate(DataLoader(range(pos_train_edge.size(0)), batch_size,
                                         shuffle=True)):
         # 量化权重
@@ -41,6 +42,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
 
         # 根据perm这个索引获得本次预测需要的边
         edge = pos_train_edge[perm].t()
+        dst_vertex_num += torch.unique(edge[1]).shape[0]
 
         if args.filter_adj:
             adj_t = train_decorator.filter_adj_by_batch(adj_t=adj_t, source_vertexes=edge[0], dst_vertexes=edge[1],
@@ -104,6 +106,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         # 清除钩子
         if args.call_neurosim:
             train_decorator.clear_hooks(model, i, cur_epoch)
+    print('dst_vertex_num:', dst_vertex_num)
 
     return total_loss / total_examples
 

@@ -84,6 +84,7 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
     pos_train_edge = split_edge['train']['edge'].to(data.x.device)
 
     total_loss = total_examples = 0
+    dst_vertex_num = 0
     for i, perm in enumerate(DataLoader(range(pos_train_edge.size(0)), batch_size,
                                         shuffle=True)):
         # 量化权重
@@ -95,6 +96,7 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
             train_decorator.bind_hooks(model, i, cur_epoch)
         optimizer.zero_grad()
         edge = pos_train_edge[perm].t()
+        dst_vertex_num += torch.unique(edge[1]).shape[0]
 
         if args.filter_adj:
             data.adj_t = train_decorator.filter_adj_by_batch(adj_t=data.adj_t, source_vertexes=edge[0],
@@ -136,6 +138,7 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
         # 清楚钩子
         if args.call_neurosim:
             train_decorator.clear_hooks(model, i, cur_epoch)
+    print('dst_vertex_num:', dst_vertex_num)
 
     return total_loss / total_examples
 
