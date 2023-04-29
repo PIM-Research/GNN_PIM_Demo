@@ -1066,7 +1066,8 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		}
 		// cout << "read activation and error(part)(dRAM->readLatency loadData*2):" << dRAM->readLatency * 2 << endl;
 		// since for each iteration, need *batchSize computation
-		*readLatency *= param->batchSize;
+		if ((layerNumber + 1) % 2 == 0) *readLatency *= param->batchSizeAg;
+		else *readLatency *= param->batchSize;
 		*readDynamicEnergy *= param->batchSize;
 		*readLatencyAG *= param->batchSize;
 		*readDynamicEnergyAG *= param->batchSize;

@@ -70,7 +70,7 @@ public:
 	int numlut, numColMuxed, numWriteColMuxed, levelOutput, avgWeightBit, numBitInput, numRowMuxedAG, levelOutputAG, numRowMuxedWG, levelOutputWG;
 	int numRowSubArray, numColSubArray, numRowSubArrayWG, numColSubArrayWG;
 	int cellBit, synapseBit;
-	int speedUpDegree, dramType, batchSize, numIteration;
+	int speedUpDegree, dramType, batchSize, numIteration, batchSizeAg;
 	
 	int XNORparallelMode, XNORsequentialMode, BNNparallelMode, BNNsequentialMode, conventionalParallel, conventionalSequential; 
 	int numRowPerSynapse, numColPerSynapse;
