@@ -60,6 +60,7 @@ class TrainDecorator:
                 handle.remove()
             for name, param in list(model.named_parameters())[::-1]:
                 if 'weight' in name and self.recorder is not None and 'convs' in name:
+                    print('clear_hook q:', param.data)
                     self.recorder.record(f'layer_run/epoch{cur_epoch}', f'{name}_after.csv',
                                          param.data.T.to('cpu').data.numpy(),
                                          delimiter=',', fmt='%10.5f')
