@@ -25,17 +25,13 @@ class TrainDecorator:
     def quantify_weight(self, model, batch_index, cur_epoch):
         for name, param in model.named_parameters():
             if 'weight' in name and 'convs' in name:
+                param.data = self.weight_quantification(param.data, model.weight_scale[name]).to(
+                    next(model.parameters()).device)
+                print('weight q:', model.weight_acc[name])
                 if self.recorder is not None and batch_index == 0:
                     self.recorder.record(f'layer_run/epoch{cur_epoch}', f'{name}_before.csv',
                                          param.data.T.to('cpu').data.numpy(),
                                          delimiter=',', fmt='%10.5f')
-                param.data = self.weight_quantification(model.weight_acc[name], model.weight_scale[name]).to(
-                    next(model.parameters()).device)
-                print('weight q:', model.weight_acc[name])
-                # if self.recorder is not None and batch_index == 0:
-                #     self.recorder.record(f'layer_run/epoch{cur_epoch}', f'{name}_before.csv',
-                #                          param.data.T.to('cpu').data.numpy(),
-                #                          delimiter=',', fmt='%10.5f')
 
     def bind_hooks(self, model, batch_index, cur_epoch):
         if batch_index == 0:
@@ -50,13 +46,9 @@ class TrainDecorator:
     def quantify_grad(self, model):
         for name, param in list(model.named_parameters())[::-1]:
             if 'weight' in name and 'convs' in name:
-                # print('before:', param.grad.data)
-                param.grad.data = self.grad_quantification(param.grad.data).data
-                # print('after:', param.grad.data)
+                # param.grad.data = self.grad_quantification(param.grad.data).data
                 # 裁剪，限制权重范围
-                print('grad q bc:', model.weight_acc[name])
                 w_acc = self.wage_grad_clip(model.weight_acc[name]).to(next(model.parameters()).device)
-                print('grad q ac:', model.weight_acc[name])
                 w_acc -= param.grad.data
                 model.weight_acc[name] = w_acc
 
@@ -68,7 +60,6 @@ class TrainDecorator:
                 handle.remove()
             for name, param in list(model.named_parameters())[::-1]:
                 if 'weight' in name and self.recorder is not None and 'convs' in name:
-                    print('clear hook:', model.weight_acc[name])
                     self.recorder.record(f'layer_run/epoch{cur_epoch}', f'{name}_after.csv',
                                          param.data.T.to('cpu').data.numpy(),
                                          delimiter=',', fmt='%10.5f')
