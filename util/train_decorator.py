@@ -62,8 +62,11 @@ class TrainDecorator:
             for name, param in list(model.named_parameters())[::-1]:
                 if 'weight' in name and self.recorder is not None and 'convs' in name:
                     self.recorder.record(f'layer_run/epoch{cur_epoch}', f'{name}_after.csv',
-                                         model.weight_acc[name].T.to('cpu').data.numpy(),
+                                         param.data.T.to('cpu').data.numpy(),
                                          delimiter=',', fmt='%10.5f')
+                    # self.recorder.record(f'layer_run/epoch{cur_epoch}', f'{name}_after.csv',
+                    #                      model.weight_acc[name].T.to('cpu').data.numpy(),
+                    #                      delimiter=',', fmt='%10.5f')
 
     @staticmethod
     def bind_update_hook(model):
