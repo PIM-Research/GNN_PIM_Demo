@@ -42,7 +42,8 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
 
         # 根据perm这个索引获得本次预测需要的边
         edge = pos_train_edge[perm].t()
-        dst_vertex_num += torch.unique(edge[1]).shape[0]
+        dst_vertex_num += torch.unique(torch.cat([edge[0], edge[1]], dim=-1)).shape[0]
+        print(dst_vertex_num)
 
         if args.filter_adj:
             adj_t = train_decorator.filter_adj_by_batch(adj_t=adj_t, source_vertexes=edge[0], dst_vertexes=edge[1],
