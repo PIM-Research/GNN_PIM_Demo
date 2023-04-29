@@ -27,7 +27,6 @@ class TrainDecorator:
             if 'weight' in name and 'convs' in name:
                 param.data = self.weight_quantification(param.data, model.weight_scale[name]).to(
                     next(model.parameters()).device)
-                print('weight q:', param.data)
                 if self.recorder is not None and batch_index == 0:
                     self.recorder.record(f'layer_run/epoch{cur_epoch}', f'{name}_before.csv',
                                          param.data.T.to('cpu').data.numpy(),
@@ -60,13 +59,9 @@ class TrainDecorator:
                 handle.remove()
             for name, param in list(model.named_parameters())[::-1]:
                 if 'weight' in name and self.recorder is not None and 'convs' in name:
-                    print('clear_hook q:', param.data)
                     self.recorder.record(f'layer_run/epoch{cur_epoch}', f'{name}_after.csv',
                                          param.data.T.to('cpu').data.numpy(),
                                          delimiter=',', fmt='%10.5f')
-                    # self.recorder.record(f'layer_run/epoch{cur_epoch}', f'{name}_after.csv',
-                    #                      model.weight_acc[name].T.to('cpu').data.numpy(),
-                    #                      delimiter=',', fmt='%10.5f')
 
     @staticmethod
     def bind_update_hook(model):
