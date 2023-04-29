@@ -27,7 +27,7 @@ class TrainDecorator:
             if 'weight' in name and 'convs' in name:
                 param.data = self.weight_quantification(param.data, model.weight_scale[name]).to(
                     next(model.parameters()).device)
-                print('weight q:', model.weight_acc[name])
+                print('weight q:', param.data)
                 if self.recorder is not None and batch_index == 0:
                     self.recorder.record(f'layer_run/epoch{cur_epoch}', f'{name}_before.csv',
                                          param.data.T.to('cpu').data.numpy(),
