@@ -1107,9 +1107,9 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 			double thisMatrixCol = netStructure[l][2] * param->numBitInput;
 			double arrayNeedRow = ceil(thisMatrixRow / param->numRowSubArrayWG) == 0 ? 1 : ceil(thisMatrixRow / param->numRowSubArrayWG);
 			double arrayNeedCol = ceil(thisMatrixCol / param->numColSubArrayWG) == 0 ? 1 : ceil(thisMatrixCol / param->numColSubArrayWG);
-			cout << "thisMatrixRow:" << thisMatrixRow << " thisMatrixCol:" << thisMatrixCol << endl;
-			cout << "arrayNeedRow:" << arrayNeedRow << " arrayNeedCol:" << arrayNeedCol << endl;
-			cout << "weightGradientUnit->numArrayInRow:" << weightGradientUnit->numArrayInRow << " weightGradientUnit->numArrayInCol:" << weightGradientUnit->numArrayInCol << endl;
+			// cout << "thisMatrixRow:" << thisMatrixRow << " thisMatrixCol:" << thisMatrixCol << endl;
+			// cout << "arrayNeedRow:" << arrayNeedRow << " arrayNeedCol:" << arrayNeedCol << endl;
+			// cout << "weightGradientUnit->numArrayInRow:" << weightGradientUnit->numArrayInRow << " weightGradientUnit->numArrayInCol:" << weightGradientUnit->numArrayInCol << endl;
 			double speedUpRow, speedUpCol;
 			if (thisMatrixRow != 1) {
 				speedUpRow = floor(weightGradientUnit->numArrayInRow / arrayNeedRow) == 0 ? 1 : floor(weightGradientUnit->numArrayInRow / arrayNeedRow);
@@ -1117,16 +1117,16 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 			}
 			else {
 				speedUpRow = weightGradientUnit->numArrayInRow;
-				speedUpCol = floor(thisMatrixCol / param->numColSubArrayWG) == 0 ? 1 : floor(thisMatrixCol / param->numColSubArrayWG);
+				speedUpCol = floor(param->numColSubArrayWG / thisMatrixCol) == 0 ? 1 : floor(param->numColSubArrayWG / thisMatrixCol);
 			}
 			double actualUsedArray = thisMatrixRow * thisMatrixCol / (weightGradientUnit->numArrayInRow * weightGradientUnit->numArrayInCol * param->numRowSubArrayWG * param->numColSubArrayWG);
 
 			*readLatencyPeakWG = (weightGradientUnit->readLatencyPeak / (speedUpRow * speedUpCol) + weightGradientUnit->writeLatencyPeak) * (netStructure[l][3] * netStructure[l][4]);
 			*readDynamicEnergyPeakWG = (weightGradientUnit->readDynamicEnergyPeak + weightGradientUnit->writeDynamicEnergyPeak) * actualUsedArray * (netStructure[l][3] * netStructure[l][4]);
 			*readLatencyWG += (*readLatencyPeakWG);
-			cout << "speedUpRow:" << speedUpRow << " speedUpCol:" << speedUpCol << endl;
-			cout << "weightGradientUnit->readLatencyPeak:" << weightGradientUnit->readLatencyPeak << " weightGradientUnit->writeLatencyPeak:" << weightGradientUnit->writeLatencyPeak << endl;
-			cout << "caculate weight gradient Latency(all):" << *readLatencyPeakWG << endl;
+			// cout << "speedUpRow:" << speedUpRow << " speedUpCol:" << speedUpCol << endl;
+			// cout << "weightGradientUnit->readLatencyPeak:" << weightGradientUnit->readLatencyPeak << " weightGradientUnit->writeLatencyPeak:" << weightGradientUnit->writeLatencyPeak << endl;
+			// cout << "caculate weight gradient Latency(all):" << *readLatencyPeakWG << endl;
 			*readDynamicEnergyWG += (*readDynamicEnergyPeakWG);
 			// cout << "readLatencyPeakWG:" << *readLatencyPeakWG << " readDynamicEnergyWG:" << *readDynamicEnergyWG << endl;
 			// cout << "dRAM->readLatency loadWeight:" << dRAM->readLatency << endl;
