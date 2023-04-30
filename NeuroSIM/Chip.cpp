@@ -1117,7 +1117,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 			}
 			else {
 				speedUpRow = weightGradientUnit->numArrayInRow;
-				speedUpCol = floor(param->numColSubArrayWG / thisMatrixCol) == 0 ? 1 : floor(param->numColSubArrayWG / thisMatrixCol);
+				speedUpCol = floor(thisMatrixCol / param->numColSubArrayWG) == 0 ? 1 : floor(thisMatrixCol / param->numColSubArrayWG);
 			}
 			double actualUsedArray = thisMatrixRow * thisMatrixCol / (weightGradientUnit->numArrayInRow * weightGradientUnit->numArrayInCol * param->numRowSubArrayWG * param->numColSubArrayWG);
 

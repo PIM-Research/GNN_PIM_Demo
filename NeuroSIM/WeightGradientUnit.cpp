@@ -308,6 +308,9 @@ void WeightGradientUnit::CalculateLatency(int numRead, int numBitDataLoad) {
 			writeLatency += wlSwitchMatrix.writeLatency;
 			writeLatency += precharger.writeLatency;
 			writeLatency += sramWriteDriver.writeLatency;
+			cout << "horowitz(tau, beta, 1e20, NULL):" << horowitz(tau, beta, 1e20, NULL) << " numRow:" << numRow << endl;
+			cout << "wlSwitchMatrix.writeLatency:" << wlSwitchMatrix.writeLatency << " precharger.writeLatency:" << precharger.writeLatency << endl;
+			cout << "sramWriteDriver.writeLatency:" << sramWriteDriver.writeLatency << endl;
 		}
 		
 		readLatency *= numRead;
