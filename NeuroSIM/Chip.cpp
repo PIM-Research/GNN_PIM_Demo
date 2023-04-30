@@ -1125,12 +1125,13 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 			*readDynamicEnergyPeakWG = (weightGradientUnit->readDynamicEnergyPeak + weightGradientUnit->writeDynamicEnergyPeak) * actualUsedArray * (netStructure[l][3] * netStructure[l][4]);
 			*readLatencyWG += (*readLatencyPeakWG);
 			// cout << "speedUpRow:" << speedUpRow << " speedUpCol:" << speedUpCol << endl;
-			// cout << "weightGradientUnit->readLatencyPeak:" << weightGradientUnit->readLatencyPeak << " weightGradientUnit->writeLatencyPeak:" << weightGradientUnit->writeLatencyPeak << endl;
+			cout << "weightGradientUnit->readLatencyPeak:" << weightGradientUnit->readLatencyPeak << " weightGradientUnit->writeLatencyPeak:" << weightGradientUnit->writeLatencyPeak << endl;
 			// cout << "caculate weight gradient Latency(all):" << *readLatencyPeakWG << endl;
 			*readDynamicEnergyWG += (*readDynamicEnergyPeakWG);
 			// cout << "readLatencyPeakWG:" << *readLatencyPeakWG << " readDynamicEnergyWG:" << *readDynamicEnergyWG << endl;
 			// cout << "dRAM->readLatency loadWeight:" << dRAM->readLatency << endl;
 			// cout << "write weight gradient to DRAM(all):" << dRAM->readLatency + (globalBuffer->readLatency + globalBuffer->writeLatency) << endl;
+			cout << "globalBuffer->readLatency:" << globalBuffer->readLatency << "globalBuffer->writeLatency:" << globalBuffer->writeLatency << endl;
 			// weight gradient need to be send back to DRAM
 			*readLatencyWG += globalBuffer->writeLatency;
 			*readDynamicEnergyWG += globalBuffer->writeDynamicEnergy;
