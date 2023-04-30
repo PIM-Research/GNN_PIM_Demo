@@ -1107,6 +1107,9 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 			double thisMatrixCol = netStructure[l][2] * param->numBitInput;
 			double arrayNeedRow = ceil(thisMatrixRow / param->numRowSubArrayWG) == 0 ? 1 : ceil(thisMatrixRow / param->numRowSubArrayWG);
 			double arrayNeedCol = ceil(thisMatrixCol / param->numColSubArrayWG) == 0 ? 1 : ceil(thisMatrixCol / param->numColSubArrayWG);
+			cout << "thisMatrixRow:" << thisMatrixRow << " thisMatrixCol:" << thisMatrixCol << endl;
+			cout << "arrayNeedRow:" << arrayNeedRow << " arrayNeedCol:" << arrayNeedCol << endl;
+			cout << "weightGradientUnit->numArrayInRow:" << weightGradientUnit->numArrayInRow << " weightGradientUnit->numArrayInCol:" << weightGradientUnit->numArrayInCol << endl;
 			double speedUpRow, speedUpCol;
 			if (thisMatrixRow != 1) {
 				speedUpRow = floor(weightGradientUnit->numArrayInRow / arrayNeedRow) == 0 ? 1 : floor(weightGradientUnit->numArrayInRow / arrayNeedRow);
