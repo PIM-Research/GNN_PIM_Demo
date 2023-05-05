@@ -6,7 +6,7 @@ from .other import filter_edges, store_adj_matrix
 from .train_decorator import TrainDecorator
 from .global_variable import args
 from .definition import NEGS
-
+import numpy as np
 
 def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, train_decorator: TrainDecorator,
           cur_epoch=0, cluster_label=None, adj_origin=None):
@@ -31,6 +31,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
     # 这个数据集边的数量为1067911，batch_size为65536，所以有17个batch
     dst_vertex_num = 0
     num_i = 0
+    np.savetxt(f'record/{cur_epoch}_x.csv', x, delimiter=',', fmt='%10f')
     for i, perm in enumerate(DataLoader(range(pos_train_edge.size(0)), batch_size,
                                         shuffle=True)):
         # 量化权重
