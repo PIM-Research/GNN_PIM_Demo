@@ -1,7 +1,9 @@
 import os
 from typing import Union, Tuple
-
+import scipy.sparse as sp
+import networkx as nx
 import numpy as np
+from node2vec import Node2Vec
 from torch_sparse import sum as sparse_sum, fill_diag, mul, SparseTensor
 from .hook import set_min_dis_vertex
 from models import Q
@@ -191,7 +193,9 @@ def map_adj_to_cluster_adj(adj_sparse: SparseTensor, cluster_label: np.ndarray) 
 
 
 def transform_adj_matrix(data, device):
-    cluster_label = get_vertex_cluster(get_dense(data.adj_t), ClusterAlg(args.cluster_alg))
+    # 进行图嵌入
+    adj_dense = map_node_to_vec(data.adj_t)
+    cluster_label = get_vertex_cluster(adj_dense, ClusterAlg(args.cluster_alg))
     adj_t = map_adj_to_cluster_adj(data.adj_t, cluster_label)
     adj_t_coo = adj_t.coo()
     adj_t_coo = torch.stack([adj_t_coo[0], adj_t_coo[1], adj_t_coo[2]])
@@ -336,3 +340,20 @@ def filter_edges_by_avg(adj: SparseTensor):
     row, col = adj_coo[0][mask], adj_coo[1][mask]
     value = adj_coo[2][mask] if adj_coo[2] is not None else None
     return SparseTensor(row=row, col=col, value=value)
+
+
+def map_node_to_vec(adj: SparseTensor):
+    # 将SparseTensor类型转换成COO稀疏矩阵的形式
+    coo = adj.coo()
+    value = torch.ones(size=coo[0].shape)
+    # 将COO稀疏矩阵转换成scipy.sparse中的稀疏矩阵类型
+    sparse_matrix = sp.coo_matrix((value.tolist(), (coo[0].tolist(), coo[1].tolist())))
+    # 将scipy.sparse中的稀疏矩阵类型转换成networkx中的图类型
+    graph = nx.from_scipy_sparse_array(sparse_matrix)
+
+    # 初始化node2vec模型
+    node2vec = Node2Vec(graph, dimensions=64, walk_length=30, num_walks=200, workers=4)
+
+    # 训练模型
+    vec = node2vec.fit(window=10, min_count=1, batch_words=4).wv.vectors
+    return vec

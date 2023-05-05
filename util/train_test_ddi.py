@@ -8,6 +8,7 @@ from .global_variable import args
 from .definition import NEGS
 import numpy as np
 
+
 def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, train_decorator: TrainDecorator,
           cur_epoch=0, cluster_label=None, adj_origin=None):
     if NEGS(args.negs) is NEGS.CLUSTER:
@@ -109,7 +110,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         # 清除钩子
         if args.call_neurosim:
             train_decorator.clear_hooks(model, i, cur_epoch)
-    print('dst_vertex_num_avg:', dst_vertex_num/num_i)
+    print('dst_vertex_num_avg:', dst_vertex_num / num_i)
 
     return total_loss / total_examples
 
