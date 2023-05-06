@@ -352,7 +352,7 @@ def map_node_to_vec(adj: SparseTensor):
     graph = nx.from_scipy_sparse_array(sparse_matrix)
 
     # 初始化node2vec模型
-    node2vec = Node2Vec(graph, dimensions=32, walk_length=30, num_walks=200, workers=4)
+    node2vec = Node2Vec(graph, dimensions=32, walk_length=30, num_walks=200, workers=16)
 
     # 训练模型
     vec = node2vec.fit(window=3, min_count=1, batch_words=4).wv.vectors
