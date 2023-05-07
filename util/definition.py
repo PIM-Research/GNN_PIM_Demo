@@ -26,3 +26,9 @@ class ClusterBasis(Enum):
 class NEGS(Enum):
     CLUSTER = 1
     VERTEX = 2
+
+
+class EmbeddingAlg(Enum):
+    DEEP_WALK = 1
+    NODE2VEC = 2
+

@@ -1,13 +1,15 @@
 import os
+import random
 from typing import Union, Tuple
 import scipy.sparse as sp
 import networkx as nx
 import numpy as np
+from gensim.models import Word2Vec
 from node2vec import Node2Vec
 from torch_sparse import sum as sparse_sum, fill_diag, mul, SparseTensor
 from .hook import set_min_dis_vertex
 from models import Q
-from .definition import DropMode, ClusterAlg, MappingAlg, ClusterBasis
+from .definition import DropMode, ClusterAlg, MappingAlg, ClusterBasis, EmbeddingAlg
 from math import ceil, floor
 from sklearn import cluster
 from .global_variable import args, run_recorder
@@ -349,11 +351,40 @@ def map_node_to_vec(adj: SparseTensor):
     # 将COO稀疏矩阵转换成scipy.sparse中的稀疏矩阵类型
     sparse_matrix = sp.coo_matrix((value.tolist(), (coo[0].tolist(), coo[1].tolist())))
     # 将scipy.sparse中的稀疏矩阵类型转换成networkx中的图类型
-    graph = nx.from_scipy_sparse_array(sparse_matrix)
-
-    # 初始化node2vec模型
-    node2vec = Node2Vec(graph, dimensions=32, walk_length=3, num_walks=40, workers=4)
-
-    # 训练模型
-    vec = node2vec.fit(window=3, min_count=1, batch_words=4).wv.vectors
+    if args.di_graph is True:
+        graph = nx.from_scipy_sparse_matrix(sparse_matrix, create_using=nx.DiGraph())
+    else:
+        graph = nx.from_scipy_sparse_array(sparse_matrix)
+    if args.embedding_alg is EmbeddingAlg.NODE2VEC:
+        # 初始化node2vec模型
+        node2vec = Node2Vec(graph, dimensions=32, walk_length=3, num_walks=40, workers=4)
+        # 训练模型
+        vec = node2vec.fit(window=3, min_count=1, batch_words=4).wv.vectors
+    else:
+        # 执行随机游走
+        num_walks = args.num_walks  # 游走次数
+        walk_length = args.walk_length  # 游走长度
+        walks = []
+        for _ in range(num_walks):
+            for node in graph.nodes():
+                walk = random_walk(graph, node, walk_length)
+                walks.append(walk)
+        model = Word2Vec(vector_size=args.embedding_size, window=args.walk_window, sg=1, hs=0, negative=10, alpha=0.03,
+                         min_alpha=0,
+                         seed=14)  # 训练Word2Vec模型
+        model.build_vocab(walks, progress_per=2)
+        model.train(walks, total_examples=model.corpus_count, epochs=50, report_delay=1)
+        # 获取节点的嵌入向量
+        vec = model.wv.vectors
     return vec
+
+
+def random_walk(graph, start_node, length):
+    walk = [start_node]
+    for _ in range(length - 1):
+        neighbors = list(graph.neighbors(walk[-1]))
+        if neighbors:
+            walk.append(random.choice(neighbors))
+        else:
+            break
+    return walk
