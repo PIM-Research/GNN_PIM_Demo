@@ -198,7 +198,7 @@ def transform_adj_matrix(data, device):
     # 进行图嵌入
     adj_dense = map_node_to_vec(data.adj_t)
     cluster_label = get_vertex_cluster(adj_dense, ClusterAlg(args.cluster_alg))
-    print('cluster num:', np,max(cluster_label))
+    print('cluster num:', np.max(cluster_label))
     adj_t = map_adj_to_cluster_adj(data.adj_t, cluster_label)
     adj_t_coo = adj_t.coo()
     adj_t_coo = torch.stack([adj_t_coo[0], adj_t_coo[1], adj_t_coo[2]])
