@@ -196,7 +196,7 @@ def map_adj_to_cluster_adj(adj_sparse: SparseTensor, cluster_label: np.ndarray) 
 
 def transform_adj_matrix(data, device):
     # 进行图嵌入
-    adj_dense = map_node_to_vec(data.adj_t)
+    adj_dense = map_node_to_vec(data.adj_t) if args.use_embedding is True else data.adj_t.to_dense()
     cluster_label = get_vertex_cluster(adj_dense, ClusterAlg(args.cluster_alg))
     print('cluster num:', np.max(cluster_label))
     adj_t = map_adj_to_cluster_adj(data.adj_t, cluster_label)
