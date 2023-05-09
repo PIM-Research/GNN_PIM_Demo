@@ -1,4 +1,10 @@
+import random
+
+import networkx as nx
 import numpy as np
+import scipy.sparse as sp
+from gensim.models import Word2Vec
+from node2vec import Node2Vec
 from torch_sparse import sum as sparse_sum, fill_diag, mul, SparseTensor
 from .definition import DropMode, ClusterAlg, MappingAlg, ClusterBasis
 from math import ceil, floor
@@ -154,6 +160,7 @@ def get_vertex_cluster(adj_dense: np.ndarray, cluster_alg: ClusterAlg):
     vertex_noise = cluster_label == -1
     cluster_append = np.random.permutation(np.arange(cluster_num, cluster_num + cluster_label[vertex_noise].shape[0]))
     cluster_label[vertex_noise] = cluster_append
+    print('聚类数量：', torch.max(cluster_label))
     # 返回各个顶点所属聚类标签的列表，顺序是原始顺序
     return cluster_label
 
@@ -211,3 +218,41 @@ def map_adj_to_cluster_adj(adj_dense: np.ndarray, cluster_label: np.ndarray) -> 
             # 将稀疏张量转换成稠密矩阵，并将它的值赋给对应的簇之间的位置
             cluster_adj[rows_cluster, cols_cluster] = 1
     return cluster_adj
+
+
+def map_node_to_vec(adj: SparseTensor):
+    # 将SparseTensor类型转换成COO稀疏矩阵的形式
+    coo = adj.coo()
+    value = torch.ones(size=coo[0].shape)
+    # 将COO稀疏矩阵转换成scipy.sparse中的稀疏矩阵类型
+    sparse_matrix = sp.coo_matrix((value.tolist(), (coo[0].tolist(), coo[1].tolist())))
+    # 将scipy.sparse中的稀疏矩阵类型转换成networkx中的图类型
+
+    graph = nx.from_scipy_sparse_array(sparse_matrix)
+    # 执行随机游走
+    num_walks = args.num_walks  # 游走次数
+    walk_length = args.walk_length  # 游走长度
+    walks = []
+    for _ in range(num_walks):
+        for node in graph.nodes():
+            walk = random_walk(graph, node, walk_length)
+            walks.append(walk)
+    model = Word2Vec(vector_size=args.embedding_size, window=args.walk_window, sg=1, hs=0, negative=10, alpha=0.03,
+                     min_alpha=0,
+                     seed=14)  # 训练Word2Vec模型
+    model.build_vocab(walks, progress_per=2)
+    model.train(walks, total_examples=model.corpus_count, epochs=50, report_delay=1)
+    # 获取节点的嵌入向量
+    vec = model.wv.vectors
+    return vec
+
+
+def random_walk(graph, start_node, length):
+    walk = [start_node]
+    for _ in range(length - 1):
+        neighbors = list(graph.neighbors(walk[-1]))
+        if neighbors:
+            walk.append(random.choice(neighbors))
+        else:
+            break
+    return walk

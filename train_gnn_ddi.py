@@ -5,7 +5,7 @@ from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 from models import GAT, GCN, SAGE, LinkPredictor, QW, QG, C
 from util import train_test_ddi, train_decorator
 from util.global_variable import *
-from util.other import norm_adj, dec2bin, get_updated_list, get_vertex_cluster, map_adj_to_cluster_adj
+from util.other import norm_adj, dec2bin, get_updated_list, get_vertex_cluster, map_adj_to_cluster_adj, map_node_to_vec
 from util.definition import DropMode, ClusterAlg
 from util.hook import set_vertex_map, set_updated_vertex_map, hook_forward_set_grad_zero
 import numpy as np
@@ -44,7 +44,8 @@ def main():
     embedding_num = data.adj_t.size(0)
     cluster_label = None
     if args.use_cluster:
-        cluster_label = get_vertex_cluster(data.adj_t.to_dense().numpy(), ClusterAlg(args.cluster_alg))
+        adj_cluster = map_node_to_vec(data.adj_t)
+        cluster_label = get_vertex_cluster(adj_cluster, ClusterAlg(args.cluster_alg))
         adj_dense = map_adj_to_cluster_adj(data.adj_t.to_dense().numpy(), cluster_label)
         run_recorder.record('', 'cluster_adj_dense.csv', adj_dense, delimiter=',', fmt='%s')
         run_recorder.record('', 'cluster_label.csv', cluster_label, delimiter=',', fmt='%s')
