@@ -397,7 +397,7 @@ def random_walk(graph, start_node, length):
 def get_updated_num(dst_vertex: torch.Tensor):
     print(dst_vertex)
     assert updated_ver is not None
-    vertex_updated = torch.nonzero(torch.from_numpy(updated_ver))
+    vertex_updated = torch.nonzero(torch.from_numpy(updated_ver)).reshape(1)
     print(vertex_updated)
     mask = torch.isin(dst_vertex, vertex_updated.to(dst_vertex.device))
     dst_vertex = dst_vertex[mask]
