@@ -401,4 +401,5 @@ def get_updated_num(dst_vertex: torch.Tensor):
     print(vertex_updated, vertex_updated.shape[0])
     mask = torch.isin(dst_vertex, vertex_updated.to(dst_vertex.device))
     dst_vertex = dst_vertex[mask]
+    print(dst_vertex.shape[0])
     return dst_vertex.shape[0]
