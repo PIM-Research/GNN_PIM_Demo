@@ -1050,7 +1050,8 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		dRAM->CalculateLatency(dataLoadIn);
 		dRAM->CalculatePower(dataLoadIn);
 		// to load data size = IFM
-		*readLatency += (dRAM->readLatency)*2;
+		if ((layerNumber + 1) % 2 != 0)
+			*readLatency += (dRAM->readLatency)*2;
 		*readDynamicEnergy += (dRAM->readDynamicEnergy)*2;
 		if ((layerNumber + 1) % 2 != 0) {
 			*readLatencyAG += (dRAM->readLatency) * 2 * ((layerNumber != 0) == true ? 1 : 0);
