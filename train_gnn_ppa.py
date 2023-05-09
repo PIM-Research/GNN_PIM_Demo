@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
-
+import time
 import torch_geometric.transforms as T
 from torch_geometric.nn import SAGEConv
 
@@ -16,7 +16,7 @@ from util.global_variable import args, weight_quantification, grad_clip, run_rec
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from util.other import norm_adj, quantify_adj, store_updated_list_and_adj_matrix, transform_adj_matrix, \
-    record_net_structure, store_updated_list
+    record_net_structure, get_updated_num
 from util.train_decorator import TrainDecorator
 
 
@@ -97,7 +97,7 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
             train_decorator.bind_hooks(model, i, cur_epoch)
         optimizer.zero_grad()
         edge = pos_train_edge[perm].t()
-        dst_vertex_num += torch.unique(edge[1]).shape[0]
+        dst_vertex_num += get_updated_num(torch.unique(edge[1]))
         num_i += 1
 
         if args.filter_adj:
@@ -140,7 +140,7 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
         # 清楚钩子
         if args.call_neurosim:
             train_decorator.clear_hooks(model, i, cur_epoch)
-    print('dst_vertex_num_avg:', dst_vertex_num / num_i)
+    print('dst_vertex_num_avg:', dst_vertex_num / num_i * 0.01 * args.percentile)
     print('num_i:', num_i)
 
     return total_loss / total_examples
@@ -293,7 +293,8 @@ def main():
     }
     if args.percentile != 0:
         train_dec.bind_update_hook(model)
-
+    test_time = 0
+    start_time = time.perf_counter()
     for run in range(args.runs):
         model.reset_parameters()
         predictor.reset_parameters()
@@ -307,8 +308,11 @@ def main():
             writer.add_scalar('ppa/Loss', loss, epoch)
 
             if epoch % args.eval_steps == 0:
+                test_s = time.perf_counter()
                 results = test(model, predictor, data, split_edge, evaluator,
                                args.batch_size, cluster_label=cluster_label)
+                test_e = time.perf_counter()
+                test_time += test_e - test_s
                 for key, result in results.items():
                     loggers[key].add_result(run, result)
 
@@ -338,6 +342,8 @@ def main():
     for key in loggers.keys():
         print(key)
         loggers[key].print_statistics(key=key)
+    end_time = time.perf_counter()
+    print('运行时长：', end_time - start_time - test_time, '秒')
 
 
 if __name__ == "__main__":

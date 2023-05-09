@@ -16,6 +16,7 @@ from .global_variable import args, run_recorder
 import torch
 
 vertex_pointer = None
+updated_ver = None
 
 
 def norm_adj(adj_t, add_self_loops=True):
@@ -255,6 +256,8 @@ def store_updated_list_and_adj_matrix(adj_t, adj_binary):
             run_recorder.record('', 'adj_matrix.csv', adj_binary, delimiter=',', fmt='%s')
     if args.call_neurosim:
         run_recorder.record('', 'updated_vertex.csv', updated_vertex.transpose(), delimiter=',', fmt='%d')
+    global updated_ver
+    updated_ver = updated_vertex
     return updated_vertex, vertex_map
 
 
@@ -389,3 +392,11 @@ def random_walk(graph, start_node, length):
         else:
             break
     return walk
+
+
+def get_updated_num(dst_vertex: torch.Tensor):
+    assert updated_ver is not None
+    vertex_updated = torch.nonzero(updated_ver)
+    mask = torch.isin(dst_vertex, vertex_updated)
+    dst_vertex = dst_vertex[mask]
+    return dst_vertex.shape[0]

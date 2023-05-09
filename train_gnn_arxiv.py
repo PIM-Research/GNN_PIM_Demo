@@ -2,7 +2,7 @@ from subprocess import call
 
 import torch
 import torch.nn.functional as F
-
+import time
 import torch_geometric.transforms as T
 
 from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
@@ -14,7 +14,7 @@ from util.global_variable import args, run_recorder, weight_quantification, grad
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from util.other import transform_adj_matrix, transform_matrix_2_binary, store_updated_list_and_adj_matrix, norm_adj, \
-    quantify_adj, record_net_structure, store_updated_list
+    quantify_adj, record_net_structure, get_updated_num
 from util.train_decorator import TrainDecorator
 
 
@@ -194,6 +194,7 @@ def main():
 
     split_idx = dataset.get_idx_split()
     train_idx = split_idx['train'].to(device)
+    print('参与Aggregation顶点数：', get_updated_num(train_idx) * 0.01 * args.percentile)
     data = data.to(device)
 
     if args.use_sage:
@@ -210,7 +211,8 @@ def main():
 
     if args.percentile != 0:
         train_dec.bind_update_hook(model)
-
+    test_time = 0
+    start_time = time.perf_counter()
     for run in range(args.runs):
         model.reset_parameters()
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -218,7 +220,10 @@ def main():
             loss = train(model, data, train_idx, optimizer, train_decorator=train_dec, cur_epoch=epoch,
                          cluster_label=cluster_label)
             writer.add_scalar('arxiv/Loss', loss, epoch)
+            test_s = time.perf_counter()
             result = test(model, data, split_idx, evaluator, cluster_label=cluster_label)
+            test_e = time.perf_counter()
+            test_time += test_e - test_s
             logger.add_result(run, result)
 
             if epoch % args.log_steps == 0:
@@ -237,6 +242,8 @@ def main():
                 call(["/bin/bash", run_recorder.bootstrap_path])
         logger.print_statistics(run)
     logger.print_statistics()
+    end_time = time.perf_counter()
+    print('运行时长：', end_time - start_time - test_time, '秒')
 
 
 if __name__ == "__main__":

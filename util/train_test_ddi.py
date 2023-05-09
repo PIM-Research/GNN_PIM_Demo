@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch_geometric.utils import negative_sampling
 from models import GCN
-from .other import filter_edges, store_adj_matrix
+from .other import get_updated_num
 from .train_decorator import TrainDecorator
 from .global_variable import args
 from .definition import NEGS
@@ -45,7 +45,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
 
         # 根据perm这个索引获得本次预测需要的边
         edge = pos_train_edge[perm].t()
-        dst_vertex_num += torch.unique(torch.cat([edge[0], edge[1]], dim=-1)).shape[0]
+        dst_vertex_num += get_updated_num(torch.unique(torch.cat([edge[0], edge[1]], dim=-1)))
         num_i += 1
 
         if args.filter_adj:
@@ -110,7 +110,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         # 清除钩子
         if args.call_neurosim:
             train_decorator.clear_hooks(model, i, cur_epoch)
-    print('dst_vertex_num_avg:', dst_vertex_num / num_i)
+    print('dst_vertex_num_avg:', dst_vertex_num / num_i * 0.01 * args.percentile)
 
     return total_loss / total_examples
 

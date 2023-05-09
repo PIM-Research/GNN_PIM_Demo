@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import torch
 import torch_geometric.transforms as T
-
+import time
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
@@ -102,7 +102,8 @@ def main():
 
     if args.percentile != 0:
         train_dec.bind_update_hook(model)
-
+    test_time = 0
+    start_time = time.perf_counter()
     for run in range(args.runs):
         torch.nn.init.xavier_uniform_(emb.weight)
         model.reset_parameters()
@@ -118,8 +119,11 @@ def main():
             writer.add_scalar('Loss', loss, epoch)
 
             if epoch % args.eval_steps == 0:
+                test_s = time.perf_counter()
                 results = train_test_ddi.test(model, predictor, emb.weight, adj_t, split_edge, evaluator,
                                               args.batch_size, cluster_label=cluster_label)
+                test_e = time.perf_counter()
+                test_time += test_e - test_s
                 for key, result in results.items():
                     loggers[key].add_result(run, result)
 
@@ -150,6 +154,8 @@ def main():
     for key in loggers.keys():
         print(key)
         loggers[key].print_statistics(key=key)
+    end_time = time.perf_counter()
+    print('运行时长：', end_time - start_time - test_time, '秒')
 
 
 if __name__ == "__main__":
