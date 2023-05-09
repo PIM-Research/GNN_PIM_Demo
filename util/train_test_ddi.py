@@ -32,7 +32,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
     # 这个数据集边的数量为1067911，batch_size为65536，所以有17个batch
     dst_vertex_num = 0
     num_i = 0
-    np.savetxt(f'record/{cur_epoch}_x.csv', x.detach().cpu().numpy(), delimiter=',', fmt='%10f')
+    # np.savetxt(f'record/{cur_epoch}_x.csv', x.detach().cpu().numpy(), delimiter=',', fmt='%10f')
     for i, perm in enumerate(DataLoader(range(pos_train_edge.size(0)), batch_size,
                                         shuffle=True)):
         # 量化权重
