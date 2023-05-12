@@ -143,7 +143,7 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
             train_decorator.clear_hooks(model, i, cur_epoch)
         end_time = time.perf_counter()
         print(f'current epoch:{cur_epoch}  current Iteration:{i} epoch time:{start_time-end_time}')
-    print('dst_vertex_num_avg:', dst_vertex_num / num_i * 0.01 * args.percentile)
+    print('dst_vertex_num_avg:', dst_vertex_num / num_i * (1 - 0.01 * args.percentile))
     print('num_i:', num_i)
 
     return total_loss / total_examples

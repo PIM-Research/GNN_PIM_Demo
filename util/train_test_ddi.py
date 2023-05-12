@@ -110,7 +110,7 @@ def train(model: GCN, predictor, x, adj_t, split_edge, optimizer, batch_size, tr
         # 清除钩子
         if args.call_neurosim:
             train_decorator.clear_hooks(model, i, cur_epoch)
-    print('dst_vertex_num_avg:', dst_vertex_num / num_i * 0.01 * args.percentile)
+    print('dst_vertex_num_avg:', dst_vertex_num / num_i * (1 - 0.01 * args.percentile))
 
     return total_loss / total_examples
 

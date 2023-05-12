@@ -194,7 +194,7 @@ def main():
 
     split_idx = dataset.get_idx_split()
     train_idx = split_idx['train'].to(device)
-    print('参与Aggregation顶点数：', get_updated_num(train_idx) * 0.01 * args.percentile)
+    print('参与Aggregation顶点数：', get_updated_num(train_idx) * (1 - 0.01 * args.percentile))
     data = data.to(device)
 
     if args.use_sage:
