@@ -88,6 +88,7 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
     num_i = 0
     for i, perm in enumerate(DataLoader(range(pos_train_edge.size(0)), batch_size,
                                         shuffle=True)):
+        print(f'current epoch:{cur_epoch}  current Iteration:{i}')
         # 量化权重
         if args.bl_weight != -1:
             train_decorator.quantify_weight(model, i, cur_epoch)
@@ -294,14 +295,15 @@ def main():
     if args.percentile != 0:
         train_dec.bind_update_hook(model)
     test_time = 0
-    start_time = time.perf_counter()
+    epoch_time = 0
+
     for run in range(args.runs):
         model.reset_parameters()
         predictor.reset_parameters()
         optimizer = torch.optim.Adam(
             list(model.parameters()) + list(predictor.parameters()),
             lr=args.lr)
-
+        start_time = time.perf_counter()
         for epoch in range(1, 1 + args.epochs):
             loss = train(model, predictor, data, split_edge, optimizer, args.batch_size, train_decorator=train_dec,
                          cur_epoch=epoch, cluster_label=cluster_label)
@@ -334,7 +336,8 @@ def main():
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])
-
+        end_time = time.perf_counter()
+        epoch_time += start_time - end_time
         for key in loggers.keys():
             print(key)
             loggers[key].print_statistics(run, key=key)
@@ -342,8 +345,8 @@ def main():
     for key in loggers.keys():
         print(key)
         loggers[key].print_statistics(key=key)
-    end_time = time.perf_counter()
-    print('运行时长：', end_time - start_time - test_time, '秒')
+
+    print('运行时长：', epoch_time - test_time, '秒')
 
 
 if __name__ == "__main__":
