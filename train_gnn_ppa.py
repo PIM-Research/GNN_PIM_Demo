@@ -303,8 +303,9 @@ def main():
         optimizer = torch.optim.Adam(
             list(model.parameters()) + list(predictor.parameters()),
             lr=args.lr)
-        start_time = time.perf_counter()
+
         for epoch in range(1, 1 + args.epochs):
+            start_time = time.perf_counter()
             loss = train(model, predictor, data, split_edge, optimizer, args.batch_size, train_decorator=train_dec,
                          cur_epoch=epoch, cluster_label=cluster_label)
             writer.add_scalar('ppa/Loss', loss, epoch)
@@ -336,8 +337,9 @@ def main():
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])
-        end_time = time.perf_counter()
-        epoch_time += start_time - end_time
+            end_time = time.perf_counter()
+            epoch_time += start_time - end_time
+            print('epoch运行时长：', epoch_time - test_time, '秒')
         for key in loggers.keys():
             print(key)
             loggers[key].print_statistics(run, key=key)
