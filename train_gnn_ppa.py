@@ -88,7 +88,7 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
     num_i = 0
     for i, perm in enumerate(DataLoader(range(pos_train_edge.size(0)), batch_size,
                                         shuffle=True)):
-        print(f'current epoch:{cur_epoch}  current Iteration:{i}')
+        start_time = time.perf_counter()
         # 量化权重
         if args.bl_weight != -1:
             train_decorator.quantify_weight(model, i, cur_epoch)
@@ -141,6 +141,8 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
         # 清楚钩子
         if args.call_neurosim:
             train_decorator.clear_hooks(model, i, cur_epoch)
+        end_time = time.perf_counter()
+        print(f'current epoch:{cur_epoch}  current Iteration:{i} epoch time:{start_time-end_time}')
     print('dst_vertex_num_avg:', dst_vertex_num / num_i * 0.01 * args.percentile)
     print('num_i:', num_i)
 
