@@ -44,8 +44,8 @@ def main():
     embedding_num = data.adj_t.size(0)
     cluster_label = None
     if args.use_cluster:
-        adj_cluster = map_node_to_vec(data.adj_t)
-        cluster_label = get_vertex_cluster(adj_cluster, ClusterAlg(args.cluster_alg))
+        # adj_cluster = map_node_to_vec(data.adj_t)
+        cluster_label = get_vertex_cluster(data.adj_t.to_dense(), ClusterAlg(args.cluster_alg))
         adj_dense = map_adj_to_cluster_adj(data.adj_t.to_dense().numpy(), cluster_label)
         run_recorder.record('', 'cluster_adj_dense.csv', adj_dense, delimiter=',', fmt='%s')
         run_recorder.record('', 'cluster_label.csv', cluster_label, delimiter=',', fmt='%s')
