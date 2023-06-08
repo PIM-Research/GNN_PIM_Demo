@@ -1200,6 +1200,15 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		*readDynamicEnergyWG *= param->numIteration;
 		*writeLatencyWU *= param->numIteration;
 		*writeDynamicEnergyWU *= param->numIteration;
+
+		*readLatency /= param->harmonicCoefficient;
+		*readDynamicEnergy /= param->harmonicCoefficient;
+		*readLatencyAG /= param->harmonicCoefficient;
+		*readDynamicEnergyAG *= param->harmonicCoefficient;
+		*readLatencyWG /= param->harmonicCoefficient;
+		*readDynamicEnergyWG *= param->harmonicCoefficient;
+		*writeLatencyWU /= param->harmonicCoefficient;
+		*writeDynamicEnergyWU /= param->harmonicCoefficient;
 		
 		*readLatencyPeakFW *= param->numIteration;
 		*readDynamicEnergyPeakFW *= param->numIteration;
