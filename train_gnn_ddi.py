@@ -148,7 +148,7 @@ def main():
             vertex_num = updated_vertex.shape[0]
 
             # 将当前epoch各层的矩阵信息写入到文件
-            with open('./matrix_info', 'a') as file:
+            with open('./matrix_info.csv', 'a') as file:
                 file.write(
                     f'{vertex_num},{args.hidden_channels},{args.hidden_channels},{args.hidden_channels},'
                     f'{vertex_num},{vertex_num},{vertex_num},'
