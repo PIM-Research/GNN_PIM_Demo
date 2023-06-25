@@ -202,7 +202,7 @@ def main():
                      dataset.num_classes, args.num_layers,
                      args.dropout).to(device)
     else:
-        model = GCN(data.num_features, args.hidden_channels, dataset.num_classes, args.num_layers, args.dropout,
+                model = GCN(data.num_features, args.hidden_channels, dataset.num_classes, args.num_layers, args.dropout,
                     bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
                     recorder=run_recorder).to(device)
 
@@ -240,6 +240,25 @@ def main():
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])
+
+            vertex_num = data.num_nodes
+            input_channels = data.num_features
+            hidden_channels = data.hidden_channels
+            output_channels = data.num_classes
+
+            with open('./pipeline/matrix_info.csv', 'a') as file:
+                file.write(
+                    f'{vertex_num},{input_channels},{input_channels},{hidden_channels},'
+                    f'{vertex_num},{vertex_num},{vertex_num},'
+                    f'{hidden_channels},{epoch},{1}\n')
+                file.write(
+                    f'{vertex_num},{hidden_channels},{hidden_channels},{hidden_channels},'
+                    f'{vertex_num},{vertex_num},{vertex_num},'
+                    f'{hidden_channels},{epoch},{2}\n')
+                file.write(
+                    f'{vertex_num},{hidden_channels},{hidden_channels},{output_channels},'
+                    f'{vertex_num},{vertex_num},{vertex_num},'
+                    f'{output_channels},{epoch},{3}\n')
         logger.print_statistics(run)
     logger.print_statistics()
     end_time = time.perf_counter()

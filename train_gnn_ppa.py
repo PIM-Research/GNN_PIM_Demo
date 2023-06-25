@@ -342,6 +342,25 @@ def main():
             end_time = time.perf_counter()
             epoch_time += start_time - end_time
             print('epoch运行时长：', epoch_time - test_time, '秒')
+
+            vertex_num = data.num_nodes
+            input_channels = data.num_features
+            hidden_channels = data.hidden_channels
+            output_channels = data.hidden_channels
+
+            with open('./pipeline/matrix_info.csv', 'a') as file:
+                file.write(
+                    f'{vertex_num},{input_channels},{input_channels},{hidden_channels},'
+                    f'{vertex_num},{vertex_num},{vertex_num},'
+                    f'{hidden_channels},{epoch},{1}\n')
+                file.write(
+                    f'{vertex_num},{hidden_channels},{hidden_channels},{hidden_channels},'
+                    f'{vertex_num},{vertex_num},{vertex_num},'
+                    f'{hidden_channels},{epoch},{2}\n')
+                file.write(
+                    f'{vertex_num},{hidden_channels},{hidden_channels},{output_channels},'
+                    f'{vertex_num},{vertex_num},{vertex_num},'
+                    f'{output_channels},{epoch},{3}\n')
         for key in loggers.keys():
             print(key)
             loggers[key].print_statistics(run, key=key)
