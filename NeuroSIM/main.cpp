@@ -362,7 +362,7 @@ int main(int argc, char * argv[]) {
 			layerLeakageEnergy = numTileOtherLayer*tileLeakage*(layerReadLatency+layerReadLatencyAG);
 			if ((i + 1) % 2 == 0) {
 				if (file.is_open()) {
-					int latencyProportion = layerReadLatency / latencyPrelayer;
+					double latencyProportion = layerReadLatency / latencyPrelayer;
 					file << latencyProportion << std::endl;	
 					std::cout << latencyProportion << " Latency Writing Succeeded" << std::endl;
 				}
