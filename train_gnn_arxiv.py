@@ -202,7 +202,7 @@ def main():
                      dataset.num_classes, args.num_layers,
                      args.dropout).to(device)
     else:
-                model = GCN(data.num_features, args.hidden_channels, dataset.num_classes, args.num_layers, args.dropout,
+        model = GCN(data.num_features, args.hidden_channels, dataset.num_classes, args.num_layers, args.dropout,
                     bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
                     recorder=run_recorder).to(device)
 
@@ -243,8 +243,8 @@ def main():
 
             vertex_num = data.num_nodes
             input_channels = data.num_features
-            hidden_channels = data.hidden_channels
-            output_channels = data.num_classes
+            hidden_channels = args.hidden_channels
+            output_channels = dataset.num_classes
 
             with open('./pipeline/matrix_info.csv', 'a') as file:
                 file.write(

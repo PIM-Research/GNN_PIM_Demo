@@ -345,8 +345,8 @@ def main():
 
             vertex_num = data.num_nodes
             input_channels = data.num_features
-            hidden_channels = data.hidden_channels
-            output_channels = data.hidden_channels
+            hidden_channels = args.hidden_channels
+            output_channels = args.hidden_channels
 
             with open('./pipeline/matrix_info.csv', 'a') as file:
                 file.write(
