@@ -145,6 +145,19 @@ def main():
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])
 
+            vertex_num = updated_vertex.shape[0]
+
+            # 将当前epoch各层的矩阵信息写入到文件
+            with open('./matrix_info', 'a') as file:
+                file.write(
+                    f'{vertex_num},{args.hidden_channels},{args.hidden_channels},{args.hidden_channels},'
+                    f'{vertex_num},{vertex_num},{vertex_num},'
+                    f'{args.hidden_channels},{epoch},{1}\n')
+                file.write(
+                    f'{vertex_num},{args.hidden_channels},{args.hidden_channels},{args.hidden_channels},'
+                    f'{vertex_num},{vertex_num},{vertex_num},'
+                    f'{args.hidden_channels},{epoch},{2}\n')
+
         for key in loggers.keys():
             print(key)
             loggers[key].print_statistics(run, key=key)

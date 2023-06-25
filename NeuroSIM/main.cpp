@@ -333,6 +333,8 @@ int main(int argc, char * argv[]) {
 	if (! param->pipeline) {
 		// layer-by-layer process
 		// show the detailed hardware performance for each layer
+		int latencyPrelayer = 0;
+		std::ofstream file("../latency_proportion", std::ios::app); // 打开文件以追加写入模式
 		for (int i=0; i<netStructure.size(); i++) {
 			cout << "-------------------- Estimation of Layer " << i+1 << " ----------------------" << endl;
 			
@@ -357,7 +359,17 @@ int main(int argc, char * argv[]) {
 				}
 			}
 			layerLeakageEnergy = numTileOtherLayer*tileLeakage*(layerReadLatency+layerReadLatencyAG);
-			
+			if ((i + 1) % 2 == 0) {
+				if (file.is_open()) {
+					int latencyProportion = layerReadLatency / latencyPrelayer;
+					file << latencyProportion << std::endl;	
+					std::cout << latencyProportion << " Latency Writing Succeeded" << std::endl;
+				}
+				else {
+					std::cout << "Latency Writing Failed" << std::endl;
+				}
+			}
+			latencyPrelayer = layerReadLatency;
 			cout << "layer" << i+1 << "'s readLatency of Forward is: " << layerReadLatency*1e9 << "ns" << endl;
 			cout << "layer" << i+1 << "'s readDynamicEnergy of Forward is: " << layerReadDynamicEnergy*1e12 << "pJ" << endl;
 			cout << "layer" << i+1 << "'s readLatency of Activation Gradient is: " << layerReadLatencyAG*1e9 << "ns" << endl;
@@ -450,6 +462,7 @@ int main(int argc, char * argv[]) {
 			chipEnergyAccum += coreEnergyAccum;
 			chipEnergyOther += coreEnergyOther;
 		}
+		file.close();
 	} else {
 		// pipeline system
 		// firstly define system clock

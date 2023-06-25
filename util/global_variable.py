@@ -64,6 +64,10 @@ if not os.path.exists('./NeuroSim_Results_Each_Epoch'):
     os.makedirs('./NeuroSim_Results_Each_Epoch')
 if not os.path.exists('./result'):
     os.makedirs('./result')
+if not os.path.exists('./pipeline/matrix_info'):
+    os.makedirs('./pipeline/matrix_info')
+if not os.path.exists('./pipeline/latency_proportion'):
+    os.makedirs('./pipeline/latency_proportion')
 result_file_path = f'./result/{create_time}.txt'
 with open(result_file_path, 'w') as f:
     f.write(f'{str(args)}\n')
