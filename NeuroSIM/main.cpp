@@ -334,7 +334,7 @@ int main(int argc, char * argv[]) {
 		// layer-by-layer process
 		// show the detailed hardware performance for each layer
 		int latencyPrelayer = 0;
-		std::ofstream file("../latency_proportion.csv", std::ios::app); // 打开文件以追加写入模式
+		std::ofstream file("../pipeline/latency_proportion.csv", std::ios::app); // 打开文件以追加写入模式
 		for (int i=0; i<netStructure.size(); i++) {
 			cout << "-------------------- Estimation of Layer " << i+1 << " ----------------------" << endl;
 			
@@ -358,6 +358,7 @@ int main(int argc, char * argv[]) {
 					numTileOtherLayer += numTileEachLayer[0][j] * numTileEachLayer[1][j];
 				}
 			}
+			cout << layerReadLatency << " " << latencyPrelayer << endl;
 			layerLeakageEnergy = numTileOtherLayer*tileLeakage*(layerReadLatency+layerReadLatencyAG);
 			if ((i + 1) % 2 == 0) {
 				if (file.is_open()) {
