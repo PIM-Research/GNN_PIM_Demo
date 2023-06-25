@@ -333,8 +333,8 @@ int main(int argc, char * argv[]) {
 	if (! param->pipeline) {
 		// layer-by-layer process
 		// show the detailed hardware performance for each layer
-		int latencyPrelayer = 0;
-		std::ofstream file("../pipeline/latency_proportion.csv", std::ios::app); // 打开文件以追加写入模式
+		double latencyPrelayer = 0;
+		std::ofstream file("./pipeline/latency_proportion.csv", std::ios::app); // 打开文件以追加写入模式
 		for (int i=0; i<netStructure.size(); i++) {
 			cout << "-------------------- Estimation of Layer " << i+1 << " ----------------------" << endl;
 			
