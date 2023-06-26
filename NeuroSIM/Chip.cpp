@@ -681,7 +681,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	// cout << "getInuptArray end" << "inputVector.size()" << inputVector.size() << "inputVector[0].size()" << inputVector[0].size() << endl;
 	vector<vector<double> > oldMemory;
 	oldMemory = LoadInWeightData(oldweightfile, numRowPerSynapse, numColPerSynapse, param->maxConductance, param->minConductance);
-	cout << "LoadInWeightData End" << endl;
+	//cout << "LoadInWeightData End" << endl;
 	*readLatency = 0;
 	*readDynamicEnergy = 0;
 	*readLatencyAG = 0;
@@ -744,7 +744,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 				
 				vector<vector<double> > tileInput;
 				tileInput = CopyInput(inputVector, i*desiredTileSizeCM, numInVector*param->numBitInput, numRowMatrix);
-				cout << "tile CopyInput End" << endl;
+				//cout << "tile CopyInput End" << endl;
 				
 				TileCalculatePerformance(tileMemory, tileMemoryOld, tileInput, markNM[l], layerNumber, ceil((double)desiredTileSizeCM/(double)desiredPESizeCM), desiredPESizeCM, speedUpEachLayer[0][l], speedUpEachLayer[1][l],
 									numRowMatrix, numColMatrix, numInVector*param->numBitInput, tech, cell, &tileReadLatency, &tileReadDynamicEnergy, &tileLeakage,
@@ -753,7 +753,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 									&tileLatencyADC, &tileLatencyAccum, &tileLatencyOther, &tileEnergyADC, &tileEnergyAccum, &tileEnergyOther, 
 									&tileReadLatencyPeakFW, &tileReadDynamicEnergyPeakFW, &tileReadLatencyPeakAG, &tileReadDynamicEnergyPeakAG,
 									&tileWriteLatencyPeakWU, &tileWriteDynamicEnergyPeakWU);
-				cout << "TileCalculatePerformance End" << endl;
+				//cout << "TileCalculatePerformance End" << endl;
 				// cout << "Tile end" << endl;
 				*readLatency = MAX(tileReadLatency, (*readLatency));
 				*readDynamicEnergy += tileReadDynamicEnergy;
@@ -1865,13 +1865,13 @@ std::vector < std::vector<double>> getInuptArray(const string& filename, int n, 
 	double activityTemp = 0;
 	map< int, int> colMap;
 	vector<vector<double>> matrix = LoadDataFromFile(filename, row_max, col_max, colMap);
-	cout << "matrix.size()" << matrix.size() << "matrix[0].size()" << matrix[0].size() << endl;
+	//cout << "matrix.size()" << matrix.size() << "matrix[0].size()" << matrix[0].size() << endl;
 	vector<vector<double>> matrix_dense = coo2dense(matrix, netRow, col_max, colMap);
-	cout << "matrix_dense.size()" << matrix_dense.size() << "matrix_dense[0].size()" << matrix_dense[0].size() << endl;
+	//cout << "matrix_dense.size()" << matrix_dense.size() << "matrix_dense[0].size()" << matrix_dense[0].size() << endl;
 	int rowSize = matrix_dense.size();
 	int colSize = matrix_dense[0].size();
 	vector<vector<double>> adj_binary_col = dec2bin(matrix_dense, n).first;
-	cout << "adj_binary_col.size()" << adj_binary_col.size() << "adj_binary_col[0].size()" << adj_binary_col[0].size() << endl;
+	//cout << "adj_binary_col.size()" << adj_binary_col.size() << "adj_binary_col[0].size()" << adj_binary_col[0].size() << endl;
 	vector<vector<double>> adj_binary(rowSize, vector<double>(colSize * n));
 
 	for (int i = 0; i < adj_binary_col.size(); i++) {
