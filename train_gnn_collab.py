@@ -17,7 +17,8 @@ from util.global_variable import args, weight_quantification, grad_quantiication
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from models.gcn import GCN
-from util.other import get_updated_num, norm_adj, quantify_adj, store_updated_list_and_adj_matrix, record_net_structure
+from util.other import get_updated_num, norm_adj, quantify_adj, store_updated_list_and_adj_matrix, record_net_structure, \
+    record_pipeline_prediction_info
 from util.train_decorator import TrainDecorator
 
 
@@ -313,7 +314,8 @@ def main():
                         writer.add_scalar(f'{key} Valid accuracy', 100 * valid_hits, epoch)
                         writer.add_scalar(f'{key} Test accuracy', 100 * test_hits, epoch)
                     print('---')
-
+            record_pipeline_prediction_info(data.num_nodes, data.num_features, args.hidden_channels,
+                                            args.hidden_channels, epoch)
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])

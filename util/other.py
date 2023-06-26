@@ -403,3 +403,26 @@ def get_updated_num(dst_vertex: torch.Tensor):
     dst_vertex = dst_vertex[mask]
     # print(dst_vertex.shape[0])
     return dst_vertex.shape[0]
+
+
+def record_pipeline_prediction_info(vertex_num, input_channels, hidden_channels, output_channels, epoch):
+    if args.use_pipeline:
+        with open('./pipeline/matrix_info.csv', 'a') as file:
+            file.write(
+                f'{vertex_num},{input_channels},{input_channels},{hidden_channels},'
+                f'{vertex_num},{vertex_num},{vertex_num},'
+                f'{hidden_channels},{epoch},{1}\n')
+            file.write(
+                f'{vertex_num},{hidden_channels},{hidden_channels},{hidden_channels},'
+                f'{vertex_num},{vertex_num},{vertex_num},'
+                f'{hidden_channels},{epoch},{2}\n')
+            file.write(
+                f'{vertex_num},{hidden_channels},{hidden_channels},{output_channels},'
+                f'{vertex_num},{vertex_num},{vertex_num},'
+                f'{output_channels},{epoch},{3}\n')
+
+        with open(run_recorder.bootstrap_path, 'a') as file:
+            file.write(' Y')
+    else:
+        with open(run_recorder.bootstrap_path, 'a') as file:
+            file.write(' N')

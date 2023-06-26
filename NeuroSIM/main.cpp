@@ -334,7 +334,12 @@ int main(int argc, char * argv[]) {
 		// layer-by-layer process
 		// show the detailed hardware performance for each layer
 		double latencyPrelayer = 0;
+		int layerNum = netStructure.size() - 1;
+		string addPredictionInfo = argv[4 * layerNum + 9];
 		std::ofstream file("./pipeline/latency_proportion.csv", std::ios::app); // 打开文件以追加写入模式
+		if (addPredictionInfo == "N") {
+			file.close();
+		}
 		for (int i=0; i<netStructure.size(); i++) {
 			cout << "-------------------- Estimation of Layer " << i+1 << " ----------------------" << endl;
 			
@@ -463,7 +468,7 @@ int main(int argc, char * argv[]) {
 			chipEnergyAccum += coreEnergyAccum;
 			chipEnergyOther += coreEnergyOther;
 		}
-		file.close();
+		if (file.is_open()) file.close();
 	} else {
 		// pipeline system
 		// firstly define system clock

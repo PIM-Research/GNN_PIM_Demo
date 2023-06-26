@@ -14,7 +14,8 @@ from models.gcn import GCN
 from tensorboardX import SummaryWriter
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.global_variable import args, run_recorder, weight_quantification, grad_clip, grad_quantiication
-from util.other import get_updated_num, norm_adj, quantify_adj, store_updated_list_and_adj_matrix, record_net_structure
+from util.other import get_updated_num, norm_adj, quantify_adj, store_updated_list_and_adj_matrix, record_net_structure, \
+    record_pipeline_prediction_info
 from util.train_decorator import TrainDecorator
 import time
 
@@ -277,7 +278,8 @@ def main():
                     writer.add_scalar('Valid accuracy', valid_mrr, epoch)
                     writer.add_scalar(' Test accuracy', test_mrr, epoch)
                     print('---')
-
+            record_pipeline_prediction_info(data.num_nodes, data.num_features, args.hidden_channels,
+                                            args.hidden_channels, epoch)
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])
@@ -286,25 +288,6 @@ def main():
             print('epoch运行时长：', epoch_time - test_time, '秒')
             print('num_nodes:', data.num_nodes, 'input_channels:', data.num_features, 'hidden_channels:',
                   args.hidden_channels, 'output_channels:', args.hidden_channels)
-            if args.use_pipeline:
-                vertex_num = data.num_nodes
-                input_channels = data.num_features
-                hidden_channels = args.hidden_channels
-                output_channels = args.hidden_channels
-
-                with open('./pipeline/matrix_info.csv', 'a') as file:
-                    file.write(
-                        f'{vertex_num},{input_channels},{input_channels},{hidden_channels},'
-                        f'{vertex_num},{vertex_num},{vertex_num},'
-                        f'{hidden_channels},{epoch},{1}\n')
-                    file.write(
-                        f'{vertex_num},{hidden_channels},{hidden_channels},{hidden_channels},'
-                        f'{vertex_num},{vertex_num},{vertex_num},'
-                        f'{hidden_channels},{epoch},{2}\n')
-                    file.write(
-                        f'{vertex_num},{hidden_channels},{hidden_channels},{output_channels},'
-                        f'{vertex_num},{vertex_num},{vertex_num},'
-                        f'{output_channels},{epoch},{3}\n')
 
         print('GraphSAGE' if args.use_sage else 'GCN')
         logger.print_statistics(run)

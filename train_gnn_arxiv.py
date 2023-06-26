@@ -14,7 +14,7 @@ from util.global_variable import args, run_recorder, weight_quantification, grad
 from util.hook import set_vertex_map, set_updated_vertex_map
 from util.logger import Logger
 from util.other import transform_adj_matrix, transform_matrix_2_binary, store_updated_list_and_adj_matrix, norm_adj, \
-    quantify_adj, record_net_structure, get_updated_num
+    quantify_adj, record_net_structure, get_updated_num, record_pipeline_prediction_info
 from util.train_decorator import TrainDecorator
 
 
@@ -238,29 +238,11 @@ def main():
                 writer.add_scalar(f'arxiv/Train accuracy', 100 * train_acc, epoch)
                 writer.add_scalar(f'arxiv/Valid accuracy', 100 * valid_acc, epoch)
                 writer.add_scalar(f'arxiv/Test accuracy', 100 * test_acc, epoch)
+            record_pipeline_prediction_info(data.num_nodes, data.num_features, args.hidden_channels,
+                                            dataset.num_classes, epoch)
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])
-
-            if args.use_pipeline:
-                vertex_num = data.num_nodes
-                input_channels = data.num_features
-                hidden_channels = args.hidden_channels
-                output_channels = dataset.num_classes
-
-                with open('./pipeline/matrix_info.csv', 'a') as file:
-                    file.write(
-                        f'{vertex_num},{input_channels},{input_channels},{hidden_channels},'
-                        f'{vertex_num},{vertex_num},{vertex_num},'
-                        f'{hidden_channels},{epoch},{1}\n')
-                    file.write(
-                        f'{vertex_num},{hidden_channels},{hidden_channels},{hidden_channels},'
-                        f'{vertex_num},{vertex_num},{vertex_num},'
-                        f'{hidden_channels},{epoch},{2}\n')
-                    file.write(
-                        f'{vertex_num},{hidden_channels},{hidden_channels},{output_channels},'
-                        f'{vertex_num},{vertex_num},{vertex_num},'
-                        f'{output_channels},{epoch},{3}\n')
         logger.print_statistics(run)
     logger.print_statistics()
     end_time = time.perf_counter()
