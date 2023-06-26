@@ -33,7 +33,6 @@ parser.add_argument('--use_node_embedding', action='store_true')
 parser.add_argument('--use-gcn', action='store_false')
 parser.add_argument('--use-cluster', action='store_true')
 parser.add_argument('--use-embedding', action='store_true')
-parser.add_argument('--use_node_embedding', action='store_true')  # vessel数据集专用参数
 parser.add_argument('--use_valedges_as_input', action='store_true')  # collab数据集专用参数
 parser.add_argument('--use-pipeline', action='store_true')
 parser.add_argument('--filter-adj', action='store_true')
