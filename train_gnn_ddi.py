@@ -141,9 +141,6 @@ def main():
                         writer.add_scalar(f'{key} Valid accuracy', 100 * valid_hits, epoch)
                         writer.add_scalar(f'{key} Test accuracy', 100 * test_hits, epoch)
                     print('---')
-            if args.call_neurosim:
-                call(["chmod", "o+x", run_recorder.bootstrap_path])
-                call(["/bin/bash", run_recorder.bootstrap_path])
 
             if args.use_pipeline:
                 vertex_num = updated_vertex.shape[0]
@@ -157,6 +154,15 @@ def main():
                         f'{vertex_num},{args.hidden_channels},{args.hidden_channels},{args.hidden_channels},'
                         f'{vertex_num},{vertex_num},{vertex_num},'
                         f'{args.hidden_channels},{epoch},{2}\n')
+                with open(run_recorder.bootstrap_path, 'a') as file:
+                    file.write(' Y')
+            else:
+                with open(run_recorder.bootstrap_path, 'a') as file:
+                    file.write(' N')
+
+            if args.call_neurosim:
+                call(["chmod", "o+x", run_recorder.bootstrap_path])
+                call(["/bin/bash", run_recorder.bootstrap_path])
 
         for key in loggers.keys():
             print(key)
