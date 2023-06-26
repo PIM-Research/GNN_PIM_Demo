@@ -677,6 +677,7 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 	param->activityRowWriteWG = activity;
 	param->activityColWriteWG = activity;
 	vector<vector<double> > newMemory;
+	cout << newweightfile << endl;
 	newMemory = LoadInWeightData(newweightfile, numRowPerSynapse, numColPerSynapse, param->maxConductance, param->minConductance);
 	// cout << "getInuptArray end" << "inputVector.size()" << inputVector.size() << "inputVector[0].size()" << inputVector[0].size() << endl;
 	vector<vector<double> > oldMemory;
