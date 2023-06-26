@@ -92,7 +92,8 @@ class GCN(torch.nn.Module):
 
         with open('record/gcn.txt', 'a') as gcn:
             gcn.write(
-                f'gcn record: message_cost {message_cost} {message_proportion} aggregate_cost {aggregate_cost} {aggregate_proportion}\n')
+                f'gcn record: message_cost {message_cost} {message_proportion} aggregate_cost {aggregate_cost} '
+                f'{aggregate_proportion}\n')
 
 
 def train(model, data, train_idx, optimizer, train_decorator: TrainDecorator, cur_epoch=0, cluster_label=None):
@@ -241,24 +242,25 @@ def main():
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])
 
-            vertex_num = data.num_nodes
-            input_channels = data.num_features
-            hidden_channels = args.hidden_channels
-            output_channels = dataset.num_classes
+            if args.use_pipeline:
+                vertex_num = data.num_nodes
+                input_channels = data.num_features
+                hidden_channels = args.hidden_channels
+                output_channels = dataset.num_classes
 
-            with open('./pipeline/matrix_info.csv', 'a') as file:
-                file.write(
-                    f'{vertex_num},{input_channels},{input_channels},{hidden_channels},'
-                    f'{vertex_num},{vertex_num},{vertex_num},'
-                    f'{hidden_channels},{epoch},{1}\n')
-                file.write(
-                    f'{vertex_num},{hidden_channels},{hidden_channels},{hidden_channels},'
-                    f'{vertex_num},{vertex_num},{vertex_num},'
-                    f'{hidden_channels},{epoch},{2}\n')
-                file.write(
-                    f'{vertex_num},{hidden_channels},{hidden_channels},{output_channels},'
-                    f'{vertex_num},{vertex_num},{vertex_num},'
-                    f'{output_channels},{epoch},{3}\n')
+                with open('./pipeline/matrix_info.csv', 'a') as file:
+                    file.write(
+                        f'{vertex_num},{input_channels},{input_channels},{hidden_channels},'
+                        f'{vertex_num},{vertex_num},{vertex_num},'
+                        f'{hidden_channels},{epoch},{1}\n')
+                    file.write(
+                        f'{vertex_num},{hidden_channels},{hidden_channels},{hidden_channels},'
+                        f'{vertex_num},{vertex_num},{vertex_num},'
+                        f'{hidden_channels},{epoch},{2}\n')
+                    file.write(
+                        f'{vertex_num},{hidden_channels},{hidden_channels},{output_channels},'
+                        f'{vertex_num},{vertex_num},{vertex_num},'
+                        f'{output_channels},{epoch},{3}\n')
         logger.print_statistics(run)
     logger.print_statistics()
     end_time = time.perf_counter()

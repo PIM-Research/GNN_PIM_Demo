@@ -1,22 +1,23 @@
 import argparse
+import time
 from subprocess import call
 
 import torch
-from torch.nn import Parameter
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
-import torch_geometric.transforms as T
-from torch_geometric.nn import SAGEConv
-from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
-from util.logger import Logger
-
-from models.gcn import GCN
 from tensorboardX import SummaryWriter
+from torch.utils.data import DataLoader
+
+import torch_geometric.transforms as T
+from torch_geometric.nn import GCNConv, SAGEConv
+
+from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
+
+from util.global_variable import args, weight_quantification, grad_clip, grad_quantiication, run_recorder
 from util.hook import set_vertex_map, set_updated_vertex_map
-from util.global_variable import args, run_recorder, weight_quantification, grad_clip, grad_quantiication
+from util.logger import Logger
+from models.gcn import GCN
 from util.other import get_updated_num, norm_adj, quantify_adj, store_updated_list_and_adj_matrix, record_net_structure
 from util.train_decorator import TrainDecorator
-import time
 
 
 class SAGE(torch.nn.Module):
@@ -78,13 +79,14 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
     model.train()
     predictor.train()
 
-    source_edge = split_edge['train']['source_node'].to(data.x.device)
-    target_edge = split_edge['train']['target_node'].to(data.x.device)
+    pos_train_edge = split_edge['train']['edge'].to(data.x.device)
+
+    neg_train_edge = split_edge['train']['edge_neg'].to(data.x.device)
 
     total_loss = total_examples = 0
     dst_vertex_num = 0
     num_i = 0
-    for i, perm in enumerate(DataLoader(range(source_edge.size(0)), batch_size,
+    for i, perm in enumerate(DataLoader(range(pos_train_edge.size(0)), batch_size,
                                         shuffle=True)):
         start_time = time.perf_counter()
         # 量化权重
@@ -94,36 +96,41 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
         # 绑定钩子函数，记录各层的输入
         if args.call_neurosim:
             train_decorator.bind_hooks(model, i, cur_epoch)
-
-        src, dst = source_edge[perm], target_edge[perm]
-        dst_vertex_num += get_updated_num(torch.unique(dst))
-        num_i += 1
-        if args.filter_adj:
-            data.adj_t = train_decorator.filter_adj_by_batch(adj_t=data.adj_t, source_vertexes=src,
-                                                             dst_vertexes=dst, batch_index=i)
-
         optimizer.zero_grad()
+        edge = pos_train_edge[perm].t()
+        dst_vertex_num += get_updated_num(torch.unique(edge[1]))
+        num_i += 1
+
+        if args.filter_adj:
+            data.adj_t = train_decorator.filter_adj_by_batch(adj_t=data.adj_t, source_vertexes=edge[0],
+                                                             dst_vertexes=edge[1], batch_index=i)
+
         h = model(data.x, data.adj_t)
-        pos_out = predictor(h[src], h[dst])
+
+        pos_out = predictor(h[edge[0]], h[edge[1]])
         pos_loss = -torch.log(pos_out + 1e-15).mean()
 
-        # Just do some trivial random sampling.
-        dst_neg = torch.randint(0, data.num_nodes, src.size(),
-                                dtype=torch.long, device=h.device)
-        neg_out = predictor(h[src], h[dst_neg])
+        # random element of previously sampled negative edges
+        # negative samples are obtained by using spatial sampling criteria
+
+        edge = neg_train_edge[perm].t()
+        neg_out = predictor(h[edge[0]], h[edge[1]])
         neg_loss = -torch.log(1 - neg_out + 1e-15).mean()
 
         loss = pos_loss + neg_loss
         loss.backward()
+
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        torch.nn.utils.clip_grad_norm_(predictor.parameters(), 1.0)
         # 量化梯度
         if args.bl_weight != -1:
             train_decorator.quantify_grad(model)
+
         optimizer.step()
 
         num_examples = pos_out.size(0)
         total_loss += loss.item() * num_examples
         total_examples += num_examples
-
         # 清除钩子
         if args.call_neurosim:
             train_decorator.clear_hooks(model, i, cur_epoch)
@@ -137,54 +144,94 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
 
 @torch.no_grad()
 def test(model, predictor, data, split_edge, evaluator, batch_size):
+    model.eval()
     predictor.eval()
 
     h = model(data.x, data.adj_t)
 
-    def test_split(split):
-        source = split_edge[split]['source_node'].to(h.device)
-        target = split_edge[split]['target_node'].to(h.device)
-        target_neg = split_edge[split]['target_node_neg'].to(h.device)
+    pos_train_edge = split_edge['train']['edge'].to(h.device)
+    neg_train_edge = split_edge['train']['edge_neg'].to(h.device)
+    pos_valid_edge = split_edge['valid']['edge'].to(h.device)
+    neg_valid_edge = split_edge['valid']['edge_neg'].to(h.device)
+    pos_test_edge = split_edge['test']['edge'].to(h.device)
+    neg_test_edge = split_edge['test']['edge_neg'].to(h.device)
 
-        pos_preds = []
-        for perm in DataLoader(range(source.size(0)), batch_size):
-            src, dst = source[perm], target[perm]
-            pos_preds += [predictor(h[src], h[dst]).squeeze().cpu()]
-        pos_pred = torch.cat(pos_preds, dim=0)
+    pos_train_preds = []
+    for perm in DataLoader(range(pos_train_edge.size(0)), batch_size):
+        edge = pos_train_edge[perm].t()
+        pos_train_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
+    pos_train_pred = torch.cat(pos_train_preds, dim=0)
 
-        neg_preds = []
-        source = source.view(-1, 1).repeat(1, 1000).view(-1)
-        target_neg = target_neg.view(-1)
-        for perm in DataLoader(range(source.size(0)), batch_size):
-            src, dst_neg = source[perm], target_neg[perm]
-            neg_preds += [predictor(h[src], h[dst_neg]).squeeze().cpu()]
-        neg_pred = torch.cat(neg_preds, dim=0).view(-1, 1000)
+    neg_train_preds = []
+    for perm in DataLoader(range(neg_train_edge.size(0)), batch_size):
+        edge = neg_train_edge[perm].t()
+        neg_train_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
+    neg_train_pred = torch.cat(neg_train_preds, dim=0)
 
-        return evaluator.eval({
-            'y_pred_pos': pos_pred,
-            'y_pred_neg': neg_pred,
-        })['mrr_list'].mean().item()
+    pos_valid_preds = []
+    for perm in DataLoader(range(pos_valid_edge.size(0)), batch_size):
+        edge = pos_valid_edge[perm].t()
+        pos_valid_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
+    pos_valid_pred = torch.cat(pos_valid_preds, dim=0)
 
-    train_mrr = test_split('eval_train')
-    valid_mrr = test_split('valid')
-    test_mrr = test_split('test')
+    neg_valid_preds = []
+    for perm in DataLoader(range(neg_valid_edge.size(0)), batch_size):
+        edge = neg_valid_edge[perm].t()
+        neg_valid_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
+    neg_valid_pred = torch.cat(neg_valid_preds, dim=0)
 
-    return train_mrr, valid_mrr, test_mrr
+    pos_test_preds = []
+    for perm in DataLoader(range(pos_test_edge.size(0)), batch_size):
+        edge = pos_test_edge[perm].t()
+        pos_test_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
+    pos_test_pred = torch.cat(pos_test_preds, dim=0)
+
+    neg_test_preds = []
+    for perm in DataLoader(range(neg_test_edge.size(0)), batch_size):
+        edge = neg_test_edge[perm].t()
+        neg_test_preds += [predictor(h[edge[0]], h[edge[1]]).squeeze().cpu()]
+    neg_test_pred = torch.cat(neg_test_preds, dim=0)
+
+    train_rocauc = evaluator.eval({
+        'y_pred_pos': pos_train_pred,
+        'y_pred_neg': neg_train_pred,
+    })[f'rocauc']
+
+    valid_rocauc = evaluator.eval({
+        'y_pred_pos': pos_valid_pred,
+        'y_pred_neg': neg_valid_pred,
+    })[f'rocauc']
+
+    test_rocauc = evaluator.eval({
+        'y_pred_pos': pos_test_pred,
+        'y_pred_neg': neg_test_pred,
+    })[f'rocauc']
+
+    return train_rocauc, valid_rocauc, test_rocauc
 
 
 def main():
     writer = SummaryWriter()
     train_dec = TrainDecorator(weight_quantification, grad_quantiication, grad_clip, run_recorder)
-    # runs为10，epochs为50，神经网络层数为3层，dropout为0，lr为0.0005，隐藏层数为256，batch_size为64*1024
+    # runs为10，epochs为100，神经网络层数为3层，dropout为0，lr为0.01，隐藏层数为256，batch_size为64*1024
     print(args)
 
     device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     device = torch.device(device)
 
-    dataset = PygLinkPropPredDataset(name='ogbl-citation2',
+    dataset = PygLinkPropPredDataset('ogbl-vessel',
                                      transform=T.ToSparseTensor())
     data = dataset[0]
-    data.adj_t = data.adj_t.to_symmetric()
+
+    # normalize x,y,z coordinates
+    data.x[:, 0] = torch.nn.functional.normalize(data.x[:, 0], dim=0)
+    data.x[:, 1] = torch.nn.functional.normalize(data.x[:, 1], dim=0)
+    data.x[:, 2] = torch.nn.functional.normalize(data.x[:, 2], dim=0)
+
+    data.x = data.x.to(torch.float)
+    if args.use_node_embedding:
+        data.x = torch.cat([data.x, torch.load('embedding.pt')], dim=-1)
+
     # 将邻接矩阵正则化
     if args.call_neurosim:
         adj_matrix = norm_adj(data.adj_t)
@@ -202,28 +249,19 @@ def main():
     if args.call_neurosim:
         record_net_structure(data.num_nodes, data.num_features, args.hidden_channels, args.hidden_channels,
                              args.num_layers)
+
     data = data.to(device)
-
     split_edge = dataset.get_edge_split()
-
-    # We randomly pick some training samples that we want to evaluate on:
-    torch.manual_seed(12345)
-    idx = torch.randperm(split_edge['train']['source_node'].numel())[:86596]
-    split_edge['eval_train'] = {
-        'source_node': split_edge['train']['source_node'][idx],
-        'target_node': split_edge['train']['target_node'][idx],
-        'target_node_neg': split_edge['valid']['target_node_neg'],
-    }
 
     if args.use_sage:
         model = SAGE(data.num_features, args.hidden_channels,
                      args.hidden_channels, args.num_layers,
                      args.dropout).to(device)
+
     else:
-        model = GCN(data.num_features, args.hidden_channels,
-                    args.hidden_channels, args.num_layers,
-                    args.dropout, bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
-                    recorder=run_recorder,normalize=False).to(device)
+        model = GCN(data.num_features, args.hidden_channels, args.hidden_channels, args.num_layers, args.dropout,
+                    bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
+                    recorder=run_recorder, normalize=False, improved=True).to(device)
 
         # Pre-compute GCN normalization.
         adj_t = data.adj_t.set_diag()
@@ -236,7 +274,7 @@ def main():
     predictor = LinkPredictor(args.hidden_channels, args.hidden_channels, 1,
                               args.num_layers, args.dropout).to(device)
 
-    evaluator = Evaluator(name='ogbl-citation2')
+    evaluator = Evaluator(name='ogbl-vessel')
     logger = Logger(args.runs, args)
     if args.percentile != 0:
         train_dec.bind_update_hook(model)
@@ -244,6 +282,7 @@ def main():
     epoch_time = 0
 
     for run in range(args.runs):
+
         model.reset_parameters()
         predictor.reset_parameters()
         optimizer = torch.optim.Adam(
@@ -252,10 +291,9 @@ def main():
 
         for epoch in range(1, 1 + args.epochs):
             start_time = time.perf_counter()
-            loss = train(model, predictor, data, split_edge, optimizer, args.batch_sizet, train_decorator=train_dec,
+            loss = train(model, predictor, data, split_edge, optimizer, args.batch_size, train_decorator=train_dec,
                          cur_epoch=epoch)
-            writer.add_scalar('citation/Loss', loss, epoch)
-            print(f'Run: {run + 1:02d}, Epoch: {epoch:02d}, Loss: {loss:.4f}')
+            writer.add_scalar('vessel/Loss', loss, epoch)
 
             if epoch % args.eval_steps == 0:
                 test_s = time.perf_counter()
@@ -265,19 +303,16 @@ def main():
                 test_time += test_e - test_s
                 logger.add_result(run, result)
 
-                if epoch % args.log_steps == 0:
-                    train_mrr, valid_mrr, test_mrr = result
-                    print(f'Run: {run + 1:02d}, '
-                          f'Epoch: {epoch:02d}, '
-                          f'Loss: {loss:.4f}, '
-                          f'Train: {train_mrr:.4f}, '
-                          f'Valid: {valid_mrr:.4f}, '
-                          f'Test: {test_mrr:.4f}')
-                    writer.add_scalar('Train accuracy', train_mrr, epoch)
-                    writer.add_scalar('Valid accuracy', valid_mrr, epoch)
-                    writer.add_scalar(' Test accuracy', test_mrr, epoch)
-                    print('---')
-
+                train_roc_auc, valid_roc_auc, test_roc_auc = result
+                print(f'Run: {run + 1:02d}, '
+                      f'Epoch: {epoch:02d}, '
+                      f'Loss: {loss:.4f}, '
+                      f'Train: {train_roc_auc:.4f}, '
+                      f'Valid: {valid_roc_auc:.4f}, '
+                      f'Test: {test_roc_auc:.4f}')
+                writer.add_scalar('Train accuracy', train_roc_auc, epoch)
+                writer.add_scalar('Valid accuracy', valid_roc_auc, epoch)
+                writer.add_scalar('Test accuracy', test_roc_auc, epoch)
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])
@@ -286,12 +321,12 @@ def main():
             print('epoch运行时长：', epoch_time - test_time, '秒')
             print('num_nodes:', data.num_nodes, 'input_channels:', data.num_features, 'hidden_channels:',
                   args.hidden_channels, 'output_channels:', args.hidden_channels)
+
             if args.use_pipeline:
                 vertex_num = data.num_nodes
                 input_channels = data.num_features
                 hidden_channels = args.hidden_channels
                 output_channels = args.hidden_channels
-
                 with open('./pipeline/matrix_info.csv', 'a') as file:
                     file.write(
                         f'{vertex_num},{input_channels},{input_channels},{hidden_channels},'
@@ -306,11 +341,11 @@ def main():
                         f'{vertex_num},{vertex_num},{vertex_num},'
                         f'{output_channels},{epoch},{3}\n')
 
-        print('GraphSAGE' if args.use_sage else 'GCN')
+        print('GNN')
         logger.print_statistics(run)
-    print('GraphSAGE' if args.use_sage else 'GCN')
+
+    print('GNN')
     logger.print_statistics()
-    print('运行时长：', epoch_time - test_time, '秒')
 
 
 if __name__ == "__main__":

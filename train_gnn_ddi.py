@@ -77,7 +77,7 @@ def main():
         model = GCN(args.hidden_channels, args.hidden_channels,
                     args.hidden_channels, args.num_layers,
                     args.dropout, bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
-                    recorder=run_recorder).to(device)
+                    recorder=run_recorder, cached=True).to(device)
     else:
         model = GAT(args.hidden_channels, args.hidden_channels,
                     args.hidden_channels, args.num_layers,
@@ -145,18 +145,18 @@ def main():
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])
 
-            vertex_num = updated_vertex.shape[0]
-
-            # 将当前epoch各层的矩阵信息写入到文件
-            with open('./pipeline/matrix_info.csv', 'a') as file:
-                file.write(
-                    f'{vertex_num},{args.hidden_channels},{args.hidden_channels},{args.hidden_channels},'
-                    f'{vertex_num},{vertex_num},{vertex_num},'
-                    f'{args.hidden_channels},{epoch},{1}\n')
-                file.write(
-                    f'{vertex_num},{args.hidden_channels},{args.hidden_channels},{args.hidden_channels},'
-                    f'{vertex_num},{vertex_num},{vertex_num},'
-                    f'{args.hidden_channels},{epoch},{2}\n')
+            if args.use_pipeline:
+                vertex_num = updated_vertex.shape[0]
+                # 将当前epoch各层的矩阵信息写入到文件
+                with open('./pipeline/matrix_info.csv', 'a') as file:
+                    file.write(
+                        f'{vertex_num},{args.hidden_channels},{args.hidden_channels},{args.hidden_channels},'
+                        f'{vertex_num},{vertex_num},{vertex_num},'
+                        f'{args.hidden_channels},{epoch},{1}\n')
+                    file.write(
+                        f'{vertex_num},{args.hidden_channels},{args.hidden_channels},{args.hidden_channels},'
+                        f'{vertex_num},{vertex_num},{vertex_num},'
+                        f'{args.hidden_channels},{epoch},{2}\n')
 
         for key in loggers.keys():
             print(key)

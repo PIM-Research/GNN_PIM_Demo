@@ -142,7 +142,7 @@ def train(model, predictor, data, split_edge, optimizer, batch_size, train_decor
         if args.call_neurosim:
             train_decorator.clear_hooks(model, i, cur_epoch)
         end_time = time.perf_counter()
-        print(f'current epoch:{cur_epoch}  current Iteration:{i} epoch time:{start_time-end_time}')
+        print(f'current epoch:{cur_epoch}  current Iteration:{i} epoch time:{end_time - start_time}')
     print('dst_vertex_num_avg:', dst_vertex_num / num_i * (1 - 0.01 * args.percentile))
     print('num_i:', num_i)
 
@@ -265,9 +265,9 @@ def main():
         record_net_structure(data.num_nodes, data.num_features, args.hidden_channels, args.hidden_channels,
                              args.num_layers)
 
+    data = data.to(device)
     split_edge = dataset.get_edge_split()
 
-    data = data.to(device)
     if args.use_sage:
         model = SAGE(data.num_features, args.hidden_channels,
                      args.hidden_channels, args.num_layers,
@@ -275,7 +275,7 @@ def main():
     else:
         model = GCN(data.num_features, args.hidden_channels, args.hidden_channels, args.num_layers,
                     args.dropout, bl_weight=args.bl_weight, bl_activate=args.bl_activate, bl_error=args.bl_error,
-                    recorder=run_recorder).to(device)
+                    recorder=run_recorder, normalize=False).to(device)
 
         # Pre-compute GCN normalization.
         adj_t = data.adj_t.set_diag()
@@ -342,25 +342,27 @@ def main():
             end_time = time.perf_counter()
             epoch_time += start_time - end_time
             print('epoch运行时长：', epoch_time - test_time, '秒')
+            print('num_nodes:', data.num_nodes, 'input_channels:', data.num_features, 'hidden_channels:',
+                  args.hidden_channels, 'output_channels:', args.hidden_channels)
 
-            vertex_num = data.num_nodes
-            input_channels = data.num_features
-            hidden_channels = args.hidden_channels
-            output_channels = args.hidden_channels
-
-            with open('./pipeline/matrix_info.csv', 'a') as file:
-                file.write(
-                    f'{vertex_num},{input_channels},{input_channels},{hidden_channels},'
-                    f'{vertex_num},{vertex_num},{vertex_num},'
-                    f'{hidden_channels},{epoch},{1}\n')
-                file.write(
-                    f'{vertex_num},{hidden_channels},{hidden_channels},{hidden_channels},'
-                    f'{vertex_num},{vertex_num},{vertex_num},'
-                    f'{hidden_channels},{epoch},{2}\n')
-                file.write(
-                    f'{vertex_num},{hidden_channels},{hidden_channels},{output_channels},'
-                    f'{vertex_num},{vertex_num},{vertex_num},'
-                    f'{output_channels},{epoch},{3}\n')
+            if args.use_pipeline:
+                vertex_num = data.num_nodes
+                input_channels = data.num_features
+                hidden_channels = args.hidden_channels
+                output_channels = args.hidden_channels
+                with open('./pipeline/matrix_info.csv', 'a') as file:
+                    file.write(
+                        f'{vertex_num},{input_channels},{input_channels},{hidden_channels},'
+                        f'{vertex_num},{vertex_num},{vertex_num},'
+                        f'{hidden_channels},{epoch},{1}\n')
+                    file.write(
+                        f'{vertex_num},{hidden_channels},{hidden_channels},{hidden_channels},'
+                        f'{vertex_num},{vertex_num},{vertex_num},'
+                        f'{hidden_channels},{epoch},{2}\n')
+                    file.write(
+                        f'{vertex_num},{hidden_channels},{hidden_channels},{output_channels},'
+                        f'{vertex_num},{vertex_num},{vertex_num},'
+                        f'{output_channels},{epoch},{3}\n')
         for key in loggers.keys():
             print(key)
             loggers[key].print_statistics(run, key=key)

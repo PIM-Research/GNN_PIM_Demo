@@ -8,7 +8,8 @@ from .named_gcnconv import NamedGCNConv
 
 class GCN(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, num_layers,
-                 dropout, bl_weight=-1, bl_activate=-1, bl_error=-1, writer=None, recorder=None, adj_activity=0):
+                 dropout, bl_weight=-1, bl_activate=-1, bl_error=-1, writer=None, recorder=None, adj_activity=0,
+                 normalize=True, cached=False, improved=False):
         super(GCN, self).__init__()
         print(bl_weight, bl_activate, bl_error)
         self.bits_W = bl_weight
@@ -20,17 +21,17 @@ class GCN(torch.nn.Module):
         count = 0
         self.convs = torch.nn.ModuleList()
         self.convs.append(
-            NamedGCNConv(in_channels, hidden_channels, cached=True, name='convs.' + str(count) + '.gcn_conv',
-                         adj_activity=adj_activity))
+            NamedGCNConv(in_channels, hidden_channels, cached=cached, normalize=normalize,
+                         name='convs.' + str(count) + '.gcn_conv', adj_activity=adj_activity))
         for _ in range(num_layers - 2):
             count += 1
             self.convs.append(
-                NamedGCNConv(hidden_channels, hidden_channels, cached=True, name='convs.' + str(count) + '.gcn_conv',
-                             adj_activity=adj_activity))
+                NamedGCNConv(hidden_channels, hidden_channels, improved=improved, cached=cached, normalize=normalize,
+                             name='convs.' + str(count) + '.gcn_conv', adj_activity=adj_activity))
         count += 1
         self.convs.append(
-            NamedGCNConv(hidden_channels, out_channels, cached=True, name='convs.' + str(count) + '.gcn_conv',
-                         adj_activity=adj_activity))
+            NamedGCNConv(hidden_channels, out_channels, improved=improved, cached=cached, normalize=normalize,
+                         name='convs.' + str(count) + '.gcn_conv', adj_activity=adj_activity))
         # 初始化神经网络权重，并对其进行量化
         self.weight_scale = {}
         self.weight_acc = {}
