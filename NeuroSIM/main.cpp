@@ -334,8 +334,8 @@ int main(int argc, char * argv[]) {
 		// layer-by-layer process
 		// show the detailed hardware performance for each layer
 		double latencyPrelayer = 0;
-		int layerNum = netStructure.size() - 1;
-		string addPredictionInfo = argv[4 * layerNum + 9];
+		string addPredictionInfo = argv[6 + netStructure.size() * 4];
+		cout << addPredictionInfo << endl;
 		std::ofstream file("./pipeline/latency_proportion.csv", std::ios::app); // 打开文件以追加写入模式
 		if (addPredictionInfo == "N") {
 			file.close();

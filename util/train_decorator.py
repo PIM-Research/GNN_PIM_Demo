@@ -16,6 +16,8 @@ class TrainDecorator:
 
     def create_bash_command(self, num_epoch, bl_weight, bl_activation):
         sim_bootstrap = self.recorder.bootstrap_path
+        bl_weight = 8 if bl_weight == -1 else bl_weight
+        bl_activation = 8 if bl_activation == -1 else bl_activation
         if os.path.exists(sim_bootstrap):
             os.remove(sim_bootstrap)
         f = open(sim_bootstrap, "w")
