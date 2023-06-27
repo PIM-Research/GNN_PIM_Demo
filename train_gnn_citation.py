@@ -182,7 +182,7 @@ def main():
     device = f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu'
     device = torch.device(device)
 
-    dataset = PygLinkPropPredDataset(name='ogbl-citation',
+    dataset = PygLinkPropPredDataset(name='ogbl-citation2',
                                      transform=T.ToSparseTensor())
     data = dataset[0]
     data.adj_t = data.adj_t.to_symmetric()
