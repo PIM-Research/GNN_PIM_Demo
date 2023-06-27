@@ -238,8 +238,8 @@ def main():
                 writer.add_scalar(f'arxiv/Train accuracy', 100 * train_acc, epoch)
                 writer.add_scalar(f'arxiv/Valid accuracy', 100 * valid_acc, epoch)
                 writer.add_scalar(f'arxiv/Test accuracy', 100 * test_acc, epoch)
-            record_pipeline_prediction_info(data.num_nodes, data.num_features, args.hidden_channels,
-                                            dataset.num_classes, epoch)
+            record_pipeline_prediction_info(data.num_nodes, data.num_nodes, data.num_features, args.hidden_channels,
+                                            dataset.num_classes, epoch, 3)
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])

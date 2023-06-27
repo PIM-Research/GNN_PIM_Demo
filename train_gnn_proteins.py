@@ -189,8 +189,8 @@ def main():
                     writer.add_scalar(f'proteins/Train accuracy', 100 * train_rocauc, epoch)
                     writer.add_scalar(f'proteins/Valid accuracy', 100 * valid_rocauc, epoch)
                     writer.add_scalar(f'proteins/Test accuracy', 100 * test_rocauc, epoch)
-            record_pipeline_prediction_info(data.num_nodes, data.num_features, args.hidden_channels,
-                                            112, epoch)
+            record_pipeline_prediction_info(data.num_nodes, data.num_nodes, data.num_features, args.hidden_channels,
+                                            112, epoch, 3)
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])

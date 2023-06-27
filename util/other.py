@@ -405,22 +405,24 @@ def get_updated_num(dst_vertex: torch.Tensor):
     return dst_vertex.shape[0]
 
 
-def record_pipeline_prediction_info(vertex_num, input_channels, hidden_channels, output_channels, epoch):
-    print('vertex_num:', vertex_num, 'input_channels:', input_channels, 'hidden_channels:', hidden_channels,
-          'output_channels:', output_channels)
+def record_pipeline_prediction_info(vertex_num_c, vertex_num_a, input_channels, hidden_channels, output_channels,
+                                    epoch, layer_num):
+    print('vertex_num_c:', vertex_num_c, 'vertex_num_a:', vertex_num_a, 'input_channels:', input_channels,
+          'hidden_channels:', hidden_channels, 'output_channels:', output_channels)
     if args.use_pipeline:
         with open('./pipeline/matrix_info.csv', 'a') as file:
             file.write(
-                f'{vertex_num},{input_channels},{input_channels},{hidden_channels},'
-                f'{vertex_num},{vertex_num},{vertex_num},'
+                f'{vertex_num_c},{input_channels},{input_channels},{hidden_channels},'
+                f'{vertex_num_a},{vertex_num_a},{vertex_num_a},'
                 f'{hidden_channels},{epoch},{1}\n')
+            for _ in range(layer_num - 2):
+                file.write(
+                    f'{vertex_num_c},{hidden_channels},{hidden_channels},{hidden_channels},'
+                    f'{vertex_num_a},{vertex_num_a},{vertex_num_a},'
+                    f'{hidden_channels},{epoch},{2}\n')
             file.write(
-                f'{vertex_num},{hidden_channels},{hidden_channels},{hidden_channels},'
-                f'{vertex_num},{vertex_num},{vertex_num},'
-                f'{hidden_channels},{epoch},{2}\n')
-            file.write(
-                f'{vertex_num},{hidden_channels},{hidden_channels},{output_channels},'
-                f'{vertex_num},{vertex_num},{vertex_num},'
+                f'{vertex_num_c},{hidden_channels},{hidden_channels},{output_channels},'
+                f'{vertex_num_a},{vertex_num_a},{vertex_num_a},'
                 f'{output_channels},{epoch},{3}\n')
 
         with open(run_recorder.bootstrap_path, 'a') as file:

@@ -9,7 +9,7 @@ from models import GAT, GCN, SAGE, LinkPredictor
 from util import train_test_ddi, train_decorator
 from util.global_variable import *
 from util.other import norm_adj, transform_adj_matrix, record_net_structure, quantify_adj, \
-    store_updated_list_and_adj_matrix, store_updated_list
+    store_updated_list_and_adj_matrix, store_updated_list, record_pipeline_prediction_info
 from subprocess import call
 from tensorboardX import SummaryWriter
 
@@ -142,23 +142,8 @@ def main():
                         writer.add_scalar(f'{key} Test accuracy', 100 * test_hits, epoch)
                     print('---')
 
-            if args.use_pipeline:
-                vertex_num = updated_vertex.shape[0]
-                # 将当前epoch各层的矩阵信息写入到文件
-                with open('./pipeline/matrix_info.csv', 'a') as file:
-                    file.write(
-                        f'{vertex_num},{args.hidden_channels},{args.hidden_channels},{args.hidden_channels},'
-                        f'{vertex_num},{vertex_num},{vertex_num},'
-                        f'{args.hidden_channels},{epoch},{1}\n')
-                    file.write(
-                        f'{vertex_num},{args.hidden_channels},{args.hidden_channels},{args.hidden_channels},'
-                        f'{vertex_num},{vertex_num},{vertex_num},'
-                        f'{args.hidden_channels},{epoch},{2}\n')
-                with open(run_recorder.bootstrap_path, 'a') as file:
-                    file.write(' Y')
-            else:
-                with open(run_recorder.bootstrap_path, 'a') as file:
-                    file.write(' N')
+            record_pipeline_prediction_info(4267, 956, args.hidden_channels, args.hidden_channels, args.hidden_channels,
+                                            epoch, 2)
 
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])

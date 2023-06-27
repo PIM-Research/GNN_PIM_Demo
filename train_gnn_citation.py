@@ -278,8 +278,8 @@ def main():
                     writer.add_scalar('Valid accuracy', valid_mrr, epoch)
                     writer.add_scalar(' Test accuracy', test_mrr, epoch)
                     print('---')
-            record_pipeline_prediction_info(data.num_nodes, data.num_features, args.hidden_channels,
-                                            args.hidden_channels, epoch)
+            record_pipeline_prediction_info(data.num_nodes, data.num_nodes,  data.num_features, args.hidden_channels,
+                                            args.hidden_channels, epoch, 3)
             if args.call_neurosim:
                 call(["chmod", "o+x", run_recorder.bootstrap_path])
                 call(["/bin/bash", run_recorder.bootstrap_path])
