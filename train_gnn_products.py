@@ -42,7 +42,6 @@ class GCN(torch.nn.Module):
             self.convs.append(
                 NamedGCNConv(hidden_channels, hidden_channels, normalize=False, name='convs.' + str(count) + '.gcn_conv'
                              , adj_activity=adj_activity))
-            self.bns.append(torch.nn.BatchNorm1d(hidden_channels))
         count += 1
         self.convs.append(
             NamedGCNConv(hidden_channels, out_channels, normalize=False, name='convs.' + str(count) + '.gcn_conv',
