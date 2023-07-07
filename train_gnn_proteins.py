@@ -169,7 +169,7 @@ def main():
         model.reset_parameters()
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
         for epoch in range(1, 1 + args.epochs):
-            loss = train(model, data, train_idx, optimizer)
+            loss = train(model, data, train_idx, optimizer, train_decorator=train_dec, cur_epoch=epoch)
             if epoch % args.eval_steps == 0:
                 writer.add_scalar('arxiv/Loss', loss, epoch)
                 test_s = time.perf_counter()
