@@ -119,7 +119,7 @@ class SAGE(torch.nn.Module):
         return torch.log_softmax(x, dim=-1)
 
 
-def train(model, data, train_idx, optimizer, train_decorator: TrainDecorator, cur_epoch=0, ):
+def train(model, data, train_idx, optimizer, train_decorator: TrainDecorator, cur_epoch=0):
     if args.call_neurosim:
         train_decorator.create_bash_command(cur_epoch, model.bits_W, model.bits_A)
     model.train()
@@ -239,7 +239,7 @@ def main():
         model.reset_parameters()
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
         for epoch in range(1, 1 + args.epochs):
-            loss = train(model, data, train_idx, optimizer)
+            loss = train(model, data, train_idx, optimizer, train_decorator=train_dec, cur_epoch=epoch)
             writer.add_scalar('products/Loss', loss, epoch)
             test_s = time.perf_counter()
             result = test(model, data, split_idx, evaluator)
