@@ -253,7 +253,7 @@ def main():
 
         for epoch in range(1, 1 + args.epochs):
             start_time = time.perf_counter()
-            loss = train(model, predictor, data, split_edge, optimizer, args.batch_sizet, train_decorator=train_dec,
+            loss = train(model, predictor, data, split_edge, optimizer, args.batch_size, train_decorator=train_dec,
                          cur_epoch=epoch)
             writer.add_scalar('citation/Loss', loss, epoch)
             print(f'Run: {run + 1:02d}, Epoch: {epoch:02d}, Loss: {loss:.4f}')

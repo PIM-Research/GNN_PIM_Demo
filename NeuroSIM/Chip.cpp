@@ -1476,7 +1476,6 @@ vector<vector<double> > OverallEachLayer(bool utilization, bool speedUp, const v
 
 
 vector<vector<double> > LoadInWeightData(const string &weightfile, int numRowPerSynapse, int numColPerSynapse, double maxConductance, double minConductance) {
-	cout << weightfile.c_str() << endl;
 	ifstream fileone(weightfile.c_str());                           
 	string lineone;
 	string valone;
