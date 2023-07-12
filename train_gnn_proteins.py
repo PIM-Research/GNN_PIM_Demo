@@ -164,7 +164,7 @@ def main():
         train_dec.bind_update_hook(model)
     test_time = 0
     start_time = time.perf_counter()
-
+    print('数据集顶点数：', len(data.x))
     for run in range(args.runs):
         model.reset_parameters()
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
