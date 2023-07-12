@@ -281,7 +281,7 @@ def main():
         train_dec.bind_update_hook(model)
     test_time = 0
     epoch_time = 0
-
+    print('数据集顶点数：', len(data.x))
     for run in range(args.runs):
 
         model.reset_parameters()
