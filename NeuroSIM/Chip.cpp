@@ -1069,15 +1069,21 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		// since for each iteration, need *batchSize computation
 		if ((layerNumber + 1) % 2 == 0) *readLatency *= param->batchSizeAg;
 		else *readLatency *= param->batchSize;
-		*readDynamicEnergy *= param->batchSize;
-		*readLatencyAG *= param->batchSize;
-		*readDynamicEnergyAG *= param->batchSize;
-		
-		*readLatencyPeakFW *= param->batchSize;
-		*readDynamicEnergyPeakFW *= param->batchSize;
-		*readLatencyPeakAG *= param->batchSize;
-		*readDynamicEnergyPeakAG *= param->batchSize;
-		
+		if ((layerNumber + 1) % 2 == 0) *readDynamicEnergy *= param->batchSizeAg;
+		else *readDynamicEnergy *= param->batchSize;
+		if ((layerNumber + 1) % 2 == 0) *readLatencyAG *= param->batchSizeAg;
+		else *readLatencyAG *= param->batchSize;
+		if ((layerNumber + 1) % 2 == 0) *readDynamicEnergyAG *= param->batchSizeAg;
+		else *readDynamicEnergyAG *= param->batchSize;
+
+		if ((layerNumber + 1) % 2 == 0) *readLatencyPeakFW *= param->batchSizeAg;
+		else *readLatencyPeakFW *= param->batchSize;
+		if ((layerNumber + 1) % 2 == 0) *readDynamicEnergyPeakFW *= param->batchSizeAg;
+		else *readDynamicEnergyPeakFW *= param->batchSize;
+		if ((layerNumber + 1) % 2 == 0) *readLatencyPeakAG *= param->batchSizeAg;
+		else *readLatencyPeakAG *= param->batchSize;
+		if ((layerNumber + 1) % 2 == 0) *readDynamicEnergyPeakAG *= param->batchSizeAg;
+		else *readDynamicEnergyPeakAG *= param->batchSize;
 		*icLatency *= param->batchSize;
 		*icDynamicEnergy *= param->batchSize;
 		
@@ -1174,10 +1180,18 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 			// weight gradient also need *batchSize computation
 		}
 		// cout << "readLatencyWG:" << *readLatencyWG << endl;
-		*readLatencyWG *= param->batchSize;
-		*readDynamicEnergyWG *= param->batchSize;
-		*readLatencyPeakWG *= param->batchSize;
-		*readDynamicEnergyPeakWG *= param->batchSize;
+		if ((layerNumber + 1) % 2 == 0) *readLatencyWG *= param->batchSizeAg;
+		else *readLatencyWG *= param->batchSize;
+		if ((layerNumber + 1) % 2 == 0) *readDynamicEnergyWG *= param->batchSizeAg;
+		else *readDynamicEnergyWG *= param->batchSize;
+		if ((layerNumber + 1) % 2 == 0) *readLatencyPeakWG *= param->batchSizeAg;
+		else *readLatencyPeakWG *= param->batchSize;
+		if ((layerNumber + 1) % 2 == 0) *readDynamicEnergyPeakWG *= param->batchSizeAg;
+		else *readDynamicEnergyPeakWG *= param->batchSize;
+		// *readLatencyWG *= param->batchSize;
+		// *readDynamicEnergyWG *= param->batchSize;
+		// *readLatencyPeakWG *= param->batchSize;
+		// *readDynamicEnergyPeakWG *= param->batchSize;
 		*bufferLatency *= param->batchSize;
 		*bufferDynamicEnergy *= param->batchSize;
 		*coreLatencyOther *= param->batchSize;
@@ -1204,9 +1218,9 @@ double ChipCalculatePerformance(InputParameter& inputParameter, Technology& tech
 		*readLatency /= param->harmonicCoefficient;
 		*readDynamicEnergy /= param->harmonicCoefficient;
 		*readLatencyAG /= param->harmonicCoefficient;
-		*readDynamicEnergyAG *= param->harmonicCoefficient;
+		*readDynamicEnergyAG /= param->harmonicCoefficient;
 		*readLatencyWG /= param->harmonicCoefficient;
-		*readDynamicEnergyWG *= param->harmonicCoefficient;
+		*readDynamicEnergyWG /= param->harmonicCoefficient;
 		*writeLatencyWU /= param->harmonicCoefficient;
 		*writeDynamicEnergyWU /= param->harmonicCoefficient;
 		
